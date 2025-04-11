@@ -268,6 +268,56 @@ export class MemStorage implements IStorage {
     this.initializeSampleData();
   }
   
+  // Generate dummy regions to fill up to the required count
+  private generateDummyRegions(countryId: number, baseRegions: Region[], targetCount: number): Region[] {
+    const result = [...baseRegions];
+    const baseCount = baseRegions.length;
+    
+    if (baseCount >= targetCount) {
+      return result;
+    }
+    
+    // Colors to use for the generated regions
+    const colors = [
+      { fill: "#EF4444", stroke: "#991B1B" }, // Red
+      { fill: "#F97316", stroke: "#9A3412" }, // Orange
+      { fill: "#FACC15", stroke: "#854D0E" }, // Yellow
+      { fill: "#84CC16", stroke: "#3F6212" }, // Lime
+      { fill: "#22C55E", stroke: "#166534" }, // Green
+      { fill: "#10B981", stroke: "#065F46" }, // Emerald
+      { fill: "#06B6D4", stroke: "#0E7490" }, // Cyan
+      { fill: "#0EA5E9", stroke: "#0369A1" }, // Light Blue
+      { fill: "#3B82F6", stroke: "#1D4ED8" }, // Blue
+      { fill: "#6366F1", stroke: "#4338CA" }, // Indigo
+      { fill: "#8B5CF6", stroke: "#5B21B6" }, // Violet
+      { fill: "#A855F7", stroke: "#6B21A8" }, // Purple
+      { fill: "#D946EF", stroke: "#86198F" }, // Fuchsia
+      { fill: "#EC4899", stroke: "#9D174D" }, // Pink
+      { fill: "#F43F5E", stroke: "#9F1239" }, // Rose
+    ];
+    
+    // Generate the additional regions
+    for (let i = 0; i < targetCount - baseCount; i++) {
+      const colorIndex = (baseCount + i) % colors.length;
+      const newRegion: Region = {
+        id: this.regionIdCounter++,
+        countryId: countryId,
+        name: countryId === 1 
+          ? `Nigeria State ${baseCount + i + 1}` 
+          : `Kenya County ${baseCount + i + 1}`,
+        svgPath: "M100,100 L150,100 L150,150 L100,150 Z", // Simple square as placeholder
+        correctX: 200 + (i * 10),
+        correctY: 200 + (i * 10),
+        fillColor: colors[colorIndex].fill,
+        strokeColor: colors[colorIndex].stroke
+      };
+      
+      result.push(newRegion);
+    }
+    
+    return result;
+  }
+
   private initializeSampleData() {
     // Add initial countries
     initialCountries.forEach(country => {
@@ -310,7 +360,18 @@ export class MemStorage implements IStorage {
         return regionObj;
       });
       
-      this.regions.set(countryId, regionsArray);
+      // Ensure we have the correct number of regions for each country
+      let targetCount = 0;
+      if (countryId === 1) { // Nigeria
+        targetCount = 37;
+      } else if (countryId === 2) { // Kenya
+        targetCount = 47;
+      }
+      
+      // Generate additional regions if needed
+      const completeRegionsArray = this.generateDummyRegions(countryId, regionsArray, targetCount);
+      
+      this.regions.set(countryId, completeRegionsArray);
     });
   }
 
