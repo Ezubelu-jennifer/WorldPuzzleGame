@@ -123,6 +123,20 @@ export function PuzzlePiece({
           // Try with underscore instead of hyphen
           alternativeIds.push(`KE-${region.name.replace('-', '_')}`);
         }
+        
+        // Special case for name variations based on SVG data
+        if (region.name === 'Taita-Taveta') {
+          alternativeIds.push('KE-39', 'KE-Taita Taveta');
+        }
+        if (region.name === 'Tharaka-Nithi') {
+          alternativeIds.push('KE-41', 'KE-Tharaka');
+        }
+        if (region.name === 'Trans-Nzoia') {
+          alternativeIds.push('KE-42', 'KE-Trans Nzoia');
+        }
+        if (region.name === 'Elgeyo-Marakwet') {
+          alternativeIds.push('KE-05', 'KE-Keiyo-Marakwet');
+        }
       }
       
       // Try multiple approaches to find the path
