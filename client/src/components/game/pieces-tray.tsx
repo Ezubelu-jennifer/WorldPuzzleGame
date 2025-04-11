@@ -46,15 +46,18 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
   // Filter for unplaced pieces that can be moved
   const unplacedPieces = allRegions.filter(region => !region.isPlaced);
   
-  // Random vibrant colors for regions (following the red theme in screenshot)
+  // Vibrant colors for regions - using a diverse color palette
   const colors = [
-    { fill: "#ef4444", stroke: "#b91c1c" }, // red-500, red-700
-    { fill: "#f87171", stroke: "#b91c1c" }, // red-400, red-700
-    { fill: "#fca5a5", stroke: "#b91c1c" }, // red-300, red-700
-    { fill: "#f97316", stroke: "#c2410c" }, // orange-500, orange-700
-    { fill: "#fb923c", stroke: "#c2410c" }, // orange-400, orange-700
-    { fill: "#ef4444", stroke: "#b91c1c" }, // red-500, red-700
-    { fill: "#f87171", stroke: "#b91c1c" }, // red-400, red-700
+    { fill: "#ef4444", stroke: "#b91c1c" }, // red
+    { fill: "#f97316", stroke: "#c2410c" }, // orange
+    { fill: "#eab308", stroke: "#a16207" }, // yellow
+    { fill: "#22c55e", stroke: "#15803d" }, // green
+    { fill: "#06b6d4", stroke: "#0e7490" }, // cyan
+    { fill: "#0ea5e9", stroke: "#0369a1" }, // light blue
+    { fill: "#6366f1", stroke: "#4338ca" }, // indigo
+    { fill: "#8b5cf6", stroke: "#6d28d9" }, // purple
+    { fill: "#d946ef", stroke: "#a21caf" }, // pink
+    { fill: "#f43f5e", stroke: "#be123c" }, // rose
   ];
   
   return (
