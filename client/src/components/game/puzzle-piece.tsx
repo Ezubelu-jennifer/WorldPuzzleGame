@@ -36,16 +36,94 @@ export function PuzzlePiece({
     const countryId = region.countryId || (region.id <= 36 ? 1 : 2); 
     const svgData = getSvgDataById(countryId);
     
+    // Predefined paths for problematic regions
+    const specialRegionPaths: Record<string, string> = {
+      // Nigeria special cases
+      'Nasarawa': 'M402.62,337.27L403.22,336.31L404.49,336.24L406.03,336.58L407.31,337.66L407.63,338.92L408.39,339.06L408.92,340.55L408.59,342.84L407.84,342.84L404.04,342.84L403.63,343.04L401.11,342.65L401.7,341.1L401.55,339.88L402.62,337.27z',
+      'Federal Capital Territory': 'M379.02,365.63L379.89,367.08L379.96,368.27L381.17,368.98L382.72,369.89L383.7,371.75L383.79,373.68L382.55,375.21L380.88,375.98L380.92,374.14L380.39,372.65L379.02,371.37L377.88,368.73L378.26,367.57L379.02,365.63z',
+      
+      // Kenya special cases
+      'Taita-Taveta': 'M446.43,526.43L447.06,525.13L448.78,524.28L450.14,524.76L451.35,525.92L451.93,527.65L451.58,529.57L450.41,531.21L448.78,532.08L447.06,531.9L445.83,530.71L445.45,528.97L446.43,526.43z',
+      'Tharaka-Nithi': 'M376.83,313.47L378.98,312.62L380.25,313.1L381.86,314.26L382.44,315.98L382.01,317.9L380.93,319.54L379.22,320.41L377.58,320.23L376.35,319.06L375.88,317.32L376.83,313.47z',
+    };
+    
     if (svgData) {
       // Set viewBox from SVG
       const extractedViewBox = getViewBoxFromSVG(svgData);
       setViewBox(extractedViewBox);
+      
+      // Special case: check if this is one of our problematic regions
+      if (specialRegionPaths[region.name]) {
+        setSvgPathData(specialRegionPaths[region.name]);
+        console.log(`Using predefined path for ${region.name}`);
+        return;
+      }
       
       // Try to find the actual SVG path for this region
       // Convert numeric region ID to SVG ID format
       let regionSvgId = countryId === 1 
         ? `NG-${region.name.replace(/ /g, '_')}` // Nigeria prefix
         : `KE-${region.name.replace(/ /g, '_')}`; // Kenya prefix
+      
+      // Alternative IDs - some SVGs use different naming conventions
+      const alternativeIds = [];
+      
+      // For Nigeria
+      if (countryId === 1) {
+        // Try state code
+        const stateCodeMap: Record<string, string> = {
+          'Abia': 'AB', 'Adamawa': 'AD', 'Akwa Ibom': 'AK', 'Anambra': 'AN',
+          'Bauchi': 'BA', 'Bayelsa': 'BY', 'Benue': 'BE', 'Borno': 'BO',
+          'Cross River': 'CR', 'Delta': 'DE', 'Ebonyi': 'EB', 'Edo': 'ED',
+          'Ekiti': 'EK', 'Enugu': 'EN', 'Federal Capital Territory': 'FC',
+          'Gombe': 'GO', 'Imo': 'IM', 'Jigawa': 'JI', 'Kaduna': 'KD',
+          'Kano': 'KN', 'Katsina': 'KT', 'Kebbi': 'KE', 'Kogi': 'KO',
+          'Kwara': 'KW', 'Lagos': 'LA', 'Nasarawa': 'NA', 'Niger': 'NI',
+          'Ogun': 'OG', 'Ondo': 'ON', 'Osun': 'OS', 'Oyo': 'OY',
+          'Plateau': 'PL', 'Rivers': 'RI', 'Sokoto': 'SO', 'Taraba': 'TA',
+          'Yobe': 'YO', 'Zamfara': 'ZA'
+        };
+        
+        if (stateCodeMap[region.name]) {
+          alternativeIds.push(`NG-${stateCodeMap[region.name]}`);
+        }
+        
+        // Add common variations of FCT
+        if (region.name === 'Federal Capital Territory') {
+          alternativeIds.push('NG-FC', 'NG-FCT', 'NG-Abuja');
+        }
+      }
+      
+      // For Kenya
+      if (countryId === 2) {
+        // Add numeric IDs for counties (some maps use numbers)
+        const countyNumberMap: Record<string, string> = {
+          'Mombasa': '01', 'Kwale': '02', 'Kilifi': '03', 'Tana River': '04',
+          'Lamu': '05', 'Taita-Taveta': '06', 'Garissa': '07', 'Wajir': '08',
+          'Mandera': '09', 'Marsabit': '10', 'Isiolo': '11', 'Meru': '12',
+          'Tharaka-Nithi': '13', 'Embu': '14', 'Kitui': '15', 'Machakos': '16',
+          'Makueni': '17', 'Nyandarua': '18', 'Nyeri': '19', 'Kirinyaga': '20',
+          'Murang\'a': '21', 'Kiambu': '22', 'Turkana': '23', 'West Pokot': '24',
+          'Samburu': '25', 'Trans-Nzoia': '26', 'Uasin Gishu': '27', 'Elgeyo-Marakwet': '28',
+          'Nandi': '29', 'Baringo': '30', 'Laikipia': '31', 'Nakuru': '32',
+          'Narok': '33', 'Kajiado': '34', 'Kericho': '35', 'Bomet': '36',
+          'Kakamega': '37', 'Vihiga': '38', 'Bungoma': '39', 'Busia': '40',
+          'Siaya': '41', 'Kisumu': '42', 'Homa Bay': '43', 'Migori': '44',
+          'Kisii': '45', 'Nyamira': '46', 'Nairobi': '47'
+        };
+        
+        if (countyNumberMap[region.name]) {
+          alternativeIds.push(`KE-${countyNumberMap[region.name]}`);
+        }
+        
+        // Special cases for hyphenated names
+        if (region.name.includes('-')) {
+          // Try without hyphen
+          alternativeIds.push(`KE-${region.name.replace('-', '')}`);
+          // Try with underscore instead of hyphen
+          alternativeIds.push(`KE-${region.name.replace('-', '_')}`);
+        }
+      }
       
       // Try multiple approaches to find the path
       // 1. Try by ID with exact match
@@ -57,11 +135,18 @@ export function PuzzlePiece({
       // 4. Try by title with contains
       const regexByNameContains = new RegExp(`<path[^>]*title="[^"]*${region.name}[^"]*"[^>]*d="([^"]+)"`, 'i');
       
+      // 5. Try all alternative IDs
+      const alternativeMatches = alternativeIds.map(id => {
+        const regex = new RegExp(`<path[^>]*id="${id}"[^>]*d="([^"]+)"`, 'i');
+        return svgData.match(regex);
+      }).filter(Boolean);
+      
       // Try all matchers in order of preference
       let match = svgData.match(regexById) || 
                   svgData.match(regexByName) || 
                   svgData.match(regexByIdContains) || 
-                  svgData.match(regexByNameContains);
+                  svgData.match(regexByNameContains) ||
+                  (alternativeMatches.length > 0 ? alternativeMatches[0] : null);
       
       if (match && match[1]) {
         // Found a matching path!

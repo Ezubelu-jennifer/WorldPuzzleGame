@@ -100,4 +100,5 @@ export interface RegionPiece {
   isPlaced: boolean;
   fillColor: string;
   strokeColor: string;
+  countryId?: number; // Added to help with SVG path matching
 }
