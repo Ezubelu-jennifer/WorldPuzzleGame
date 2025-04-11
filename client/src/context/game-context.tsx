@@ -38,10 +38,72 @@ export function GameProvider({ children }: { children: ReactNode }) {
           throw new Error("Failed to load regions");
         }
         regions = await response.json();
+        
+        // Debug the regions received from API
+        console.log(`Loaded ${regions.length} regions for ${countryName} (ID: ${countryId})`);
+        
+        // Ensure all required properties are present
+        regions = regions.map((region, index) => {
+          // Make sure each region has required properties
+          const processedRegion: RegionPiece = {
+            id: region.id,
+            name: region.name,
+            svgPath: region.svgPath || "",
+            correctX: region.correctX || 100 + (index * 50),
+            correctY: region.correctY || 100 + (index * 30),
+            isPlaced: false,
+            fillColor: region.fillColor || "#" + Math.floor(Math.random()*16777215).toString(16),
+            strokeColor: region.strokeColor || "#333333"
+          };
+          
+          return processedRegion;
+        });
+        
+        // Check if Nasarawa is in the Nigeria regions
+        if (countryId === 1) {
+          const hasNasarawa = regions.some(r => r.name === "Nasarawa");
+          console.log(`Nasarawa region ${hasNasarawa ? 'found' : 'missing'} in Nigeria data`);
+        }
+        
+        // Make sure we have the correct number of regions
+        const expectedCount = countryId === 1 ? 37 : 47;
+        console.log(`Expected ${expectedCount} regions, got ${regions.length} for ${countryName}`);
+        
+        // If count doesn't match, add missing or remove extras
+        if (regions.length !== expectedCount) {
+          if (regions.length < expectedCount) {
+            // Missing regions - add generic ones to match the count
+            const missingCount = expectedCount - regions.length;
+            console.warn(`Adding ${missingCount} generic regions to match expected count`);
+            
+            for (let i = 0; i < missingCount; i++) {
+              const id = 1000 + regions.length + i;
+              const name = countryId === 1 
+                ? `Nigeria State ${regions.length + i + 1}` 
+                : `Kenya County ${regions.length + i + 1}`;
+              
+              regions.push({
+                id: id,
+                name: name,
+                svgPath: "",
+                correctX: 150 + (i * 50),
+                correctY: 150 + (i * 30),
+                isPlaced: false,
+                fillColor: "#" + Math.floor(Math.random()*16777215).toString(16),
+                strokeColor: "#333333"
+              });
+            }
+          } else if (regions.length > expectedCount) {
+            // Too many regions - trim to expected count
+            console.warn(`Trimming ${regions.length - expectedCount} excess regions`);
+            regions = regions.slice(0, expectedCount);
+          }
+        }
       } catch (err) {
         // Fallback to sample data if API fails
-        console.warn("Using sample regions data as fallback");
+        console.warn("Using sample regions data as fallback", err);
         regions = sampleRegions[countryId] || [];
+        console.log(`Fallback provided ${regions.length} regions`);
       }
       
       // Create a new game session on the server
@@ -64,7 +126,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
       
       // Set initial game state
-      setGameState({
+      const gameState: GameState = {
         countryId,
         countryName,
         regions: regions.map(r => ({ ...r, isPlaced: false })),
@@ -74,7 +136,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
         endTime: null,
         isCompleted: false,
         score: null
-      });
+      };
+      
+      // Set the state
+      setGameState(gameState);
+      
+      // Final check of the data to debug
+      console.log(`Game initialized with ${gameState.regions.length} regions`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to initialize game");
     } finally {

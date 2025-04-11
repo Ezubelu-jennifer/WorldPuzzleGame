@@ -610,8 +610,12 @@ export class MemStorage implements IStorage {
             }
           }
           
-          regionsArray = uniqueCounties;
-          console.log(`Kenya now has ${regionsArray.length} unique counties`);
+          // Create new array with unique counties
+          const uniqueRegionsArray = [...uniqueCounties];
+          console.log(`Kenya now has ${uniqueRegionsArray.length} unique counties`);
+          
+          // Update regionsArray reference to the filtered array
+          return this.generateDummyRegions(countryId, uniqueRegionsArray, targetCount);
         }
       }
       
