@@ -20,7 +20,7 @@ export const initialCountries: CountryData[] = [
     slug: "nigeria",
     imageUrl: "https://images.unsplash.com/photo-1526721940322-10fb6e3ae94a?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&h=500&q=80",
     difficulty: 3,
-    regionsCount: 10,
+    regionsCount: 37,
     tagType: "popular",
     tagText: "Popular",
     outlinePath: "M192.3,27.6l7.5-3.1l8.1,1.1l8.7,3.8l8.1,5.5l1.6,7.3l5.8,2.7l8.4,2.2l5.5-1.4l4.5-4.5l7.4,0.5l2.9,2.2l0.8,3.6l3.3,2.9 l2.6,4.9v4.9l-1.4,2.7l-2.5,2.1l-3.3,5.6l-4.3,2.3l-1.2,3l1.4,3l-0.2,4.7l-7.2,2.8l-4.9-0.3l-2.9,2.8l-4.5,0.5l-3.4,3 l-3.6,0.3l-3.8-1.9l-4.1,0.2L216,96l-6.1-0.1l-4.3-1.5l-5.1-5l-1.6-4.1l-3.7-2.2l-1.8-5.1l-3.9-3.2l-2-2.8l-0.1-3.4l-1.7-3.7 l-0.4-6.5l1.5-3.6l-1.8-3.9l0.5-5.4l2.1-7.5l0.6-2.9L192.3,27.6z",
