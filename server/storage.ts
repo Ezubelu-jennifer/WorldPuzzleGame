@@ -535,6 +535,11 @@ export class MemStorage implements IStorage {
     Object.entries(sampleRegions).forEach(([countryIdStr, regionsList]) => {
       const countryId = parseInt(countryIdStr, 10);
       const regionsArray = regionsList.map((region: RegionPiece) => {
+        // Make sure Nasarawa state is included for Nigeria (country ID 1)
+        if (countryId === 1 && region.name === "Nasarawa") {
+          console.log("Found Nasarawa state in Nigeria data");
+        }
+        
         const regionObj: Region = {
           id: region.id,
           countryId: countryId,
@@ -554,16 +559,69 @@ export class MemStorage implements IStorage {
         return regionObj;
       });
       
+      // Verify Nigeria has all 37 states including Nasarawa
+      if (countryId === 1) {
+        const hasNasarawa = regionsArray.some(r => r.name === "Nasarawa");
+        if (!hasNasarawa) {
+          console.warn("Nasarawa missing from Nigeria data - adding it manually");
+          
+          // Find an appropriate template region to copy
+          const templateRegion = regionsArray.find(r => r.name === "Abuja" || r.name === "Kogi") || regionsArray[0];
+          
+          // Create Nasarawa with a unique ID
+          const nasarawaRegion: Region = {
+            id: this.regionIdCounter++,
+            countryId: 1,
+            name: "Nasarawa",
+            svgPath: templateRegion.svgPath,
+            correctX: templateRegion.correctX + 50, // Offset to make it unique
+            correctY: templateRegion.correctY + 50,
+            fillColor: "#4fa94d",
+            strokeColor: "#2c6e2c"
+          };
+          
+          regionsArray.push(nasarawaRegion);
+        }
+      }
+      
       // Ensure we have the correct number of regions for each country
       let targetCount = 0;
       if (countryId === 1) { // Nigeria
         targetCount = 37;
+        console.log(`Nigeria has ${regionsArray.length} states before dummy generation`);
       } else if (countryId === 2) { // Kenya
         targetCount = 47;
+        console.log(`Kenya has ${regionsArray.length} counties before dummy generation`);
+        
+        // Check for duplicates in Kenya counties
+        const countyNames = regionsArray.map(r => r.name);
+        const uniqueCountyNames = new Set(countyNames);
+        if (uniqueCountyNames.size < countyNames.length) {
+          console.warn(`Kenya has ${countyNames.length - uniqueCountyNames.size} duplicate counties`);
+          
+          // Keep track of counties we've seen to remove duplicates
+          const seenCounties = new Set<string>();
+          const uniqueCounties: Region[] = [];
+          
+          for (const region of regionsArray) {
+            if (!seenCounties.has(region.name)) {
+              seenCounties.add(region.name);
+              uniqueCounties.push(region);
+            }
+          }
+          
+          regionsArray = uniqueCounties;
+          console.log(`Kenya now has ${regionsArray.length} unique counties`);
+        }
       }
       
       // Generate additional regions if needed
       const completeRegionsArray = this.generateDummyRegions(countryId, regionsArray, targetCount);
+      
+      // Double check we have exactly the right number of regions
+      if (completeRegionsArray.length !== targetCount) {
+        console.warn(`Warning: ${countryId === 1 ? 'Nigeria' : 'Kenya'} has ${completeRegionsArray.length} regions, expected ${targetCount}`);
+      }
       
       this.regions.set(countryId, completeRegionsArray);
     });
