@@ -41,8 +41,10 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
     );
   }
 
-  // Filter for unplaced pieces
-  const unplacedPieces = gameState.regions.filter(region => !region.isPlaced);
+  // Make sure we display ALL regions
+  const allRegions = [...gameState.regions];
+  // Filter for unplaced pieces that can be moved
+  const unplacedPieces = allRegions.filter(region => !region.isPlaced);
   
   // Random vibrant colors for regions (following the red theme in screenshot)
   const colors = [
@@ -56,8 +58,8 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
   ];
   
   return (
-    <div ref={trayRef} className="flex space-x-3 overflow-x-auto py-1 min-h-[80px]">
-      {unplacedPieces.map((region, index) => {
+    <div ref={trayRef} className="flex flex-wrap gap-2 overflow-x-auto py-3 px-4 min-h-[120px] max-h-[200px] overflow-y-auto">
+      {allRegions.map((region, index) => {
         // Assign color from our palette, cycling through if needed
         const colorIndex = index % colors.length;
         const fillColor = colors[colorIndex].fill;
@@ -78,7 +80,7 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
         return (
           <div 
             key={region.id}
-            className="flex-shrink-0 relative w-20 h-20 bg-white rounded-md shadow-sm border border-gray-200 p-1 flex items-center justify-center"
+            className={`flex-shrink-0 relative w-20 h-20 rounded-md shadow-sm border p-1 flex items-center justify-center ${region.isPlaced ? 'bg-gray-100 opacity-60' : 'bg-white cursor-grab'}`}
           >
             {svgData && svgRegion ? (
               // Use the SVG thumbnail for the region
