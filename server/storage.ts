@@ -18,8 +18,8 @@ const sampleRegions: { [key: number]: RegionPiece[] } = {
       correctX: 300,
       correctY: 510,
       isPlaced: false,
-      fillColor: "#2563EB",
-      strokeColor: "#1E40AF"
+      fillColor: "#EF4444",
+      strokeColor: "#991B1B"
     },
     {
       id: 2,
@@ -28,8 +28,8 @@ const sampleRegions: { [key: number]: RegionPiece[] } = {
       correctX: 680,
       correctY: 220,
       isPlaced: false,
-      fillColor: "#3B82F6",
-      strokeColor: "#1E40AF"
+      fillColor: "#F97316",
+      strokeColor: "#9A3412"
     },
     {
       id: 3,
@@ -38,8 +38,8 @@ const sampleRegions: { [key: number]: RegionPiece[] } = {
       correctX: 320,
       correctY: 560,
       isPlaced: false,
-      fillColor: "#60A5FA",
-      strokeColor: "#1E40AF"
+      fillColor: "#FACC15",
+      strokeColor: "#854D0E"
     },
     {
       id: 4,
@@ -48,8 +48,8 @@ const sampleRegions: { [key: number]: RegionPiece[] } = {
       correctX: 270,
       correctY: 470,
       isPlaced: false,
-      fillColor: "#93C5FD",
-      strokeColor: "#1E40AF"
+      fillColor: "#84CC16",
+      strokeColor: "#3F6212"
     },
     {
       id: 5,
@@ -58,8 +58,8 @@ const sampleRegions: { [key: number]: RegionPiece[] } = {
       correctX: 510,
       correctY: 160,
       isPlaced: false,
-      fillColor: "#BFDBFE",
-      strokeColor: "#1E40AF"
+      fillColor: "#06B6D4",
+      strokeColor: "#0E7490"
     },
     {
       id: 6,
