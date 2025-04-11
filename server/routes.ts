@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
-import { insertCountrySchema, insertRegionSchema, insertGameSessionSchema } from "@shared/schema";
+import { insertCountrySchema, insertRegionSchema, insertGameSessionSchema, type InsertGameSession } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get all available countries
@@ -55,8 +55,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Start a new game session
   app.post("/api/game-sessions", async (req, res) => {
     try {
-      const validatedData = insertGameSessionSchema.parse(req.body);
-      const gameSession = await storage.createGameSession(validatedData);
+      // Define a custom schema with string date handling
+      const gameSessionRequestSchema = z.object({
+        userId: z.number().nullable().optional(),
+        countryId: z.number(),
+        startedAt: z.string().transform(str => new Date(str)),
+        hintsUsed: z.number().default(0)
+      });
+      
+      // Validate and transform the data
+      const validatedData = gameSessionRequestSchema.parse(req.body);
+      
+      // Create the game session
+      const gameSession = await storage.createGameSession(validatedData as InsertGameSession);
       res.status(201).json(gameSession);
     } catch (error) {
       if (error instanceof z.ZodError) {
