@@ -211,7 +211,7 @@ export function PuzzlePiece({
   }, [region.isPlaced, snapToPosition, region.correctX, region.correctY, setPosition]);
 
   // Determine piece size based on whether it's in the tray or on the board
-  const pieceSize = isTrayPiece ? 80 : 120;
+  const pieceSize = isTrayPiece ? 100 : 150;
 
   return (
     <div
@@ -242,7 +242,7 @@ export function PuzzlePiece({
           d={svgPathData || region.svgPath} 
           fill={region.isPlaced ? region.fillColor : "#ef4444"} // Red for unplaced pieces
           stroke={region.strokeColor}
-          strokeWidth="2"
+          strokeWidth="3"
           style={{ filter: isDragging ? 'drop-shadow(0px 4px 8px rgba(0,0,0,0.3))' : 'none' }}
         />
         <text 
@@ -251,7 +251,7 @@ export function PuzzlePiece({
           textAnchor="middle" 
           dominantBaseline="middle"
           fill={region.isPlaced ? "#ffffff" : "#ffffff"} 
-          fontSize={isTrayPiece ? "10" : "12"}
+          fontSize={isTrayPiece ? "12" : "14"}
           fontWeight="bold"
           style={{ 
             filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.5))',

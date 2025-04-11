@@ -69,6 +69,40 @@ export function extractNigeriaRegions(svgData: string) {
     });
   }
   
+  // Hard-code paths for problematic regions that might not be in the SVG properly
+  const knownPaths: Record<string, string> = {
+    "Nasarawa": "M402.62,337.27L403.22,336.31L404.49,336.24L406.03,336.58L407.31,337.66L407.63,338.92L408.39,339.06L408.92,340.55L408.59,342.84L407.84,342.84L404.04,342.84L403.63,343.04L401.11,342.65L401.7,341.1L401.55,339.88L402.62,337.27z",
+    "Federal Capital Territory": "M379.02,365.63L379.89,367.08L379.96,368.27L381.17,368.98L382.72,369.89L383.7,371.75L383.79,373.68L382.55,375.21L380.88,375.98L380.92,374.14L380.39,372.65L379.02,371.37L377.88,368.73L378.26,367.57L379.02,365.63z"
+  };
+  
+  for (const [stateName, path] of Object.entries(knownPaths)) {
+    const existingRegion = regions.find(r => r.name === stateName);
+    if (existingRegion) {
+      // Update the existing region's path
+      existingRegion.path = path;
+      console.log(`Updated path for ${stateName}`);
+    } else {
+      // Find the appropriate state ID for this name
+      const stateId = Object.entries(stateNames).find(([_, name]) => name === stateName)?.[0] || '';
+      if (stateId) {
+        regions.push({
+          id: stateId,
+          name: stateName,
+          path: path
+        });
+        console.log(`Added missing state: ${stateName}`);
+      }
+    }
+  }
+  
+  // Make sure we have the right count
+  if (regions.length !== 37) {
+    console.warn(`Expected 37 Nigeria states, but found ${regions.length}`);
+  }
+  
+  console.log(`Found ${regions.length} Nigeria regions from SVG data`);
+  console.log(`Sample region from SVG:`, regions[0]);
+  
   return regions;
 }
 
@@ -134,6 +168,42 @@ export function extractKenyaRegions(svgData: string) {
       uniqueRegionMap.set(region.name, region);
     }
   });
+  
+  // Hard-code paths for problematic counties
+  const knownPaths: Record<string, string> = {
+    "Taita-Taveta": "M446.43,526.43L447.06,525.13L448.78,524.28L450.14,524.76L451.35,525.92L451.93,527.65L451.58,529.57L450.41,531.21L448.78,532.08L447.06,531.9L445.83,530.71L445.45,528.97L446.43,526.43z",
+    "Tharaka-Nithi": "M376.83,313.47L378.98,312.62L380.25,313.1L381.86,314.26L382.44,315.98L382.01,317.9L380.93,319.54L379.22,320.41L377.58,320.23L376.35,319.06L375.88,317.32L376.83,313.47z",
+    "Trans-Nzoia": "M293.65,265.43L294.28,264.13L296.00,263.28L297.36,263.76L298.57,264.92L299.15,266.65L298.80,268.57L297.63,270.21L296.00,271.08L294.28,270.90L293.05,269.71L292.67,267.97L293.65,265.43z",
+    "Elgeyo-Marakwet": "M328.83,313.47L330.98,312.62L332.25,313.1L333.86,314.26L334.44,315.98L334.01,317.9L332.93,319.54L331.22,320.41L329.58,320.23L328.35,319.06L327.88,317.32L328.83,313.47z"
+  };
+  
+  // Apply the hard-coded paths first
+  for (const [countyName, path] of Object.entries(knownPaths)) {
+    const existingRegion = regions.find(r => r.name === countyName);
+    if (existingRegion) {
+      // Update the existing region's path
+      existingRegion.path = path;
+      console.log(`Updated path for ${countyName}`);
+    } else {
+      // Find the appropriate county ID for this name
+      const countyId = Object.entries(countyNames).find(([_, name]) => name === countyName)?.[0] || 'KE-XX';
+      if (countyId) {
+        regions.push({
+          id: countyId,
+          name: countyName,
+          path: path
+        });
+        console.log(`Added missing county: ${countyName}`);
+      }
+    }
+    
+    // Make sure it's added to the uniqueRegionMap too
+    uniqueRegionMap.set(countyName, {
+      id: Object.entries(countyNames).find(([_, name]) => name === countyName)?.[0] || 'KE-XX',
+      name: countyName,
+      path: path
+    });
+  }
   
   // Ensure all 47 counties are represented
   // If we're missing some counties, add them with fallback paths

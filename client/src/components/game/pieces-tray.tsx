@@ -61,7 +61,7 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
   ];
   
   return (
-    <div ref={trayRef} className="flex flex-wrap gap-1 overflow-x-auto py-2 px-3 min-h-[120px] max-h-[240px] overflow-y-auto">
+    <div ref={trayRef} className="flex flex-wrap gap-1 overflow-x-auto py-2 px-3 min-h-[140px] max-h-[320px] overflow-y-auto">
       {allRegions.map((region, index) => {
         // Assign color from our palette, cycling through if needed
         const colorIndex = index % colors.length;
@@ -83,7 +83,7 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
         return (
           <div 
             key={region.id}
-            className={`flex-shrink-0 relative w-16 h-16 rounded-md shadow-sm border p-1 flex items-center justify-center ${region.isPlaced ? 'bg-gray-100 opacity-60' : 'bg-white cursor-grab'}`}
+            className={`flex-shrink-0 relative w-24 h-24 rounded-md shadow-sm border p-1 flex items-center justify-center ${region.isPlaced ? 'bg-gray-100 opacity-60' : 'bg-white cursor-grab'}`}
           >
             {svgData && svgRegion ? (
               // Use the SVG thumbnail for the region
