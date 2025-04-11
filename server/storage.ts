@@ -296,18 +296,55 @@ export class MemStorage implements IStorage {
       { fill: "#F43F5E", stroke: "#9F1239" }, // Rose
     ];
     
+    // Use existing SVG paths instead of basic shapes
+    // This will rotate through the existing paths, scaling and offsetting them to create variations
+    const existingPaths = baseRegions.map(region => region.svgPath);
+    
+    // Nigeria SVG paths for common state shapes if we need them
+    const nigeriaPaths = [
+      "M100,100 C120,80 150,90 160,120 C170,150 160,180 130,190 C100,200 70,180 60,150 C50,120 70,90 100,100 Z", // Rounded shape
+      "M80,80 L150,100 L160,150 L120,180 L60,150 L50,100 Z", // Hexagon-like
+      "M100,70 L150,90 L170,130 L150,170 L100,190 L50,170 L30,130 L50,90 Z", // Octagon-like
+      "M90,70 C140,80 160,120 150,160 C140,180 110,190 80,180 C40,160 30,120 60,90 C70,80 80,70 90,70 Z" // Organic shape
+    ];
+    
+    // Kenya SVG paths for common county shapes
+    const kenyaPaths = [
+      "M120,80 L150,110 L150,150 L120,180 L80,180 L50,150 L50,110 L80,80 Z", // Diamond-like
+      "M70,80 L140,80 L170,120 L170,160 L140,200 L70,200 L40,160 L40,120 Z", // Octagon variation
+      "M80,90 C110,80 140,90 160,110 C180,130 180,160 160,180 C140,200 110,210 80,200 C50,190 30,170 20,140 C10,110 40,90 80,90 Z", // Kidney shape
+      "M90,80 L130,80 L160,110 L160,150 L130,180 L90,180 L60,150 L60,110 Z" // Diamond variation
+    ];
+    
     // Generate the additional regions
     for (let i = 0; i < targetCount - baseCount; i++) {
       const colorIndex = (baseCount + i) % colors.length;
+      
+      // Get a varied path - either from existing regions or from our predefined shapes
+      let svgPath = '';
+      if (existingPaths.length > 0) {
+        // Reuse existing paths with slight variations
+        const pathIndex = i % existingPaths.length;
+        svgPath = existingPaths[pathIndex];
+      } else {
+        // Use predefined shapes
+        const shapes = countryId === 1 ? nigeriaPaths : kenyaPaths;
+        const shapeIndex = i % shapes.length;
+        svgPath = shapes[shapeIndex];
+      }
+      
+      // Create position variations by offsetting coordinates
+      const offset = i * 20;
+      
       const newRegion: Region = {
         id: this.regionIdCounter++,
         countryId: countryId,
         name: countryId === 1 
           ? `Nigeria State ${baseCount + i + 1}` 
           : `Kenya County ${baseCount + i + 1}`,
-        svgPath: "M100,100 L150,100 L150,150 L100,150 Z", // Simple square as placeholder
-        correctX: 200 + (i * 10),
-        correctY: 200 + (i * 10),
+        svgPath: svgPath,
+        correctX: 200 + (i * 15) % 150, // Scattered positions
+        correctY: 150 + (i * 18) % 180,
         fillColor: colors[colorIndex].fill,
         strokeColor: colors[colorIndex].stroke
       };
