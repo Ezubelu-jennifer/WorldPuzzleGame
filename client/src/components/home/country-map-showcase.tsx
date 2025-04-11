@@ -28,7 +28,7 @@ export function CountryMapShowcase({ nigeriaSvg, kenyaSvg }: CountryMapShowcaseP
       id: 1,
       name: "Nigeria",
       svgData: nigeriaSvg,
-      description: "Nigeria is divided into 36 states and the Federal Capital Territory. Each state is further divided into Local Government Areas. Click on a state to see its details."
+      description: "Nigeria has 10 diverse states, each with unique geography and culture. The map puzzle game lets you explore these regions by solving interactive jigsaw puzzles. Click on a state to learn more."
     },
     {
       id: 2,

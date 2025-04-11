@@ -78,7 +78,8 @@ export function CountryCard({ country }: CountryCardProps) {
         
         {/* Region thumbnails */}
         <div className="absolute bottom-0 left-0 right-0 flex flex-wrap justify-center gap-1 p-2 bg-gradient-to-t from-black/70 to-transparent">
-          {regions.slice(0, 8).map((region, index) => (
+          {/* Show all regions if Nigeria (id=1), otherwise limit to 8 */}
+          {(id === 1 ? regions : regions.slice(0, 8)).map((region, index) => (
             <div 
               key={region.id}
               className={cn(
@@ -90,14 +91,14 @@ export function CountryCard({ country }: CountryCardProps) {
               <svg viewBox="0 0 400 300" className="w-full h-full">
                 <path 
                   d={region.svgPath} 
-                  fill={getRegionColors(index).fill}
-                  stroke={getRegionColors(index).stroke}
+                  fill={region.fillColor || getRegionColors(index).fill}
+                  stroke={region.strokeColor || getRegionColors(index).stroke}
                   strokeWidth="1"
                 />
               </svg>
             </div>
           ))}
-          {regions.length > 8 && (
+          {id !== 1 && regions.length > 8 && (
             <div className="flex items-center justify-center w-8 h-8 bg-black/30 text-white rounded-full text-xs">
               +{regions.length - 8}
             </div>
