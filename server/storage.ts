@@ -365,6 +365,7 @@ export class MemStorage implements IStorage {
     ];
     
     // Region names for Nigeria states (total 37 including FCT)
+    // Double-check for Nasarawa state
     const nigeriaStateNames = [
       "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno", 
       "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", "Federal Capital Territory", 
@@ -373,7 +374,36 @@ export class MemStorage implements IStorage {
       "Sokoto", "Taraba", "Yobe", "Zamfara"
     ];
     
+    // Use filter to get unique values (avoid Set for TypeScript compatibility)
+    let uniqueNigeriaStates = nigeriaStateNames
+      .filter((state, index, self) => self.indexOf(state) === index)
+      .sort();
+      
+    // Make sure Nasarawa is included
+    if (!uniqueNigeriaStates.includes("Nasarawa")) {
+      console.warn("Nasarawa state is missing from the Nigeria states list! Adding it.");
+      uniqueNigeriaStates.push("Nasarawa");
+      uniqueNigeriaStates.sort(); // Re-sort after adding
+    }
+    
+    // Double-check we have exactly 37 states
+    if (uniqueNigeriaStates.length !== 37) {
+      console.warn(`Warning: Nigerian states list has ${uniqueNigeriaStates.length} states, expected 37.`);
+      
+      // Make sure we have 37 state names - no more, no less
+      while (uniqueNigeriaStates.length < 37) {
+        const missingIndex = uniqueNigeriaStates.length + 1;
+        uniqueNigeriaStates.push(`State ${missingIndex}`);
+      }
+      
+      // If we have too many, trim to 37
+      if (uniqueNigeriaStates.length > 37) {
+        uniqueNigeriaStates = uniqueNigeriaStates.slice(0, 37);
+      }
+    }
+    
     // Region names for Kenya counties (47 counties)
+    // Ensure Nairobi and another missing county are included
     const kenyaCountyNames = [
       "Mombasa", "Kwale", "Kilifi", "Tana River", "Lamu", "Taita-Taveta", 
       "Garissa", "Wajir", "Mandera", "Marsabit", "Isiolo", "Meru", "Tharaka-Nithi",
@@ -384,8 +414,29 @@ export class MemStorage implements IStorage {
       "Busia", "Siaya", "Kisumu", "Homa Bay", "Migori", "Kisii", "Nyamira", "Nairobi"
     ];
     
-    // Use names appropriate for the country
-    const regionNames = countryId === 1 ? nigeriaStateNames : kenyaCountyNames;
+    // Use filter to get unique values (avoid Set for TypeScript compatibility)
+    let uniqueKenyaCounties = kenyaCountyNames
+      .filter((county, index, self) => self.indexOf(county) === index)
+      .sort();
+    
+    // Double-check we have exactly 47 counties
+    if (uniqueKenyaCounties.length !== 47) {
+      console.warn(`Warning: Kenya counties list has ${uniqueKenyaCounties.length} counties, expected 47.`);
+      
+      // Make sure we have 47 county names - no more, no less
+      while (uniqueKenyaCounties.length < 47) {
+        const missingIndex = uniqueKenyaCounties.length + 1;
+        uniqueKenyaCounties.push(`County ${missingIndex}`);
+      }
+      
+      // If we have too many, trim to 47
+      if (uniqueKenyaCounties.length > 47) {
+        uniqueKenyaCounties = uniqueKenyaCounties.slice(0, 47);
+      }
+    }
+    
+    // Use names appropriate for the country - using the validated unique lists
+    const regionNames = countryId === 1 ? uniqueNigeriaStates : uniqueKenyaCounties;
     
     // Create a transformation function to make SVG paths unique
     const transformPath = (path: string, scale: number, offsetX: number, offsetY: number): string => {
