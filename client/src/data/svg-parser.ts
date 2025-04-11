@@ -79,7 +79,7 @@ export function extractKenyaRegions(svgData: string) {
   // These are county codes we expect to find in the SVG
   const countyIds = Array.from({length: 47}, (_, i) => `KE-${String(i+1).padStart(2, '0')}`);
   
-  // Map county codes to names
+  // Map county codes to names - full list of all 47 Kenya counties
   const countyNames: Record<string, string> = {
     "KE-01": "Mombasa", "KE-02": "Kwale", "KE-03": "Kilifi", "KE-04": "Tana River",
     "KE-05": "Lamu", "KE-06": "Taita-Taveta", "KE-07": "Garissa", "KE-08": "Wajir",
@@ -125,19 +125,55 @@ export function extractKenyaRegions(svgData: string) {
     }
   }
   
-  // If we still haven't found any regions, add fallback regions with empty paths
-  if (regions.length === 0) {
-    console.warn("Could not extract regions from Kenya SVG data. Using fallback.");
-    countyIds.forEach(id => {
-      regions.push({
-        id: id,
-        name: countyNames[id] || id.replace('KE-', 'County '),
+  // Create a "processed" array with unique entries by name (no duplicates)
+  const uniqueRegionMap = new Map<string, { id: string; name: string; path: string }>();
+  
+  // First add all the extracted regions, ensuring no duplicates by name
+  regions.forEach(region => {
+    if (!uniqueRegionMap.has(region.name)) {
+      uniqueRegionMap.set(region.name, region);
+    }
+  });
+  
+  // Ensure all 47 counties are represented
+  // If we're missing some counties, add them with fallback paths
+  Object.values(countyNames).forEach(countyName => {
+    if (!uniqueRegionMap.has(countyName)) {
+      console.warn(`Adding missing Kenya county: ${countyName}`);
+      
+      // Find a valid ID for this county
+      const countyId = Object.entries(countyNames).find(([_, name]) => name === countyName)?.[0] || 'KE-XX';
+      
+      uniqueRegionMap.set(countyName, {
+        id: countyId,
+        name: countyName,
         path: ""  // Empty path, will be generated on the client
       });
-    });
+    }
+  });
+  
+  // If we still have less than 47 counties, add generic ones
+  const allCounties = Array.from(uniqueRegionMap.values());
+  if (allCounties.length < 47) {
+    console.warn(`Only have ${allCounties.length} Kenya counties, adding generic ones to reach 47`);
+    
+    // Add generic counties to reach 47
+    for (let i = allCounties.length + 1; i <= 47; i++) {
+      const genericName = `County ${i}`;
+      uniqueRegionMap.set(genericName, {
+        id: `KE-GEN-${i}`,
+        name: genericName,
+        path: ""
+      });
+    }
   }
   
-  return regions;
+  // Convert back to array and ensure exactly 47 counties
+  const finalCounties = Array.from(uniqueRegionMap.values());
+  console.log(`Extracted ${finalCounties.length} unique Kenya counties`);
+  
+  // If we somehow got more than 47, trim to 47
+  return finalCounties.slice(0, 47);
 }
 
 export function getViewBoxFromSVG(svgData: string): string {
