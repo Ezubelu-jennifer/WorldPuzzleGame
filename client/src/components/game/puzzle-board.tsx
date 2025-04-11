@@ -153,7 +153,7 @@ export function PuzzleBoard({
               Memorize the Map of {countryName}
             </h3>
             <p className="text-gray-600 mb-4">
-              Drag and place the {gameState?.regions.length || '0'} states of {countryName} in their correct positions on the map.
+              Drag and place all {gameState?.regions.length || '0'} states of {countryName} in their correct positions on the map.
               <br/>
               <span className="text-sm mt-1 inline-block text-emerald-600">Click on an area of the map for hints!</span>
             </p>
