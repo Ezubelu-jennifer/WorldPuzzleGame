@@ -8,6 +8,38 @@ import {
 // Import directly from the client directory
 import { initialCountries } from "../client/src/data/countries";
 
+// Helper function to transform SVG paths for more variety
+function transformPath(path: string, scaleX: number = 1.0, scaleY: number = 1.0): string {
+  // This is a simple path transformation that scales the path by adjusting coordinates
+  
+  // Parse commands from the path data
+  const commands = path.match(/[a-zA-Z][^a-zA-Z]*/g) || [];
+  let result = '';
+  
+  for (const cmd of commands) {
+    const type = cmd[0]; // Command type (M, L, C, etc.)
+    const rest = cmd.slice(1); // Coordinates
+    
+    // Extract numbers from the command
+    const numbers = rest.trim().split(/[\s,]+/).map(parseFloat).filter(n => !isNaN(n));
+    let transformed = type;
+    
+    // Apply scaling based on command type
+    for (let i = 0; i < numbers.length; i++) {
+      // Scale X coordinates (even indices) and Y coordinates (odd indices)
+      if (i % 2 === 0) {
+        transformed += ' ' + (numbers[i] * scaleX);
+      } else {
+        transformed += ' ' + (numbers[i] * scaleY);
+      }
+    }
+    
+    result += transformed;
+  }
+  
+  return result;
+}
+
 // Define regions for countries based on the provided SVG data
 const sampleRegions: { [key: number]: RegionPiece[] } = {
   // Kenya regions (we'll add 10 for demonstration, Kenya has 47 counties in total)
@@ -320,21 +352,32 @@ export class MemStorage implements IStorage {
     for (let i = 0; i < targetCount - baseCount; i++) {
       const colorIndex = (baseCount + i) % colors.length;
       
-      // Get a varied path - either from existing regions or from our predefined shapes
+      // Get a varied path for more diversity
       let svgPath = '';
-      if (existingPaths.length > 0) {
-        // Reuse existing paths with slight variations
+      
+      if (existingPaths.length > 0 && i < existingPaths.length) {
+        // First use all available actual paths without repeating
+        svgPath = existingPaths[i];
+      } else if (i < existingPaths.length * 1.5) {
+        // Generate a similar but different path by offsetting the original path
         const pathIndex = i % existingPaths.length;
-        svgPath = existingPaths[pathIndex];
+        // Use the path but offset it to make it look different
+        const pathOffset = 10 + (i * 5);
+        svgPath = existingPaths[pathIndex] + ` m ${pathOffset},${pathOffset}`; // Add a move command to shift the path
+      } else if (i < existingPaths.length * 2) {
+        // Create a different variation by using a different existing path
+        const pathIndex2 = (i + 2) % existingPaths.length; // Use a different index
+        const pathOffset2 = -15 + (i * 3);
+        svgPath = existingPaths[pathIndex2] + ` m ${pathOffset2},${-pathOffset2}`; // Add a move command with negative offset
       } else {
-        // Use predefined shapes
+        // Finally use predefined shapes
         const shapes = countryId === 1 ? nigeriaPaths : kenyaPaths;
         const shapeIndex = i % shapes.length;
         svgPath = shapes[shapeIndex];
       }
       
       // Create position variations by offsetting coordinates
-      const offset = i * 20;
+      const positionOffset = i * 20;
       
       const newRegion: Region = {
         id: this.regionIdCounter++,
@@ -343,8 +386,8 @@ export class MemStorage implements IStorage {
           ? `Nigeria State ${baseCount + i + 1}` 
           : `Kenya County ${baseCount + i + 1}`,
         svgPath: svgPath,
-        correctX: 200 + (i * 15) % 150, // Scattered positions
-        correctY: 150 + (i * 18) % 180,
+        correctX: 200 + (positionOffset % 150), // Scattered positions
+        correctY: 150 + (positionOffset % 200),
         fillColor: colors[colorIndex].fill,
         strokeColor: colors[colorIndex].stroke
       };
