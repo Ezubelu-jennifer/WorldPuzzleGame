@@ -100,7 +100,8 @@ export function CountrySvgMap({
               fill={fill}
               stroke={stroke}
               strokeWidth={strokeWidth}
-              title={region.name}
+              data-name={region.name} // Using data attribute instead of title
+              aria-label={region.name}
               className="transition-colors duration-200 hover:opacity-90"
               style={{ cursor: "pointer" }}
               onClick={() => handleRegionClick(region.id, region.name)}
