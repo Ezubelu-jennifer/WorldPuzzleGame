@@ -32,8 +32,8 @@ export function PuzzlePiece({
 
   // Try to get the actual SVG path for this region from the SVG data
   useEffect(() => {
-    // Determine country ID from the region ID pattern
-    const countryId = region.id <= 36 ? 1 : 2; // Nigeria (1-36), Kenya (37+)
+    // Determine country ID from the region data
+    const countryId = region.countryId || (region.id <= 36 ? 1 : 2); 
     const svgData = getSvgDataById(countryId);
     
     if (svgData) {
@@ -44,26 +44,53 @@ export function PuzzlePiece({
       // Try to find the actual SVG path for this region
       // Convert numeric region ID to SVG ID format
       let regionSvgId = countryId === 1 
-        ? `NG-${region.name}` // Nigeria prefix
-        : `KE-${region.name}`; // Kenya prefix
+        ? `NG-${region.name.replace(/ /g, '_')}` // Nigeria prefix
+        : `KE-${region.name.replace(/ /g, '_')}`; // Kenya prefix
       
-      // Use regex to find the path with this ID, or fallback to using the region name
+      // Try multiple approaches to find the path
+      // 1. Try by ID with exact match
       const regexById = new RegExp(`<path[^>]*id="${regionSvgId}"[^>]*d="([^"]+)"`, 'i');
+      // 2. Try by title with exact match
       const regexByName = new RegExp(`<path[^>]*title="${region.name}"[^>]*d="([^"]+)"`, 'i');
+      // 3. Try by ID with contains
+      const regexByIdContains = new RegExp(`<path[^>]*id="[^"]*${region.name.replace(/ /g, '[_\\s-]')}[^"]*"[^>]*d="([^"]+)"`, 'i');
+      // 4. Try by title with contains
+      const regexByNameContains = new RegExp(`<path[^>]*title="[^"]*${region.name}[^"]*"[^>]*d="([^"]+)"`, 'i');
       
-      let match = svgData.match(regexById) || svgData.match(regexByName);
+      // Try all matchers in order of preference
+      let match = svgData.match(regexById) || 
+                  svgData.match(regexByName) || 
+                  svgData.match(regexByIdContains) || 
+                  svgData.match(regexByNameContains);
       
       if (match && match[1]) {
+        // Found a matching path!
         setSvgPathData(match[1]);
+        console.log(`Found SVG path for ${region.name} in ${countryId === 1 ? 'Nigeria' : 'Kenya'}`);
       } else {
-        // Fallback to the original path
-        setSvgPathData(region.svgPath);
+        // If no match found but we have a valid path from backend, use it
+        if (region.svgPath && region.svgPath.includes('M')) {
+          setSvgPathData(region.svgPath);
+          console.log(`Using backend SVG path for ${region.name}`);
+        } else {
+          // Last resort: try a very flexible search in the SVG data
+          const flexRegex = new RegExp(`<path[^>]*d="(M[^"]+)"[^>]*`, 'i');
+          const flexMatch = flexRegex.exec(svgData);
+          if (flexMatch && flexMatch[1]) {
+            setSvgPathData(flexMatch[1]);
+            console.log(`Using flexible SVG path for ${region.name}`);
+          } else {
+            // Fallback to the original path
+            setSvgPathData(region.svgPath);
+            console.log(`Fallback path used for ${region.name}`);
+          }
+        }
       }
     } else {
-      // Fallback to the original path
+      // No SVG data found, fallback to the original path
       setSvgPathData(region.svgPath);
     }
-  }, [region.id, region.name, region.svgPath]);
+  }, [region.id, region.name, region.svgPath, region.countryId]);
 
   // Use our custom drag hook
   const { isDragging, position, setPosition, dragHandlers } = useDrag({
