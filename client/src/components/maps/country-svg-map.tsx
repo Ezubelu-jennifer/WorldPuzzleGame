@@ -50,9 +50,18 @@ export function CountrySvgMap({
     if (countryId === 1) {
       // Nigeria
       extractedRegions = extractNigeriaRegions(svgData);
+      console.log(`Found ${extractedRegions.length} Nigeria regions from SVG data`);
     } else if (countryId === 2) {
       // Kenya
       extractedRegions = extractKenyaRegions(svgData);
+      console.log(`Found ${extractedRegions.length} Kenya regions from SVG data`);
+    }
+    
+    // Log the extracted regions for debugging
+    if (extractedRegions.length > 0) {
+      console.log("Sample region from SVG:", extractedRegions[0]);
+    } else {
+      console.warn("No regions extracted from SVG data");
     }
     
     setRegions(extractedRegions);
