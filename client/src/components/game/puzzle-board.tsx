@@ -4,7 +4,7 @@ import { useDrop } from "@/hooks/useDrop";
 import { PuzzlePiece } from "@/components/game/puzzle-piece";
 import { Button } from "@/components/ui/button";
 import { getSvgDataById } from "@/data/svg-map-data";
-import { getViewBoxFromSVG } from "@/data/svg-parser";
+import { getViewBoxFromSVG, extractNigeriaRegions, extractKenyaRegions } from "@/data/svg-parser";
 import { CountrySvgMap } from "@/components/maps/country-svg-map";
 
 interface PuzzleBoardProps {
@@ -20,11 +20,13 @@ export function PuzzleBoard({
   outlinePath,
   onStart
 }: PuzzleBoardProps) {
-  const { gameState, placePiece } = useGame();
+  const { gameState, placePiece, useHint } = useGame();
   const [gameStarted, setGameStarted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [svgData, setSvgData] = useState<string>("");
   const [viewBox, setViewBox] = useState<string>("0 0 400 300");
+  const [highlightedRegion, setHighlightedRegion] = useState<string | null>(null);
+  const [svgRegions, setSvgRegions] = useState<{ id: string; name: string; path: string }[]>([]);
   
   // Set up the drop zone for the puzzle container
   const { dropRef } = useDrop({
@@ -40,6 +42,12 @@ export function PuzzleBoard({
       setSvgData(data);
       const extractedViewBox = getViewBoxFromSVG(data);
       setViewBox(extractedViewBox);
+      
+      // Extract regions
+      const extractedRegions = countryId === 1 
+        ? extractNigeriaRegions(data)
+        : extractKenyaRegions(data);
+      setSvgRegions(extractedRegions);
     }
   }, [countryId]);
 
@@ -73,6 +81,25 @@ export function PuzzleBoard({
 
   // Check if regions are available
   const hasRegions = gameState && gameState.regions && gameState.regions.length > 0;
+  
+  // Handle region click
+  const handleRegionClick = (regionId: string, regionName: string) => {
+    // Find matching game region
+    if (hasRegions && gameState) {
+      const gameRegion = gameState.regions.find(r => 
+        r.name.toLowerCase() === regionName.toLowerCase() ||
+        regionName.toLowerCase().includes(r.name.toLowerCase()) ||
+        r.name.toLowerCase().includes(regionName.toLowerCase())
+      );
+      
+      if (gameRegion && !gameRegion.isPlaced) {
+        // Trigger a hint for this region
+        setHighlightedRegion(regionId);
+        // Optional: trigger hint functionality
+        useHint();
+      }
+    }
+  };
 
   return (
     <div 
@@ -84,28 +111,17 @@ export function PuzzleBoard({
         ref={dropRef}
         className="relative h-[500px] flex items-center justify-center flex-grow"
       >
-        {/* Country Outline (using actual SVG map data as black silhouette) */}
-        <div className="w-full h-full absolute top-0 left-0 pointer-events-none">
+        {/* Country Outline (using actual interactive SVG map) */}
+        <div className="w-full h-full absolute top-0 left-0">
           {svgData ? (
-            <div className="w-full h-full bg-transparent">
-              <svg className="w-full h-full" viewBox={viewBox} preserveAspectRatio="xMidYMid meet">
-                <g fill="black" stroke="none">
-                  {/* Extract only the path data from the SVG without IDs or other attributes */}
-                  {svgData.match(/<path[^>]*d="([^"]+)"/g)?.map((pathMatch, index) => {
-                    const dMatch = pathMatch.match(/d="([^"]+)"/);
-                    const dAttr = dMatch ? dMatch[1] : '';
-                    return (
-                      <path
-                        key={`outline-${index}`}
-                        d={dAttr}
-                        fill="black"
-                        stroke="none"
-                      />
-                    );
-                  })}
-                </g>
-              </svg>
-            </div>
+            <CountrySvgMap
+              countryId={countryId}
+              countryName={countryName}
+              svgData={svgData}
+              highlightRegion={highlightedRegion}
+              onRegionClick={handleRegionClick}
+              className="w-full h-full"
+            />
           ) : (
             <svg className="w-full h-full" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet">
               <path 
@@ -138,6 +154,8 @@ export function PuzzleBoard({
             </h3>
             <p className="text-gray-600 mb-4">
               Drag and place the {gameState?.regions.length || '0'} states of {countryName} in their correct positions on the map.
+              <br/>
+              <span className="text-sm mt-1 inline-block text-emerald-600">Click on an area of the map for hints!</span>
             </p>
             <Button 
               onClick={handleStartPuzzle}

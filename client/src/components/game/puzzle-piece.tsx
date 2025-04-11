@@ -11,6 +11,7 @@ interface PuzzlePieceProps {
   containerRef: RefObject<HTMLDivElement>;
   snapToPosition?: boolean;
   isTrayPiece?: boolean;
+  useThumbnail?: boolean; // Whether to use the thumbnail instead of rendering SVG
 }
 
 export function PuzzlePiece({ 
@@ -18,7 +19,8 @@ export function PuzzlePiece({
   onDrop, 
   containerRef,
   snapToPosition = false,
-  isTrayPiece = false 
+  isTrayPiece = false,
+  useThumbnail = false
 }: PuzzlePieceProps) {
   const pieceRef = useRef<HTMLDivElement>(null);
   const [svgPathData, setSvgPathData] = useState<string | null>(null);
