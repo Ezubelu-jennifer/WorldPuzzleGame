@@ -1,0 +1,87 @@
+import React, { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
+import { Shuffle } from "lucide-react";
+import { CountryCard } from "@/components/home/country-card";
+import { Button } from "@/components/ui/button";
+import { CountryData, initialCountries } from "@/data/countries";
+
+export function HomeScreen() {
+  // Fetch countries from the API
+  const { data: countries, isLoading, error } = useQuery({
+    queryKey: ['/api/countries'],
+    queryFn: async () => {
+      try {
+        const response = await fetch('/api/countries');
+        if (!response.ok) {
+          throw new Error("Failed to fetch countries");
+        }
+        return await response.json();
+      } catch (error) {
+        console.warn("Using initial data as fallback:", error);
+        // Return initial data as fallback
+        return initialCountries;
+      }
+    }
+  });
+
+  // Function to play a random country
+  const playRandomCountry = () => {
+    if (!countries || countries.length === 0) return;
+    
+    const randomIndex = Math.floor(Math.random() * countries.length);
+    const randomCountry = countries[randomIndex];
+    window.location.href = `/game/${randomCountry.id}`;
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="text-center mb-8">
+        <h2 className="font-heading font-bold text-3xl mb-2 text-gray-800">
+          Learn African Geography Through Play
+        </h2>
+        <p className="text-gray-600 max-w-2xl mx-auto">
+          Assemble puzzles of African countries by placing states and regions in their correct positions. 
+          Challenge yourself with different countries and difficulty levels!
+        </p>
+      </div>
+      
+      {isLoading ? (
+        <div className="text-center py-10">
+          <div className="spinner w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading countries...</p>
+        </div>
+      ) : error ? (
+        <div className="text-center py-10 text-red-500">
+          <p>Error loading countries. Please try again later.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          {countries?.map((country: CountryData) => (
+            <CountryCard key={country.id} country={country} />
+          ))}
+          
+          {/* "More coming soon" card */}
+          <div className="bg-white/50 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center p-6 text-center hover:bg-white/70 transition">
+            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+              <span className="text-2xl text-gray-400">+</span>
+            </div>
+            <h3 className="font-heading font-bold text-gray-700 text-xl mb-2">More Coming Soon</h3>
+            <p className="text-gray-500 text-sm">We're working on adding more African countries to the collection!</p>
+          </div>
+        </div>
+      )}
+
+      <div className="flex justify-center mt-12">
+        <Button 
+          onClick={playRandomCountry}
+          className="bg-accent hover:bg-accent/90 text-white font-medium rounded-full px-6 py-6"
+          disabled={isLoading || !countries || countries.length === 0}
+        >
+          <Shuffle className="h-5 w-5 mr-2" />
+          <span>Play Random Country</span>
+        </Button>
+      </div>
+    </div>
+  );
+}
