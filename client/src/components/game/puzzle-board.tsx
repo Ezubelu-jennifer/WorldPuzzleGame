@@ -3,6 +3,9 @@ import { useGame } from "@/context/game-context";
 import { useDrop } from "@/hooks/useDrop";
 import { PuzzlePiece } from "@/components/game/puzzle-piece";
 import { Button } from "@/components/ui/button";
+import { getSvgDataById } from "@/data/svg-map-data";
+import { getViewBoxFromSVG } from "@/data/svg-parser";
+import { CountrySvgMap } from "@/components/maps/country-svg-map";
 
 interface PuzzleBoardProps {
   countryId: number;
@@ -20,6 +23,8 @@ export function PuzzleBoard({
   const { gameState, placePiece } = useGame();
   const [gameStarted, setGameStarted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [svgData, setSvgData] = useState<string>("");
+  const [viewBox, setViewBox] = useState<string>("0 0 400 300");
   
   // Set up the drop zone for the puzzle container
   const { dropRef } = useDrop({
@@ -27,6 +32,16 @@ export function PuzzleBoard({
       // The drag and drop is handled in the PuzzlePiece component
     },
   });
+
+  // Get SVG data for this country
+  useEffect(() => {
+    const data = getSvgDataById(countryId);
+    if (data) {
+      setSvgData(data);
+      const extractedViewBox = getViewBoxFromSVG(data);
+      setViewBox(extractedViewBox);
+    }
+  }, [countryId]);
 
   // Handle game start
   const handleStartPuzzle = () => {
@@ -69,15 +84,37 @@ export function PuzzleBoard({
         ref={dropRef}
         className="relative h-[500px] flex items-center justify-center flex-grow"
       >
-        {/* Country Outline (as black silhouette) */}
+        {/* Country Outline (using actual SVG map data as black silhouette) */}
         <div className="w-full h-full absolute top-0 left-0 pointer-events-none">
-          <svg className="w-full h-full" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet">
-            <path 
-              d={outlinePath} 
-              fill="black" 
-              stroke="none" 
-            />
-          </svg>
+          {svgData ? (
+            <div className="w-full h-full bg-transparent">
+              <svg className="w-full h-full" viewBox={viewBox} preserveAspectRatio="xMidYMid meet">
+                <g fill="black" stroke="none">
+                  {/* Extract only the path data from the SVG without IDs or other attributes */}
+                  {svgData.match(/<path[^>]*d="([^"]+)"/g)?.map((pathMatch, index) => {
+                    const dMatch = pathMatch.match(/d="([^"]+)"/);
+                    const dAttr = dMatch ? dMatch[1] : '';
+                    return (
+                      <path
+                        key={`outline-${index}`}
+                        d={dAttr}
+                        fill="black"
+                        stroke="none"
+                      />
+                    );
+                  })}
+                </g>
+              </svg>
+            </div>
+          ) : (
+            <svg className="w-full h-full" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet">
+              <path 
+                d={outlinePath} 
+                fill="black" 
+                stroke="none" 
+              />
+            </svg>
+          )}
         </div>
         
         {/* Puzzle Pieces that have been placed on the board */}

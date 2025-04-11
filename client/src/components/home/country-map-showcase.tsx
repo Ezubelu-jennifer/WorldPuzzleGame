@@ -62,7 +62,7 @@ export function CountryMapShowcase({ nigeriaSvg, kenyaSvg }: CountryMapShowcaseP
     
     extractRegions();
     setSelectedRegion(null);
-  }, [selectedCountryIndex, selectedCountry]);
+  }, [selectedCountryIndex]);
 
   const handleRegionClick = (regionId: string, regionName: string) => {
     setSelectedRegion({ id: regionId, name: regionName });
