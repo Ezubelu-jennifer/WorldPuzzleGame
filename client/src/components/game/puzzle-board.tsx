@@ -84,19 +84,49 @@ export function PuzzleBoard({
   
   // Handle region click
   const handleRegionClick = (regionId: string, regionName: string) => {
+    console.log(`Clicked region: ${regionId} - ${regionName}`);
+    
     // Find matching game region
     if (hasRegions && gameState) {
-      const gameRegion = gameState.regions.find(r => 
-        r.name.toLowerCase() === regionName.toLowerCase() ||
-        regionName.toLowerCase().includes(r.name.toLowerCase()) ||
-        r.name.toLowerCase().includes(regionName.toLowerCase())
-      );
+      // Get the matching region from gameState
+      const gameRegion = gameState.regions.find(r => {
+        // First try direct name match (case insensitive)
+        if (r.name.toLowerCase() === regionName.toLowerCase()) {
+          return true;
+        }
+        
+        // Try to see if the game region name contains the SVG region name or vice versa
+        if (regionName.toLowerCase().includes(r.name.toLowerCase()) || 
+            r.name.toLowerCase().includes(regionName.toLowerCase())) {
+          return true;
+        }
+        
+        // For Nigeria, try to match state codes
+        if (countryId === 1 && regionId.startsWith('NG-')) {
+          // If our region name contains the short code (like AB, AD, etc.), it's a match
+          const stateCode = regionId.replace('NG-', '');
+          return r.name.toUpperCase().includes(stateCode);
+        }
+        
+        // For Kenya, try to match county numbers
+        if (countryId === 2 && regionId.startsWith('KE-')) {
+          // If the region ID is something like KE-01, KE-02, etc.
+          const countyNum = parseInt(regionId.replace('KE-', ''), 10);
+          // Match if the game region has a number that matches
+          return r.name.includes(String(countyNum));
+        }
+        
+        return false;
+      });
       
       if (gameRegion && !gameRegion.isPlaced) {
+        console.log(`Found matching game region: ${gameRegion.name}`);
         // Trigger a hint for this region
         setHighlightedRegion(regionId);
-        // Optional: trigger hint functionality
+        // Trigger hint functionality
         useHint();
+      } else {
+        console.log(`No matching unplaced game region found for ${regionName}`);
       }
     }
   };
