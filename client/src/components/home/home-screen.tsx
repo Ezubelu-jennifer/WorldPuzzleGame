@@ -4,8 +4,10 @@ import { useLocation } from "wouter";
 import { Shuffle, Map } from "lucide-react";
 import { CountryCard } from "@/components/home/country-card";
 import { CountryDetails } from "@/components/home/country-details";
+import { SvgMapShowcase } from "@/components/home/svg-map-showcase";
 import { Button } from "@/components/ui/button";
 import { CountryData, initialCountries } from "@/data/countries";
+import { NigeriaSvg, KenyaSvg } from "@/data/svg-map-data";
 
 export function HomeScreen() {
   const [selectedCountry, setSelectedCountry] = useState<CountryData | null>(null);
@@ -69,6 +71,12 @@ export function HomeScreen() {
               Challenge yourself with different countries and difficulty levels!
             </p>
           </div>
+          
+          {/* SVG Map Showcase */}
+          <SvgMapShowcase 
+            nigeriaData={NigeriaSvg}
+            kenyaData={KenyaSvg}
+          />
           
           {isLoading ? (
             <div className="text-center py-10">
