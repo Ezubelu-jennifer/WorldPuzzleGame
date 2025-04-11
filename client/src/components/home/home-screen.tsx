@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { Shuffle, Map } from "lucide-react";
 import { CountryCard } from "@/components/home/country-card";
 import { CountryDetails } from "@/components/home/country-details";
-import { SvgMapShowcase } from "@/components/home/svg-map-showcase";
+import { CountryMapShowcase } from "@/components/home/country-map-showcase";
 import { Button } from "@/components/ui/button";
 import { CountryData, initialCountries } from "@/data/countries";
 import { NigeriaSvg, KenyaSvg } from "@/data/svg-map-data";
@@ -72,11 +72,13 @@ export function HomeScreen() {
             </p>
           </div>
           
-          {/* SVG Map Showcase */}
-          <SvgMapShowcase 
-            nigeriaData={NigeriaSvg}
-            kenyaData={KenyaSvg}
+          {/* Country Map Showcase with detailed SVG maps */}
+          <CountryMapShowcase 
+            nigeriaSvg={NigeriaSvg}
+            kenyaSvg={KenyaSvg}
           />
+          
+          <h3 className="text-2xl font-bold text-center mt-16 mb-6">Available Countries</h3>
           
           {isLoading ? (
             <div className="text-center py-10">

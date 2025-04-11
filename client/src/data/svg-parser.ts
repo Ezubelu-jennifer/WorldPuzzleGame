@@ -1,77 +1,57 @@
-// SVG Parser for extracting region data from SVG maps
+import { RegionPiece } from "@shared/schema";
 
-// Process Nigeria SVG data
 export function extractNigeriaRegions(svgData: string) {
-  const regions: {id: string, name: string, path: string}[] = [];
-
-  // Extract region paths using regex
-  const pathRegex = /<path\s+id="([^"]+)"\s+title="([^"]+)"\s+d="([^"]+)"/g;
+  const regions: { id: string; name: string; path: string }[] = [];
+  
+  // Extract all path elements with id and title attributes
+  const regex = /<path[^>]*id="([^"]+)"[^>]*title="([^"]+)"[^>]*d="([^"]+)"/g;
   let match;
-
-  while ((match = pathRegex.exec(svgData)) !== null) {
-    const id = match[1];
-    const name = match[2];
-    const path = match[3];
-    
+  
+  while ((match = regex.exec(svgData)) !== null) {
     regions.push({
-      id,
-      name,
-      path
+      id: match[1],
+      name: match[2],
+      path: match[3]
     });
   }
-
+  
   return regions;
 }
 
-// Process Kenya SVG data
 export function extractKenyaRegions(svgData: string) {
-  const regions: {id: string, name: string, path: string}[] = [];
-
-  // Extract region paths using regex
-  const pathRegex = /<path\s+id="([^"]+)"\s+title="([^"]+)"\s+d="([^"]+)"/g;
+  const regions: { id: string; name: string; path: string }[] = [];
+  
+  // Extract all path elements with id and title attributes
+  const regex = /<path[^>]*id="([^"]+)"[^>]*title="([^"]+)"[^>]*d="([^"]+)"/g;
   let match;
-
-  while ((match = pathRegex.exec(svgData)) !== null) {
-    const id = match[1];
-    const name = match[2];
-    const path = match[3];
-    
+  
+  while ((match = regex.exec(svgData)) !== null) {
     regions.push({
-      id,
-      name,
-      path
+      id: match[1],
+      name: match[2],
+      path: match[3]
     });
   }
-
+  
   return regions;
 }
 
-// Get SVG viewBox dimensions from the SVG data
 export function getViewBoxFromSVG(svgData: string): string {
-  const viewBoxRegex = /viewBox="([^"]+)"/;
-  const match = viewBoxRegex.exec(svgData);
-  
-  if (match && match[1]) {
-    return match[1];
-  }
-  
-  // Default viewBox if not found
-  return "0 0 800 600";
+  const viewBoxMatch = svgData.match(/viewBox="([^"]+)"/);
+  return viewBoxMatch && viewBoxMatch[1] ? viewBoxMatch[1] : "0 0 800 600";
 }
 
-// Extract coordinate boundaries from amcharts:ammap projection tag
 export function getMapBoundaries(svgData: string) {
-  const boundaryRegex = /leftLongitude="([^"]+)"\s+topLatitude="([^"]+)"\s+rightLongitude="([^"]+)"\s+bottomLatitude="([^"]+)"/;
-  const match = boundaryRegex.exec(svgData);
+  // Extract the viewBox to determine the map boundaries
+  const viewBox = getViewBoxFromSVG(svgData);
+  const [minX, minY, width, height] = viewBox.split(' ').map(Number);
   
-  if (match) {
-    return {
-      leftLongitude: parseFloat(match[1]),
-      topLatitude: parseFloat(match[2]),
-      rightLongitude: parseFloat(match[3]),
-      bottomLatitude: parseFloat(match[4])
-    };
-  }
-  
-  return null;
+  return {
+    minX,
+    minY,
+    width,
+    height, 
+    maxX: minX + width,
+    maxY: minY + height
+  };
 }

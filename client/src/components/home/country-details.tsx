@@ -5,6 +5,10 @@ import { CountryData, sampleRegions } from "@/data/countries";
 import { RegionPiece } from "@shared/schema";
 import { RegionMap } from "./region-map";
 import { Button } from "@/components/ui/button";
+import { CountrySvgMap } from "@/components/maps/country-svg-map";
+import { getSvgDataById } from "@/data/svg-map-data";
+import { RegionThumbnail } from "@/components/region-thumbnail";
+import { extractNigeriaRegions, extractKenyaRegions } from "@/data/svg-parser";
 
 interface CountryDetailsProps {
   country: CountryData;
@@ -14,6 +18,10 @@ interface CountryDetailsProps {
 
 export function CountryDetails({ country, onBack, onPlay }: CountryDetailsProps) {
   const [regions, setRegions] = useState<RegionPiece[]>([]);
+  const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
+  
+  // Get SVG data for this country
+  const svgData = getSvgDataById(country.id);
   
   // Fetch regions for this country
   const { data, isLoading, error } = useQuery({
@@ -38,6 +46,16 @@ export function CountryDetails({ country, onBack, onPlay }: CountryDetailsProps)
       setRegions(data);
     }
   }, [data]);
+  
+  // Get SVG regions from the SVG data
+  const svgRegions = country.id === 1 
+    ? extractNigeriaRegions(svgData || '')
+    : extractKenyaRegions(svgData || '');
+  
+  // Handle region click in SVG map
+  const handleRegionClick = (regionId: string, regionName: string) => {
+    setSelectedRegion(selectedRegion === regionId ? null : regionId);
+  };
   
   // Generate a variety of colors for regions
   const getRegionColor = (index: number) => {
@@ -80,20 +98,34 @@ export function CountryDetails({ country, onBack, onPlay }: CountryDetailsProps)
           
           <div className="bg-gray-100 rounded-lg p-4 mb-4">
             <h3 className="font-medium text-lg mb-2">Country Map</h3>
-            <div className="aspect-[4/3] bg-white rounded-md shadow-sm flex items-center justify-center p-4">
-              <svg 
-                width="100%" 
-                height="100%" 
-                viewBox="0 0 400 300" 
-                preserveAspectRatio="xMidYMid meet"
-              >
-                <path 
-                  d={country.outlinePath}
-                  fill="black"
-                  stroke="none"
+            {svgData ? (
+              <div className="aspect-[4/3] bg-white rounded-md shadow-sm flex items-center justify-center p-4 overflow-hidden">
+                <CountrySvgMap
+                  countryId={country.id}
+                  countryName={country.name}
+                  svgData={svgData}
+                  highlightRegion={selectedRegion}
+                  onRegionClick={handleRegionClick}
+                  height="100%"
+                  width="100%"
                 />
-              </svg>
-            </div>
+              </div>
+            ) : (
+              <div className="aspect-[4/3] bg-white rounded-md shadow-sm flex items-center justify-center p-4">
+                <svg 
+                  width="100%" 
+                  height="100%" 
+                  viewBox="0 0 400 300" 
+                  preserveAspectRatio="xMidYMid meet"
+                >
+                  <path 
+                    d={country.outlinePath}
+                    fill="black"
+                    stroke="none"
+                  />
+                </svg>
+              </div>
+            )}
           </div>
           
           <div className="text-sm text-gray-500">
@@ -112,31 +144,35 @@ export function CountryDetails({ country, onBack, onPlay }: CountryDetailsProps)
         
         {/* Regions Grid */}
         <div className="w-full md:w-2/3">
-          <h3 className="font-medium text-lg mb-4">States/Regions ({regions.length})</h3>
-          {isLoading ? (
+          <h3 className="font-medium text-lg mb-4">States/Regions ({svgRegions.length})</h3>
+          {!svgData ? (
             <div className="text-center py-10">
               <div className="spinner w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
               <p className="text-gray-600">Loading regions...</p>
             </div>
-          ) : error ? (
-            <div className="text-center py-6 text-red-500">
-              <p>Error loading regions data</p>
-            </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {regions.map((region, index) => {
+              {svgRegions.map((region, index) => {
                 const { fill, stroke } = getRegionColor(index);
+                const isSelected = region.id === selectedRegion;
                 
                 return (
-                  <div key={region.id} className="bg-gray-50 rounded-md border border-gray-200 p-2 hover:shadow-md transition">
-                    <RegionMap 
-                      region={region} 
-                      colorFill={fill}
-                      colorStroke={stroke}
-                      showName={true}
+                  <div 
+                    key={region.id} 
+                    className={`bg-gray-50 rounded-md border ${isSelected ? 'border-primary ring-2 ring-primary/30' : 'border-gray-200'} p-2 hover:shadow-md transition`}
+                    onClick={() => handleRegionClick(region.id, region.name)}
+                  >
+                    <RegionThumbnail
+                      svgData={svgData}
+                      regionId={region.id}
+                      regionName={region.name}
+                      color={isSelected ? fill : `${fill}80`}
+                      strokeColor={stroke}
+                      strokeWidth={isSelected ? 2 : 1}
                       className="aspect-[4/3]"
-                      width={100}
-                      height={75}
+                      width="100%"
+                      height={80}
+                      showLabel={true}
                     />
                   </div>
                 );
