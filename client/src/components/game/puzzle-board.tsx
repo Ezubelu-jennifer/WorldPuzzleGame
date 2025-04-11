@@ -62,21 +62,20 @@ export function PuzzleBoard({
   return (
     <div 
       ref={containerRef}
-      className="bg-white rounded-xl shadow-md p-4 h-full flex flex-col"
+      className="w-full max-w-3xl mx-auto h-full flex flex-col"
     >
       {/* Puzzle Container */}
       <div 
         ref={dropRef}
-        className="relative min-h-[500px] border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 mb-4 flex-grow flex items-center justify-center"
+        className="relative h-[500px] flex items-center justify-center flex-grow"
       >
-        {/* Country Outline */}
+        {/* Country Outline (as black silhouette) */}
         <div className="w-full h-full absolute top-0 left-0 pointer-events-none">
-          <svg className="w-full h-full opacity-30" viewBox="0 0 400 300">
+          <svg className="w-full h-full" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet">
             <path 
               d={outlinePath} 
-              fill="#e5e7eb" 
-              stroke="#64748b" 
-              strokeWidth="2"
+              fill="black" 
+              stroke="none" 
             />
           </svg>
         </div>
@@ -96,16 +95,16 @@ export function PuzzleBoard({
         
         {/* Start Message */}
         {!gameStarted && (
-          <div className="text-center p-6 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg max-w-md z-10">
+          <div className="text-center p-6 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg max-w-md z-10">
             <h3 className="font-heading font-bold text-2xl mb-3 text-gray-800">
-              {countryName} Puzzle
+              Memorize the Map of {countryName}
             </h3>
             <p className="text-gray-600 mb-4">
-              Drag and place the {gameState?.regions.length || '0'} regions of {countryName} in their correct positions on the map.
+              Drag and place the {gameState?.regions.length || '0'} states of {countryName} in their correct positions on the map.
             </p>
             <Button 
               onClick={handleStartPuzzle}
-              className="bg-primary hover:bg-primary/90 text-white font-bold py-3 px-6"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6"
             >
               Start Puzzle
             </Button>
