@@ -111,7 +111,7 @@ export function GameScreen({ countryId }: GameScreenProps) {
       {/* Game progress indicator */}
       <div className="bg-gray-100 px-4 py-2 flex justify-between items-center">
         <p className="text-sm font-medium">
-          {gameState?.placedPieces.length || 0}/{gameState?.regions.length || country.regionsCount} States
+          {gameState?.placedPieces.length || 0}/{country.id === 1 ? 37 : 47} States
         </p>
         <div className="flex items-center gap-2">
           <button 
