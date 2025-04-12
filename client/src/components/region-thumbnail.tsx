@@ -126,20 +126,21 @@ export function RegionThumbnail({
       {pathData ? (
         <div className="w-full h-full relative">
           <svg viewBox={viewBox} width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
-            {/* Background circle for consistent sizing */}
-            <circle cx="50%" cy="50%" r="35%" fill="transparent" />
+            {/* Background for better boundaries */}
+            <rect x="0" y="0" width="100%" height="100%" fill="transparent" />
+            
             {/* Create a fixed-size centered container for the state shape */}
-            <g>
+            <g transform="translate(50, 50) scale(0.7)" style={{ transformOrigin: "center" }}>
               <path
                 d={pathData}
                 fill={color}
                 stroke={strokeColor}
-                strokeWidth={strokeWidth + 2} // Thicker border for bolder appearance
-                transform="scale(2.2)" // Slightly larger scale
+                strokeWidth={strokeWidth + 3} // Thicker border for very bold appearance
+                transform="scale(3.5)" // Much larger scale for better visibility
                 style={{
                   transformBox: 'fill-box',
                   transformOrigin: 'center',
-                  filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.4))'
+                  filter: 'drop-shadow(0px 2px 5px rgba(0,0,0,0.5))'
                 }}
               />
               {/* Add text label IN the shape */}
@@ -150,10 +151,11 @@ export function RegionThumbnail({
                   textAnchor="middle"
                   dominantBaseline="middle"
                   fill="#000000" 
-                  fontSize="6"
+                  fontSize="10"
                   fontWeight="bold"
                   style={{ 
-                    textShadow: '0 0 2px white, 0 0 2px white, 0 0 2px white, 0 0 2px white'
+                    textShadow: '0 0 3px white, 0 0 3px white, 0 0 3px white, 0 0 3px white',
+                    fontFamily: 'Arial, sans-serif'
                   }}
                 >
                   {regionName}
