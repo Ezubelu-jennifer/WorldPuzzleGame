@@ -136,7 +136,7 @@ export function RegionThumbnail({
                 fill={color}
                 stroke={strokeColor}
                 strokeWidth={strokeWidth + 3} // Thicker border for very bold appearance
-                transform="scale(3.5)" // Much larger scale for better visibility
+                transform="scale(5.5)" // Increased to exactly 5.5x scale per request
                 style={{
                   transformBox: 'fill-box',
                   transformOrigin: 'center',
@@ -151,7 +151,7 @@ export function RegionThumbnail({
                   textAnchor="middle"
                   dominantBaseline="middle"
                   fill="#000000" 
-                  fontSize="10"
+                  fontSize="14"
                   fontWeight="bold"
                   style={{ 
                     textShadow: '0 0 3px white, 0 0 3px white, 0 0 3px white, 0 0 3px white',

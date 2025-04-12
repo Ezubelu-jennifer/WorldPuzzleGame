@@ -365,7 +365,7 @@ export function PuzzlePiece({
             fill={region.isPlaced ? region.fillColor : "#ef4444"} // Red for unplaced pieces
             stroke={region.strokeColor}
             strokeWidth="3" // Thicker stroke for bold appearance
-            transform="scale(3.5)" // Match RegionThumbnail scale
+            transform="scale(5.5)" // Increased to exactly 5.5x scale per request
             strokeLinejoin="round"
             strokeLinecap="round"
             style={{ 
@@ -380,7 +380,7 @@ export function PuzzlePiece({
           textAnchor="middle"
           dominantBaseline="middle"
           fill="#000000" 
-          fontSize={isTrayPiece ? "10" : "12"}
+          fontSize={isTrayPiece ? "14" : "16"}
           fontWeight="bold"
           style={{ 
             textShadow: '0 0 3px white, 0 0 3px white, 0 0 3px white, 0 0 3px white',
