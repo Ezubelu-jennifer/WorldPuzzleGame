@@ -217,16 +217,19 @@ export function CountrySvgMap({
         onTouchEnd={handleTouchEnd}
         onWheel={handleWheel}
       >
-        {/* Fill the map with regions */}
+        {/* Fill the map with regions - use unique index + id as keys to avoid duplicates */}
         {regions.map((region, index) => {
           const isHighlighted = region.id === highlightRegion;
           const fill = isHighlighted ? "#f87171" : "#757575"; // Use gray for the puzzle outline
           const stroke = isHighlighted ? "#b91c1c" : "#757575"; // Same gray for stroke to remove boundaries
           const strokeWidth = isHighlighted ? "1.5" : "0.1"; // Very thin stroke to essentially remove inner boundaries
           
+          // Create a unique key that combines index and ID to prevent duplicates
+          const uniqueKey = `region-${index}-${region.id}`;
+          
           return (
             <path
-              key={region.id}
+              key={uniqueKey}
               id={region.id}
               d={region.path}
               fill={fill}
@@ -241,12 +244,12 @@ export function CountrySvgMap({
           );
         })}
         
-        {showLabels && regions.map(region => {
+        {showLabels && regions.map((region, index) => {
           // For simplicity, we'll use fixed label positions
           // In a production app, you'd calculate center points dynamically
           return (
             <text
-              key={`label-${region.id}`}
+              key={`label-${index}-${region.id}`}
               x="50%"
               y="50%"
               textAnchor="middle"
