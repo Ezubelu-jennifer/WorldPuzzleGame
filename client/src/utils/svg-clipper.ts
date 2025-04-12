@@ -1,12 +1,13 @@
 import { getPathBounds } from 'svg-path-bounds';
 
 /**
- * Similar to Flutter's SvgClipper, this function properly scales SVG paths
+ * Inspired by Flutter's SvgClipper, this function properly scales and centers SVG paths
  * based on the path's bounding box, ensuring uniform scaling across different shapes.
+ * It centers the transformed path to ensure it's perfectly aligned within the target container.
  * 
  * @param svgPath - The SVG path string to scale
  * @param targetSize - The target size object with width and height
- * @returns The scaled SVG path string
+ * @returns The scaled and centered SVG path string
  */
 export function clipSvgPath(svgPath: string, targetSize: { width: number, height: number }): string {
   try {
@@ -23,7 +24,15 @@ export function clipSvgPath(svgPath: string, targetSize: { width: number, height
     const scaleY = targetSize.height / pathHeight;
     
     // Use the smaller scale factor to ensure the entire path fits within the target
-    const scale = Math.min(scaleX, scaleY);
+    const scale = Math.min(scaleX, scaleY) * 0.95; // 95% to add a small margin
+    
+    // Calculate the scaled dimensions
+    const scaledWidth = pathWidth * scale;
+    const scaledHeight = pathHeight * scale;
+    
+    // Calculate centering offsets to position the path in the center of the target area
+    const offsetX = (targetSize.width - scaledWidth) / 2;
+    const offsetY = (targetSize.height - scaledHeight) / 2;
     
     // Parse the SVG path commands one by one
     const commandRegex = /([MLHVCSQTAZmlhvcsqtaz])([^MLHVCSQTAZmlhvcsqtaz]*)/g;
@@ -59,22 +68,54 @@ export function clipSvgPath(svgPath: string, targetSize: { width: number, height
       if (command.toUpperCase() === 'H') {
         // Horizontal line - only X coordinates
         transformedNumbers = numbers.map((x: number) => {
-          return isRelative ? x * scale : (x - minX) * scale;
+          // Scale X and add the centering offset
+          return isRelative 
+            ? x * scale 
+            : (x - minX) * scale + offsetX;
         });
       } else if (command.toUpperCase() === 'V') {
         // Vertical line - only Y coordinates
         transformedNumbers = numbers.map((y: number) => {
-          return isRelative ? y * scale : (y - minY) * scale;
+          // Scale Y and add the centering offset
+          return isRelative 
+            ? y * scale 
+            : (y - minY) * scale + offsetY;
         });
+      } else if (command.toUpperCase() === 'A') {
+        // Arc commands have 7 parameters: rx ry x-axis-rotation large-arc-flag sweep-flag x y
+        for (let i = 0; i < numbers.length; i += 7) {
+          if (i + 6 < numbers.length) { // Ensure we have a complete set of arc parameters
+            // rx and ry are scaled but not offset
+            transformedNumbers.push(numbers[i] * scale);
+            transformedNumbers.push(numbers[i + 1] * scale);
+            
+            // x-axis-rotation, large-arc-flag, and sweep-flag remain unchanged
+            transformedNumbers.push(numbers[i + 2]);
+            transformedNumbers.push(numbers[i + 3]);
+            transformedNumbers.push(numbers[i + 4]);
+            
+            // End point x,y are scaled and offset
+            transformedNumbers.push(isRelative 
+              ? numbers[i + 5] * scale 
+              : (numbers[i + 5] - minX) * scale + offsetX);
+            transformedNumbers.push(isRelative 
+              ? numbers[i + 6] * scale 
+              : (numbers[i + 6] - minY) * scale + offsetY);
+          }
+        }
       } else {
-        // Commands with X,Y coordinate pairs (M, L, C, S, Q, T, A)
+        // Commands with X,Y coordinate pairs (M, L, C, S, Q, T)
         for (let i = 0; i < numbers.length; i++) {
           if (i % 2 === 0) {
-            // X coordinate
-            transformedNumbers.push(isRelative ? numbers[i] * scale : (numbers[i] - minX) * scale);
+            // X coordinate: scale and add X offset
+            transformedNumbers.push(isRelative 
+              ? numbers[i] * scale 
+              : (numbers[i] - minX) * scale + offsetX);
           } else {
-            // Y coordinate
-            transformedNumbers.push(isRelative ? numbers[i] * scale : (numbers[i] - minY) * scale);
+            // Y coordinate: scale and add Y offset
+            transformedNumbers.push(isRelative 
+              ? numbers[i] * scale 
+              : (numbers[i] - minY) * scale + offsetY);
           }
         }
       }
@@ -95,10 +136,10 @@ export function clipSvgPath(svgPath: string, targetSize: { width: number, height
  * Uses the clipSvgPath function internally.
  * 
  * @param svgPath - The SVG path string to optimize
- * @param scaleFactor - The desired scale factor (default: 2.5)
+ * @param scaleFactor - The desired scale factor (default: 3.0)
  * @returns The optimized SVG path string
  */
-export function optimizeSvgPath(svgPath: string, scaleFactor: number = 2.5): string {
+export function optimizeSvgPath(svgPath: string, scaleFactor: number = 3.0): string {
   try {
     // First we get the bounds of the path
     const bounds = getPathBounds(svgPath);

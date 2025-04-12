@@ -81,20 +81,24 @@ export function RegionThumbnail({
       onClick={handleClick}
     >
       {pathData ? (
-        <div className="w-full h-full relative">
-          <svg viewBox={viewBox} width="100%" height="100%">
-            <path
-              d={pathData}
-              fill={color}
-              stroke={strokeColor}
-              strokeWidth={strokeWidth + 1}
-              style={{
-                transform: 'scale(1.5)',
-                transformOrigin: 'center',
-                filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.3))'
-              }}
-            />
-          </svg>
+        <div className="w-full h-full relative overflow-hidden">
+          {/* Container div acting like ClipPath in Flutter */}
+          <div className="w-full h-full flex items-center justify-center">
+            {/* SVG with fixed viewBox for consistent scaling */}
+            <svg viewBox="0 0 100 100" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+              <path
+                d={pathData}
+                fill={color}
+                stroke={strokeColor}
+                strokeWidth={strokeWidth}
+                style={{
+                  transformOrigin: 'center',
+                  transform: 'scale(0.95)', // Slightly smaller to ensure it fits within boundaries
+                  filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.3))'
+                }}
+              />
+            </svg>
+          </div>
           
           {showLabel && (
             <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs px-1 py-0.5 text-center truncate">

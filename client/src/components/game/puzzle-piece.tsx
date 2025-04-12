@@ -347,42 +347,60 @@ export function PuzzlePiece({
         </div>
       )}
 
-      <svg 
-        viewBox={viewBox} 
-        className="w-full h-full" 
-        style={{ 
-          overflow: 'visible',
-          transform: `rotate(${rotation}deg) scale(1.5)`, // Scale up the SVG by 50%
+      <div 
+        className="w-full h-full flex items-center justify-center p-1"
+        style={{
+          transform: `rotate(${rotation}deg)`,
           transition: "transform 0.3s ease"
         }}
       >
-        <path 
-          d={svgPathData || region.svgPath} 
-          fill={region.isPlaced ? region.fillColor : "#ef4444"} // Red for unplaced pieces
-          stroke={region.strokeColor}
-          strokeWidth="4" // Increased stroke width for better visibility 
-          style={{ 
-            filter: isDragging ? 'drop-shadow(0px 6px 12px rgba(0,0,0,0.5))' : 'drop-shadow(0px 2px 4px rgba(0,0,0,0.3))',
-            // Apply transform-origin to center for better rotation
-            transformOrigin: 'center center'
-          }}
-        />
-        <text 
-          x="50%" 
-          y="50%" 
-          textAnchor="middle" 
-          dominantBaseline="middle"
-          fill="#ffffff" 
-          fontSize={isTrayPiece ? "16" : "20"}
-          fontWeight="bold"
-          style={{ 
-            filter: 'drop-shadow(0px 2px 3px rgba(0,0,0,0.6))',
-            textShadow: '0 2px 3px rgba(0,0,0,0.6)'
-          }}
-        >
-          {region.name}
-        </text>
-      </svg>
+        {/* This div acts like the ClipPath in Flutter */}
+        <div className="relative w-full h-full">
+          {/* SVG with path clipped to container (similar to Flutter's SvgClipper) */}
+          <svg 
+            viewBox="0 0 100 100" 
+            className="w-full h-full" 
+            style={{ 
+              overflow: 'visible',
+              filter: isDragging ? 'drop-shadow(0px 6px 12px rgba(0,0,0,0.5))' : 'drop-shadow(0px 2px 4px rgba(0,0,0,0.3))',
+            }}
+            preserveAspectRatio="xMidYMid meet"
+          >
+            <path 
+              d={svgPathData || region.svgPath} 
+              fill={region.isPlaced ? region.fillColor : "#ef4444"} // Red for unplaced pieces
+              stroke={region.strokeColor}
+              strokeWidth="2.5"
+              style={{ 
+                transformOrigin: 'center center',
+                transform: `scale(${scale * 0.95})`, // Scale the path content slightly smaller than container
+              }}
+            />
+          </svg>
+          
+          {/* Text overlay in the center */}
+          <div 
+            className="absolute inset-0 flex items-center justify-center"
+            style={{
+              pointerEvents: 'none'
+            }}
+          >
+            <span 
+              className="text-white font-bold text-center px-1 py-0.5 rounded"
+              style={{ 
+                fontSize: isTrayPiece ? "14px" : "18px",
+                textShadow: '0 2px 3px rgba(0,0,0,0.7)',
+                maxWidth: '90%',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {region.name}
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
