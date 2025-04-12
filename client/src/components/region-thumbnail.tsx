@@ -77,13 +77,13 @@ export function RegionThumbnail({
           <svg viewBox={viewBox} width="100%" height="100%">
             <path
               d={pathData}
-              fill={color}
-              stroke={strokeColor}
-              strokeWidth={strokeWidth + 1}
+              fill="#ef4444" /* Fixed red color like in the screenshot */
+              stroke="#b91c1c" /* Darker red for stroke */
+              strokeWidth={1}
               style={{
-                transform: 'scale(1.5)',
+                transform: 'scale(2.2)', /* Make it much larger to fill the space */
                 transformOrigin: 'center',
-                filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.3))'
+                filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.2))'
               }}
             />
           </svg>

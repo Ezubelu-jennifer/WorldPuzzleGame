@@ -139,7 +139,7 @@ export function PuzzleBoard({
       {/* Puzzle Container */}
       <div 
         ref={dropRef}
-        className="relative h-[500px] flex items-center justify-center flex-grow"
+        className="relative h-[400px] flex items-center justify-center flex-grow"
       >
         {/* Country Outline (using actual interactive SVG map) */}
         <div className="w-full h-full absolute top-0 left-0">

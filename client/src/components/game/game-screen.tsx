@@ -83,13 +83,13 @@ export function GameScreen({ countryId }: GameScreenProps) {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header with country name and difficulty */}
-      <div className="bg-gradient-to-r from-emerald-700 to-emerald-600 py-3 px-4 text-white flex justify-between items-center">
+      {/* Header with country name and difficulty - matching the screenshot exactly */}
+      <div className="bg-green-700 py-3 px-4 text-white flex justify-between items-center">
         <h1 className="text-xl font-bold">{country.name} Puzzle - Easy</h1>
         <div className="flex items-center gap-4">
           <button 
             onClick={handleHelp}
-            className="text-white hover:text-emerald-200 transition"
+            className="text-white hover:text-green-200 transition"
             aria-label="Help"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
@@ -98,7 +98,7 @@ export function GameScreen({ countryId }: GameScreenProps) {
           </button>
           <button 
             onClick={handleRestart}
-            className="text-white hover:text-emerald-200 transition"
+            className="text-white hover:text-green-200 transition"
             aria-label="Restart"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
@@ -141,9 +141,9 @@ export function GameScreen({ countryId }: GameScreenProps) {
         />
       </div>
       
-      {/* Footer */}
+      {/* Footer - exactly like in the screenshot */}
       <div className="bg-gray-100 p-2 text-center text-sm text-gray-600">
-        <p>Memorize the Map of {country.name}</p>
+        <p className="text-green-800">Memorize the Map of {country.name}</p>
         {!gameStarted && <p className="text-xs text-gray-500">Starting puzzle in a moment...</p>}
       </div>
       

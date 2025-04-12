@@ -221,8 +221,8 @@ export function CountrySvgMap({
         {regions.map((region, index) => {
           const isHighlighted = region.id === highlightRegion;
           const fill = isHighlighted ? "#f87171" : "black"; // Use black for the puzzle outline
-          const stroke = isHighlighted ? "#b91c1c" : "#444"; // red-700 or dark gray
-          const strokeWidth = isHighlighted ? "1.5" : "0.5";
+          const stroke = isHighlighted ? "#b91c1c" : "#666"; // red-700 or dark gray
+          const strokeWidth = isHighlighted ? "1.5" : "0.7";
           
           return (
             <path

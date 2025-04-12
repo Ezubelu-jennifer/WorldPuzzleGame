@@ -61,11 +61,11 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
   ];
   
   return (
-    <div className="relative min-h-[200px] border-t border-b border-gray-200 bg-gray-50">
-      <div className="absolute left-0 top-1/2 -translate-y-1/2 bg-gradient-to-r from-gray-50 to-transparent w-16 h-full z-10 pointer-events-none"></div>
-      <div className="absolute right-0 top-1/2 -translate-y-1/2 bg-gradient-to-l from-gray-50 to-transparent w-16 h-full z-10 pointer-events-none"></div>
+    <div className="relative min-h-[110px] border-t border-b border-gray-100 bg-green-700">
+      <div className="absolute left-0 top-1/2 -translate-y-1/2 bg-gradient-to-r from-green-700 to-transparent w-16 h-full z-10 pointer-events-none"></div>
+      <div className="absolute right-0 top-1/2 -translate-y-1/2 bg-gradient-to-l from-green-700 to-transparent w-16 h-full z-10 pointer-events-none"></div>
       
-      <div ref={trayRef} className="flex gap-4 overflow-x-auto py-4 px-6 min-h-[200px] whitespace-nowrap overflow-y-hidden">
+      <div ref={trayRef} className="flex gap-1 overflow-x-auto py-2 px-2 min-h-[110px] whitespace-nowrap overflow-y-hidden">
         {allRegions.map((region, index) => {
         // Assign color from our palette, cycling through if needed
         const colorIndex = index % colors.length;
@@ -87,8 +87,8 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
         return (
           <div 
             key={region.id}
-            className={`flex-shrink-0 relative w-40 h-40 rounded-md shadow-md border-2 p-1 flex items-center justify-center 
-              ${region.isPlaced ? 'bg-gray-100 opacity-60 border-gray-300' : 'bg-white cursor-grab border-blue-200 hover:border-blue-400'}`}
+            className={`flex-shrink-0 relative w-24 h-24 rounded-sm shadow-sm flex items-center justify-center 
+              ${region.isPlaced ? 'opacity-40' : 'cursor-grab'}`}
           >
             {svgData && svgRegion ? (
               // Use the SVG thumbnail for the region
