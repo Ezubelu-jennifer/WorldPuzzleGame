@@ -1,5 +1,4 @@
-import React, { useEffect, useRef, RefObject, useState } from "react";
-import { useDrag } from "@/hooks/useDrag";
+import React, { useEffect, useRef, RefObject, useState, useCallback } from "react";
 import { RegionPiece } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { getSvgDataById } from "@/data/svg-map-data";
@@ -32,9 +31,15 @@ export function PuzzlePiece({
   // Animation states for dynamic sizing during interaction
   const [isEnlarged, setIsEnlarged] = useState<boolean>(false);
   
-  // Initialize position
-  const initialX = region.currentX || (isTrayPiece ? 0 : Math.random() * 100);
-  const initialY = region.currentY || (isTrayPiece ? 0 : Math.random() * 100);
+  // State for position, dragging and animations
+  const [position, setPosition] = useState({ 
+    x: region.currentX || (isTrayPiece ? 0 : Math.random() * 100),
+    y: region.currentY || (isTrayPiece ? 0 : Math.random() * 100)
+  });
+  const [isDragging, setIsDragging] = useState(false);
+  
+  // Refs for drag calculations
+  const dragOffset = useRef({ x: 0, y: 0 });
 
   // Try to get the actual SVG path for this region from the SVG data
   useEffect(() => {
@@ -217,42 +222,128 @@ export function PuzzlePiece({
     }
   }, [region.id, region.name, region.svgPath, region.countryId]);
 
-  // Use our custom drag hook
-  const { isDragging, position, setPosition, dragHandlers } = useDrag({
-    initialPosition: { x: initialX, y: initialY },
-    onDragStart: () => {
-      // Start animation - make piece significantly bigger when first tapped
-      setIsEnlarged(true);
-    },
-    onDragEnd: (finalPosition) => {
-      // Reset animation state
-      setIsEnlarged(false);
+  // Mouse and touch event handlers for dragging
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (region.isPlaced) return;
+    e.stopPropagation();
+    
+    // Calculate offset between mouse position and piece position
+    // This is key to prevent the piece from jumping to cursor
+    const rect = pieceRef.current?.getBoundingClientRect();
+    if (rect) {
+      dragOffset.current = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+    }
+    
+    setIsDragging(true);
+    setIsEnlarged(true); // Enlarge on start
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [region.isPlaced]);
+  
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging) return;
+    
+    // Use the offset to keep the piece positioned relative to cursor
+    setPosition({
+      x: e.clientX - dragOffset.current.x,
+      y: e.clientY - dragOffset.current.y
+    });
+  }, [isDragging]);
+  
+  const handleMouseUp = useCallback((e: MouseEvent) => {
+    if (!isDragging) return;
+    
+    setIsDragging(false);
+    setIsEnlarged(false);
+    
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+    
+    // Calculate final position relative to container
+    if (containerRef.current && pieceRef.current) {
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const pieceRect = pieceRef.current.getBoundingClientRect();
       
-      // Calculate position relative to container
-      if (containerRef.current && pieceRef.current) {
-        const containerRect = containerRef.current.getBoundingClientRect();
-        const pieceRect = pieceRef.current.getBoundingClientRect();
-        
-        const relativeX = finalPosition.x - containerRect.left;
-        const relativeY = finalPosition.y - containerRect.top;
-        
-        // Check if piece should be placed in the correct position
-        const isPlaced = onDrop(region.id, relativeX, relativeY);
-        
-        if (isPlaced && snapToPosition) {
-          // If it's placed and we want to snap, set to the correct position
-          setPosition({ x: region.correctX, y: region.correctY });
-        }
+      const relativeX = pieceRect.left + pieceRect.width/2 - containerRect.left;
+      const relativeY = pieceRect.top + pieceRect.height/2 - containerRect.top;
+      
+      // Check if piece should be placed
+      const isPlaced = onDrop(region.id, relativeX, relativeY);
+      
+      if (isPlaced && snapToPosition) {
+        setPosition({ x: region.correctX, y: region.correctY });
       }
     }
-  });
+  }, [isDragging, region.id, containerRef, snapToPosition, region.correctX, region.correctY, onDrop]);
+  
+  // Touch events
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (region.isPlaced || e.touches.length !== 1) return;
+    e.stopPropagation();
+    e.preventDefault();
+    
+    const touch = e.touches[0];
+    const rect = pieceRef.current?.getBoundingClientRect();
+    if (rect) {
+      dragOffset.current = {
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top
+      };
+    }
+    
+    setIsDragging(true);
+    setIsEnlarged(true);
+    
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+  }, [region.isPlaced]);
+  
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!isDragging || e.touches.length !== 1) return;
+    e.preventDefault(); // Prevent scrolling
+    
+    const touch = e.touches[0];
+    setPosition({
+      x: touch.clientX - dragOffset.current.x,
+      y: touch.clientY - dragOffset.current.y
+    });
+  }, [isDragging]);
+  
+  const handleTouchEnd = useCallback((e: TouchEvent) => {
+    if (!isDragging) return;
+    
+    setIsDragging(false);
+    setIsEnlarged(false);
+    
+    document.removeEventListener('touchmove', handleTouchMove);
+    document.removeEventListener('touchend', handleTouchEnd);
+    
+    // Calculate final position relative to container
+    if (containerRef.current && pieceRef.current) {
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const pieceRect = pieceRef.current.getBoundingClientRect();
+      
+      const relativeX = pieceRect.left + pieceRect.width/2 - containerRect.left;
+      const relativeY = pieceRect.top + pieceRect.height/2 - containerRect.top;
+      
+      const isPlaced = onDrop(region.id, relativeX, relativeY);
+      
+      if (isPlaced && snapToPosition) {
+        setPosition({ x: region.correctX, y: region.correctY });
+      }
+    }
+  }, [isDragging, region.id, containerRef, snapToPosition, region.correctX, region.correctY, onDrop]);
 
   // If the piece is placed correctly and snapToPosition is true, position it correctly
   useEffect(() => {
     if (region.isPlaced && snapToPosition) {
       setPosition({ x: region.correctX, y: region.correctY });
     }
-  }, [region.isPlaced, snapToPosition, region.correctX, region.correctY, setPosition]);
+  }, [region.isPlaced, snapToPosition, region.correctX, region.correctY]);
   
   // We no longer need the gradual size reduction effect
   // The animation will be handled by CSS transitions
@@ -312,7 +403,8 @@ export function PuzzlePiece({
         background: 'transparent',
         transformOrigin: "center center"
       }}
-      {...dragHandlers}
+      onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
     >
       {/* Control buttons (only visible when hovering and not placed) */}
       {!region.isPlaced && !isTrayPiece && (
