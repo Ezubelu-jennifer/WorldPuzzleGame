@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { optimizeSvgPath } from "@/utils/svg-clipper";
 import { getPathBounds } from "svg-path-bounds";
+import { Button } from "@/components/ui/button";
 
 interface RegionThumbnailProps {
   svgData: string;
@@ -14,6 +15,8 @@ interface RegionThumbnailProps {
   showLabel?: boolean;
   onClick?: () => void;
   className?: string;
+  draggable?: boolean;
+  rotatable?: boolean;
 }
 
 export function RegionThumbnail({
@@ -27,10 +30,15 @@ export function RegionThumbnail({
   strokeWidth = 1,
   showLabel = true,
   onClick,
-  className = ""
+  className = "",
+  draggable = false,
+  rotatable = false
 }: RegionThumbnailProps) {
   const [pathData, setPathData] = useState<string>("");
   const [viewBox, setViewBox] = useState<string>("0 0 800 600");
+  const [rotation, setRotation] = useState<number>(0);
+  const [scale, setScale] = useState<number>(1);
+  const thumbnailRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     if (!svgData || !regionId) return;
