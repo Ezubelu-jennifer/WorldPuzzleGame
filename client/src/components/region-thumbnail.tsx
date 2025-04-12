@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { optimizeSvgPath } from "@/utils/svg-clipper";
 import { getPathBounds } from "svg-path-bounds";
+import { Button } from "@/components/ui/button";
+import { useDrag } from "@/hooks/useDrag";
 
 interface RegionThumbnailProps {
   svgData: string;
@@ -20,11 +22,6 @@ interface RegionThumbnailProps {
   regionPieceId?: number;
 }
 
-interface Position {
-  x: number;
-  y: number;
-}
-
 export function RegionThumbnail({
   svgData,
   regionId,
@@ -42,284 +39,316 @@ export function RegionThumbnail({
   onDrop,
   regionPieceId
 }: RegionThumbnailProps) {
-  // State variables
   const [pathData, setPathData] = useState<string>("");
-  const [viewBox, setViewBox] = useState<string>("0 0 100 100");
+  const [viewBox, setViewBox] = useState<string>("0 0 800 600");
   const [rotation, setRotation] = useState<number>(0);
   const [scale, setScale] = useState<number>(1);
-  const [isDragging, setIsDragging] = useState<boolean>(false);
-  const [position, setPosition] = useState<Position>({ x: 0, y: 0 });
-
-  // Refs for elements
-  const svgRef = useRef<SVGSVGElement>(null);
-  const pathRef = useRef<SVGPathElement>(null);
-  const size = typeof width === 'number' ? width : 100;
-
-  // Process SVG path data
+  const thumbnailRef = useRef<HTMLDivElement>(null);
+  
+  // Set up drag functionality if draggable is enabled
+  const { isDragging, position, dragHandlers } = useDrag({
+    onDragStart: () => {
+      // Add any needed drag start behavior
+      document.body.style.cursor = "grabbing";
+    },
+    onDragEnd: (position, dropped) => {
+      // Reset cursor and handle any post-drag behavior
+      document.body.style.cursor = "auto";
+      
+      // If there's a custom click handler and we didn't actually drag (just clicked), 
+      // trigger the click handler
+      if (!isDragging && onClick) {
+        onClick();
+      }
+      
+      // If we have the onDrop handler and a piece ID, we can attempt to drop the piece
+      if (isDragging && dropped && onDrop && regionPieceId !== undefined) {
+        onDrop(regionPieceId, position.x, position.y);
+      }
+    }
+  });
+  
   useEffect(() => {
     if (!svgData || !regionId) return;
     
     try {
-      // Extract viewBox, but use a fixed one for consistency
-      setViewBox("0 0 100 100");
+      // Extract viewBox
+      const viewBoxMatch = svgData.match(/viewBox="([^"]+)"/);
+      if (viewBoxMatch && viewBoxMatch[1]) {
+        setViewBox("0 0 100 100"); // Use a normalized viewBox for consistent positioning
+      }
       
-      // Extract the path for this region
+      // Extract the path for this specific region
+      // First, try to find an exact ID match
       const pathRegex = new RegExp(`<path[^>]*id="${regionId}"[^>]*d="([^"]+)"`, 'i');
       let pathMatch = svgData.match(pathRegex);
       
-      // Try alternative searches for custom regions
+      // If no match and it's a custom ID (KE-CUSTOM-*, KE-MISSING-*, etc), try to extract by region name
       if (!pathMatch && (regionId.includes('CUSTOM') || regionId.includes('MISSING') || regionId.includes('GEN'))) {
+        // Look for the path with the regionName in title attribute
         const nameRegex = new RegExp(`<path[^>]*title="${regionName}"[^>]*d="([^"]+)"`, 'i');
         pathMatch = svgData.match(nameRegex);
       }
       
       if (pathMatch && pathMatch[1]) {
         try {
-          // Optimize the path if possible
-          const normalizedPath = optimizeSvgPath(pathMatch[1], 1.0);
+          // Get the original path
+          const originalPath = pathMatch[1];
+          
+          // Get the bounds of the path to normalize it
+          const bounds = getPathBounds(originalPath);
+          const [minX, minY, maxX, maxY] = bounds;
+          
+          // Calculate the width and height
+          const width = maxX - minX;
+          const height = maxY - minY;
+          
+          // Calculate the center of the path
+          const centerX = minX + width / 2;
+          const centerY = minY + height / 2;
+          
+          // Center the path in the middle of the 100x100 viewBox
+          const scaleFactor = 55 / Math.max(width, height);
+          
+          // Create a simplified optimized path centered in the viewBox
+          // This is a simplified approach that modifies the path string directly
+          const normalizedPath = optimizeSvgPath(originalPath, 1.0); // First get optimized path
+          
+          // Set as the path data
+          setViewBox("0 0 100 100");
+          
+          // Now we will use SVG transformation to center and scale the path
+          // rather than modifying the path data directly
           setPathData(normalizedPath);
         } catch (error) {
           console.warn(`Failed to optimize path for ${regionId}, using original`, error);
           setPathData(pathMatch[1]); 
         }
-      } else if (regionId.includes('CUSTOM') || regionId.includes('MISSING') || regionId.includes('GEN')) {
-        // Fallback for missing regions
-        const fallbackPath = "M10,10 L90,10 Q100,10 100,20 L100,80 Q100,90 90,90 L10,90 Q0,90 0,80 L0,20 Q0,10 10,10 Z";
-        setPathData(fallbackPath);
       } else {
-        console.warn(`Path for region ${regionId} not found`);
+        // For missing or custom paths, create a simple shape as fallback
+        if (regionId.includes('CUSTOM') || regionId.includes('MISSING') || regionId.includes('GEN')) {
+          console.warn(`Creating fallback shape for ${regionId} (${regionName})`);
+          
+          // Create a simple rounded rectangle shape as fallback
+          const fallbackPath = "M10,10 L90,10 Q100,10 100,20 L100,80 Q100,90 90,90 L10,90 Q0,90 0,80 L0,20 Q0,10 10,10 Z";
+          setPathData(fallbackPath);
+        } else {
+          console.warn(`Path for region ${regionId} not found`);
+        }
       }
     } catch (error) {
-      console.error("Error processing SVG path:", error);
+      console.error("Error extracting region path:", error);
     }
-  }, [svgData, regionId, regionName]);
+  }, [svgData, regionId]);
 
-  // Drag handlers
-  const handleDragStart = useCallback((e: React.MouseEvent<SVGPathElement>) => {
-    if (!draggable) return;
-    e.preventDefault();
+  // Rotation functions
+  const rotateLeft = (e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    setIsDragging(true);
-    
-    // Get path element's position
-    const rect = e.currentTarget.getBoundingClientRect();
-    const offsetX = e.clientX - (rect.left + rect.width/2);
-    const offsetY = e.clientY - (rect.top + rect.height/2);
-    
-    setPosition({
-      x: e.clientX - offsetX - size/2,
-      y: e.clientY - offsetY - size/2
-    });
-    
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  }, [draggable, size]);
-  
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging) return;
-    e.preventDefault();
-    
-    setPosition({
-      x: e.clientX - size/2,
-      y: e.clientY - size/2
-    });
-  }, [isDragging, size]);
-  
-  const handleMouseUp = useCallback((e: MouseEvent) => {
-    if (!isDragging) return;
-    
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
-    
-    // Reset dragging state
-    setIsDragging(false);
-    
-    // Trigger the drop callback if provided
-    if (onDrop && regionPieceId !== undefined) {
-      onDrop(regionPieceId, e.clientX, e.clientY);
-    }
-  }, [isDragging, onDrop, regionPieceId]);
-  
-  // Touch event handlers
-  const handleTouchStart = useCallback((e: React.TouchEvent<SVGPathElement>) => {
-    if (!draggable || e.touches.length !== 1) return;
-    e.preventDefault();
-    e.stopPropagation();
-    
-    setIsDragging(true);
-    
-    const touch = e.touches[0];
-    const rect = e.currentTarget.getBoundingClientRect();
-    const offsetX = touch.clientX - (rect.left + rect.width/2);
-    const offsetY = touch.clientY - (rect.top + rect.height/2);
-    
-    setPosition({
-      x: touch.clientX - offsetX - size/2,
-      y: touch.clientY - offsetY - size/2
-    });
-    
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleTouchEnd);
-  }, [draggable, size]);
-  
-  const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (!isDragging || e.touches.length !== 1) return;
-    e.preventDefault();
-    
-    const touch = e.touches[0];
-    setPosition({
-      x: touch.clientX - size/2,
-      y: touch.clientY - size/2
-    });
-  }, [isDragging, size]);
-  
-  const handleTouchEnd = useCallback((e: TouchEvent) => {
-    if (!isDragging) return;
-    
-    document.removeEventListener('touchmove', handleTouchMove);
-    document.removeEventListener('touchend', handleTouchEnd);
-    
-    setIsDragging(false);
-    
-    if (onDrop && regionPieceId !== undefined && e.changedTouches.length === 1) {
-      const touch = e.changedTouches[0];
-      onDrop(regionPieceId, touch.clientX, touch.clientY);
-    }
-  }, [isDragging, onDrop, regionPieceId]);
+    setRotation(prev => prev - 15);
+  };
 
-  // Click handler
-  const handleClick = useCallback(() => {
+  const rotateRight = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRotation(prev => prev + 15);
+  };
+
+  // Scaling functions
+  const increaseSize = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setScale(prev => Math.min(prev + 0.1, 1.5));
+  };
+
+  const decreaseSize = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setScale(prev => Math.max(prev - 0.1, 0.5));
+  };
+
+  // Reset transformations
+  const resetTransformations = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRotation(0);
+    setScale(1);
+  };
+
+  const handleClick = () => {
     if (onClick) {
       onClick();
     }
-  }, [onClick]);
-
-  // Rotation handlers
-  const rotateLeft = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    setRotation(prev => prev - 15);
-  }, []);
-
-  const rotateRight = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    setRotation(prev => prev + 15);
-  }, []);
-
+  };
+  
+  const styles = {
+    width: typeof width === 'number' ? `${width}px` : width,
+    height: typeof height === 'number' ? `${height}px` : height,
+    cursor: onClick || (draggable || rotatable) ? 'pointer' : 'default',
+    position: 'relative' as const
+  };
+  
   return (
-    <svg
-      ref={svgRef}
-      viewBox={viewBox}
-      width={width}
-      height={height}
-      className={`${className} ${isDragging ? 'z-50' : ''}`}
+    <div 
+      ref={thumbnailRef}
+      className={`region-thumbnail ${className} overflow-visible group ${isDragging ? 'z-50' : ''}`}
       style={{
-        position: isDragging ? 'fixed' : 'absolute',
-        top: isDragging ? position.y : 'auto',
-        left: isDragging ? position.x : 'auto',
-        transform: `rotate(${rotation}deg) scale(${scale})`,
-        transformOrigin: 'center center',
-        pointerEvents: 'none', // The SVG itself has no pointer events
-        overflow: 'visible'
+        ...styles,
+        background: 'transparent',
+        ...(draggable && isDragging ? {
+          position: 'fixed',
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+          zIndex: 9999,
+          pointerEvents: 'none',
+          opacity: 0.8,
+          transform: `rotate(${rotation}deg) scale(${scale})`,
+          transformOrigin: 'center center',
+          transition: 'none'
+        } : {})
       }}
-      onClick={!draggable ? handleClick : undefined}
+      {...(draggable ? {
+        ...dragHandlers,
+        onMouseDown: (e) => {
+          dragHandlers.onMouseDown(e);
+          e.stopPropagation();
+        },
+        onTouchStart: (e) => {
+          dragHandlers.onTouchStart(e);
+          e.stopPropagation();
+        }
+      } : { onClick: handleClick })}
     >
-      <g transform="translate(50, 50) scale(0.7)">
-        {/* Shadow for depth */}
-        <path 
-          d={pathData}
-          fill="rgba(0,0,0,0.3)"
-          stroke="rgba(0,0,0,0.4)"
-          strokeWidth={strokeWidth + 2}
-          transform="translate(1.5, 1.5) scale(6)"
-          style={{ pointerEvents: 'none' }}
-        />
-        
-        {/* The actual interactive path */}
-        <path 
-          ref={pathRef}
-          d={pathData}
-          fill={color}
-          stroke={strokeColor}
-          strokeWidth={strokeWidth + 1.5}
-          transform="scale(6)"
-          style={{ 
-            transformOrigin: 'center center',
-            cursor: draggable ? 'move' : onClick ? 'pointer' : 'default',
-            pointerEvents: 'auto', // Only the path gets events
-            filter: 'drop-shadow(0px 2px 3px rgba(0,0,0,0.3))'
-          }}
-          onMouseDown={draggable ? handleDragStart : undefined}
-          onTouchStart={draggable ? handleTouchStart : undefined}
-        />
-
-        {/* Label */}
-        {showLabel && (
-          <text 
-            x="0" 
-            y="0" 
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fill="#000000" 
-            fontSize="14"
-            fontWeight="bold"
-            style={{ 
-              textShadow: '0 0 4px white, 0 0 4px white, 0 0 4px white, 0 0 4px white',
-              fontFamily: 'Arial, sans-serif',
-              pointerEvents: 'none'
+      {/* Control buttons for rotation and scaling (only visible when hovering) */}
+      {rotatable && (
+        <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex space-x-1">
+          <Button 
+            size="icon" 
+            variant="secondary"
+            className="w-6 h-6 bg-white/80 hover:bg-white text-black" 
+            onClick={rotateLeft}
+          >
+            ↺
+          </Button>
+          <Button 
+            size="icon" 
+            variant="secondary"
+            className="w-6 h-6 bg-white/80 hover:bg-white text-black" 
+            onClick={rotateRight}
+          >
+            ↻
+          </Button>
+          <Button 
+            size="icon" 
+            variant="secondary" 
+            className="w-6 h-6 bg-white/80 hover:bg-white text-black"
+            onClick={resetTransformations}
+          >
+            ↺↻
+          </Button>
+        </div>
+      )}
+      
+      {pathData ? (
+        <div className="w-full h-full relative" style={{ background: 'transparent' }}>
+          <svg 
+            viewBox={viewBox} 
+            width="100%" 
+            height="100%" 
+            preserveAspectRatio="xMidYMid meet"
+            style={{
+              transform: `rotate(${rotation}deg) scale(${scale})`,
+              transition: "transform 0.3s ease",
+              background: 'transparent'
             }}
           >
-            {regionName}
-          </text>
-        )}
-      </g>
-      
-      {/* Rotation controls (for rotatable pieces only) */}
-      {rotatable && !isDragging && (
-        <g transform="translate(80, 20)">
-          <circle 
-            cx="0" cy="0" r="10" 
-            fill="white" 
-            stroke="#ccc" 
-            strokeWidth="1" 
-            style={{ cursor: 'pointer', pointerEvents: 'auto' }}
-            onClick={rotateLeft}
-          />
-          <text 
-            x="0" y="0" 
-            textAnchor="middle" 
-            dominantBaseline="middle"
-            fontSize="12"
-            style={{ pointerEvents: 'none' }}
-          >↺</text>
+            {/* No rectangular background */}
+            
+            {/* Create a fixed-size centered container just for the state shape */}
+            <g transform="translate(50, 50) scale(0.7)" style={{ transformOrigin: "center" }}>
+              {/* White outline for visibility */}
+              <path
+                d={pathData}
+                fill="white"
+                stroke="white"
+                strokeWidth={(strokeWidth + 3) + 4} // Extra thick white border for visibility
+                transform="scale(5.5)" // Increased to exactly 5.5x scale per request
+                style={{
+                  transformBox: 'fill-box',
+                  transformOrigin: 'center',
+                  opacity: 0.7
+                }}
+              />
+              
+              {/* Shadow layer for depth */}
+              <path
+                d={pathData}
+                fill="#000000"
+                stroke="#000000"
+                strokeWidth={strokeWidth + 3}
+                transform="translate(2, 2) scale(5.5)" // Offset shadow
+                style={{
+                  transformBox: 'fill-box',
+                  transformOrigin: 'center',
+                  opacity: 0.3,
+                  filter: 'blur(3px)'
+                }}
+              />
+              
+              {/* Main colored path with extra high contrast */}
+              <path
+                d={pathData}
+                fill={color}
+                stroke={strokeColor}
+                strokeWidth={strokeWidth + 3} // Thicker border for very bold appearance
+                transform="scale(5.5)" // Increased to exactly 5.5x scale per request
+                style={{
+                  transformBox: 'fill-box',
+                  transformOrigin: 'center',
+                  filter: 'drop-shadow(0px 4px 8px rgba(0,0,0,0.7))',
+                  opacity: 1
+                }}
+              />
+              
+              {/* Highlight edge for better definition */}
+              <path
+                d={pathData}
+                fill="none"
+                stroke="white"
+                strokeWidth={1}
+                transform="scale(5.5)"
+                style={{
+                  transformBox: 'fill-box',
+                  transformOrigin: 'center',
+                  opacity: 0.7
+                }}
+              />
+              
+              {/* Add text label IN the shape */}
+              {showLabel && (
+                <text 
+                  x="0" 
+                  y="0" 
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fill="#000000" 
+                  fontSize="16"
+                  fontWeight="bold"
+                  style={{ 
+                    textShadow: '0 0 4px white, 0 0 4px white, 0 0 4px white, 0 0 4px white',
+                    fontFamily: 'Arial, sans-serif'
+                  }}
+                >
+                  {regionName}
+                </text>
+              )}
+            </g>
+          </svg>
           
-          <circle 
-            cx="25" cy="0" r="10" 
-            fill="white" 
-            stroke="#ccc" 
-            strokeWidth="1" 
-            style={{ cursor: 'pointer', pointerEvents: 'auto' }}
-            onClick={rotateRight}
-          />
-          <text 
-            x="25" y="0" 
-            textAnchor="middle" 
-            dominantBaseline="middle"
-            fontSize="12"
-            style={{ pointerEvents: 'none' }}
-          >↻</text>
-        </g>
+          {/* State name is now rendered directly in the SVG */}
+        </div>
+      ) : (
+        <div className="flex items-center justify-center w-full h-full">
+          <div className="text-xs text-gray-400">
+            {regionName || "Region"}
+          </div>
+        </div>
       )}
-      
-      {/* Drag indicator for dragging state */}
-      {isDragging && (
-        <g>
-          <circle cx="50%" cy="50%" r="15" fill="none" stroke="rgba(255,0,0,0.5)" strokeWidth="3"
-            style={{ animation: 'pulse 1.5s infinite', pointerEvents: 'none' }} />
-          <circle cx="50%" cy="50%" r="5" fill="red" stroke="white" strokeWidth="1.5" 
-            style={{ pointerEvents: 'none' }} />
-        </g>
-      )}
-    </svg>
+    </div>
   );
 }
