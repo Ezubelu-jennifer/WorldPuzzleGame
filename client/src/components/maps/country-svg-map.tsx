@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { extractNigeriaRegions, extractKenyaRegions, getViewBoxFromSVG } from "@/data/svg-parser";
+import { extractNigeriaRegions, extractKenyaRegions, getViewBoxFromSVG, createUnifiedCountryOutline } from "@/data/svg-parser";
 import { ZoomIn, ZoomOut, Maximize } from "lucide-react";
 
 interface CountrySvgMapProps {
@@ -230,7 +230,7 @@ export function CountrySvgMap({
         <g filter="drop-shadow(0px 4px 8px rgba(0,0,0,0.5))">
           {/* Single merged country shape with outer border only */}
           <path
-            d={uniqueRegions.map(region => region.path).join(' ')}
+            d={createUnifiedCountryOutline(uniqueRegions.map(region => region.path))}
             fill="#e5e5e5" // Light gray fill for the puzzle outline
             stroke="#444444" // Darker gray for stronger border definition
             strokeWidth="7" // Extra thick outer border
