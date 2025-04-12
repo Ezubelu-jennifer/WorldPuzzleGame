@@ -18,6 +18,8 @@ interface RegionThumbnailProps {
   className?: string;
   draggable?: boolean;
   rotatable?: boolean;
+  onDrop?: (id: number, x: number, y: number) => boolean;
+  regionPieceId?: number;
 }
 
 export function RegionThumbnail({
@@ -33,7 +35,9 @@ export function RegionThumbnail({
   onClick,
   className = "",
   draggable = false,
-  rotatable = false
+  rotatable = false,
+  onDrop,
+  regionPieceId
 }: RegionThumbnailProps) {
   const [pathData, setPathData] = useState<string>("");
   const [viewBox, setViewBox] = useState<string>("0 0 800 600");
@@ -55,6 +59,11 @@ export function RegionThumbnail({
       // trigger the click handler
       if (!isDragging && onClick) {
         onClick();
+      }
+      
+      // If we have the onDrop handler and a piece ID, we can attempt to drop the piece
+      if (isDragging && dropped && onDrop && regionPieceId !== undefined) {
+        onDrop(regionPieceId, position.x, position.y);
       }
     }
   });
@@ -180,6 +189,7 @@ export function RegionThumbnail({
       className={`region-thumbnail ${className} overflow-visible group ${isDragging ? 'z-50' : ''}`}
       style={{
         ...styles,
+        background: 'transparent',
         ...(draggable && isDragging ? {
           position: 'fixed',
           left: `${position.x}px`,
@@ -235,7 +245,7 @@ export function RegionThumbnail({
       )}
       
       {pathData ? (
-        <div className="w-full h-full relative">
+        <div className="w-full h-full relative" style={{ background: 'transparent' }}>
           <svg 
             viewBox={viewBox} 
             width="100%" 
@@ -243,13 +253,13 @@ export function RegionThumbnail({
             preserveAspectRatio="xMidYMid meet"
             style={{
               transform: `rotate(${rotation}deg) scale(${scale})`,
-              transition: "transform 0.3s ease"
+              transition: "transform 0.3s ease",
+              background: 'transparent'
             }}
           >
-            {/* Background for better boundaries */}
-            <rect x="0" y="0" width="100%" height="100%" fill="transparent" />
+            {/* No rectangular background */}
             
-            {/* Create a fixed-size centered container for the state shape */}
+            {/* Create a fixed-size centered container just for the state shape */}
             <g transform="translate(50, 50) scale(0.7)" style={{ transformOrigin: "center" }}>
               <path
                 d={pathData}

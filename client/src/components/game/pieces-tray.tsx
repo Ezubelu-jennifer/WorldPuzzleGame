@@ -95,34 +95,22 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
               ${region.isPlaced ? 'bg-gray-100 opacity-60 border-gray-300' : 'bg-white cursor-grab border-transparent hover:border-blue-300'}`}
           >
             {svgData && svgRegion ? (
-              // Use the SVG thumbnail for the region
-              <div className="w-full h-full relative">
-                <div className="absolute inset-0">
-                  <RegionThumbnail
-                    svgData={svgData}
-                    regionId={svgRegion.id}
-                    regionName={region.name}
-                    color={fillColor}
-                    strokeColor={strokeColor}
-                    strokeWidth={1}
-                    width="100%"
-                    height="100%"
-                    showLabel={true}
-                    draggable={true}
-                    rotatable={true}
-                  />
-                </div>
-                
-                {/* Overlay the puzzle piece for drag-and-drop functionality */}
-                <div className="absolute inset-0 opacity-0">
-                  <PuzzlePiece
-                    region={regionWithColor}
-                    onDrop={onPieceDrop}
-                    containerRef={trayRef}
-                    isTrayPiece
-                  />
-                </div>
-              </div>
+              // Use the SVG thumbnail for the region, with direct draggable and rotatable support
+              <RegionThumbnail
+                svgData={svgData}
+                regionId={svgRegion.id}
+                regionName={region.name}
+                color={fillColor}
+                strokeColor={strokeColor}
+                strokeWidth={1}
+                width="100%"
+                height="100%"
+                showLabel={true}
+                draggable={true}
+                rotatable={true}
+                onDrop={onPieceDrop}
+                regionPieceId={region.id}
+              />
             ) : (
               // Fallback to regular puzzle piece
               <div className="absolute inset-0 flex items-center justify-center">
