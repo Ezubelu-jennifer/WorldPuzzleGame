@@ -234,7 +234,8 @@ export function StatePiece({
         isDragging ? "z-50" : "",
         region.isPlaced ? "cursor-default" : "",
         isTrayPiece ? "inline-block" : "",
-        region.isPlaced ? "" : "group" // Add group for hover effects
+        region.isPlaced ? "" : "group", // Add group for hover effects
+        "pointer-events-none" // CRITICAL: Explicitly disable ALL pointer events on the container
       )}
       style={{ 
         position: isDragging ? 'fixed' : 'absolute', 
@@ -245,17 +246,16 @@ export function StatePiece({
         height: pieceSize,
         transition: isDragging ? "none" : "opacity 0.3s ease",
         background: 'transparent',
-        transformOrigin: "center center",
-        pointerEvents: 'none' // IMPORTANT: Main container has NO pointer events
+        transformOrigin: "center center"
       }}
     >
       {/* Control buttons (only visible when hovering and not placed) */}
       {!region.isPlaced && !isTrayPiece && (
-        <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex space-x-1">
+        <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex space-x-1 pointer-events-auto">
           <Button 
             size="icon" 
             variant="secondary"
-            className="w-6 h-6 bg-white/80 hover:bg-white text-black" 
+            className="w-6 h-6 bg-white/80 hover:bg-white text-black pointer-events-auto" 
             onClick={rotateLeft}
           >
             ↺
@@ -263,7 +263,7 @@ export function StatePiece({
           <Button 
             size="icon" 
             variant="secondary"
-            className="w-6 h-6 bg-white/80 hover:bg-white text-black" 
+            className="w-6 h-6 bg-white/80 hover:bg-white text-black pointer-events-auto" 
             onClick={rotateRight}
           >
             ↻
@@ -271,7 +271,7 @@ export function StatePiece({
           <Button 
             size="icon" 
             variant="secondary" 
-            className="w-6 h-6 bg-white/80 hover:bg-white text-black"
+            className="w-6 h-6 bg-white/80 hover:bg-white text-black pointer-events-auto"
             onClick={increaseSize}
           >
             +
@@ -279,7 +279,7 @@ export function StatePiece({
           <Button 
             size="icon" 
             variant="secondary" 
-            className="w-6 h-6 bg-white/80 hover:bg-white text-black"
+            className="w-6 h-6 bg-white/80 hover:bg-white text-black pointer-events-auto"
             onClick={decreaseSize}
           >
             -
@@ -287,7 +287,7 @@ export function StatePiece({
           <Button 
             size="icon" 
             variant="secondary" 
-            className="w-6 h-6 bg-white/80 hover:bg-white text-black"
+            className="w-6 h-6 bg-white/80 hover:bg-white text-black pointer-events-auto"
             onClick={resetTransformations}
           >
             ↺↻
