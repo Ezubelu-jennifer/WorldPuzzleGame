@@ -29,6 +29,9 @@ export function PuzzlePiece({
   const [viewBox, setViewBox] = useState<string>("0 0 100 100");
   const [rotation, setRotation] = useState<number>(0);
   const [scale, setScale] = useState<number>(1);
+  // Animation states for dynamic sizing during interaction
+  const [animationScale, setAnimationScale] = useState<number>(1);
+  const [isFirstTap, setIsFirstTap] = useState<boolean>(false);
   
   // Initialize position
   const initialX = region.currentX || (isTrayPiece ? 0 : Math.random() * 100);
@@ -219,9 +222,15 @@ export function PuzzlePiece({
   const { isDragging, position, setPosition, dragHandlers } = useDrag({
     initialPosition: { x: initialX, y: initialY },
     onDragStart: () => {
-      // Start dragging logic
+      // Start animation - make piece bigger when first tapped
+      setIsFirstTap(true);
+      setAnimationScale(1.6); // Initially grow the piece when tapped
     },
     onDragEnd: (finalPosition) => {
+      // Reset animation scale
+      setAnimationScale(1); 
+      setIsFirstTap(false);
+      
       // Calculate position relative to container
       if (containerRef.current && pieceRef.current) {
         const containerRect = containerRef.current.getBoundingClientRect();
@@ -356,8 +365,8 @@ export function PuzzlePiece({
         className="w-full h-full" 
         style={{ 
           overflow: 'visible',
-          transform: `rotate(${rotation}deg) scale(2.2)`, // Match scale with thumbnail
-          transition: "transform 0.3s ease",
+          transform: `rotate(${rotation}deg) scale(${isDragging ? animationScale : 2.2})`, // Apply animation scale when dragging
+          transition: isDragging ? "transform 0.15s ease" : "transform 0.3s ease",
           background: 'transparent',
           transformOrigin: "center center" // Ensure rotation happens from center
         }}
