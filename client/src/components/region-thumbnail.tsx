@@ -261,6 +261,36 @@ export function RegionThumbnail({
             
             {/* Create a fixed-size centered container just for the state shape */}
             <g transform="translate(50, 50) scale(0.7)" style={{ transformOrigin: "center" }}>
+              {/* White outline for visibility */}
+              <path
+                d={pathData}
+                fill="white"
+                stroke="white"
+                strokeWidth={(strokeWidth + 3) + 4} // Extra thick white border for visibility
+                transform="scale(5.5)" // Increased to exactly 5.5x scale per request
+                style={{
+                  transformBox: 'fill-box',
+                  transformOrigin: 'center',
+                  opacity: 0.7
+                }}
+              />
+              
+              {/* Shadow layer for depth */}
+              <path
+                d={pathData}
+                fill="#000000"
+                stroke="#000000"
+                strokeWidth={strokeWidth + 3}
+                transform="translate(2, 2) scale(5.5)" // Offset shadow
+                style={{
+                  transformBox: 'fill-box',
+                  transformOrigin: 'center',
+                  opacity: 0.3,
+                  filter: 'blur(3px)'
+                }}
+              />
+              
+              {/* Main colored path with extra high contrast */}
               <path
                 d={pathData}
                 fill={color}
@@ -270,21 +300,37 @@ export function RegionThumbnail({
                 style={{
                   transformBox: 'fill-box',
                   transformOrigin: 'center',
-                  filter: 'drop-shadow(0px 2px 5px rgba(0,0,0,0.5))'
+                  filter: 'drop-shadow(0px 4px 8px rgba(0,0,0,0.7))',
+                  opacity: 1
                 }}
               />
+              
+              {/* Highlight edge for better definition */}
+              <path
+                d={pathData}
+                fill="none"
+                stroke="white"
+                strokeWidth={1}
+                transform="scale(5.5)"
+                style={{
+                  transformBox: 'fill-box',
+                  transformOrigin: 'center',
+                  opacity: 0.7
+                }}
+              />
+              
               {/* Add text label IN the shape */}
               {showLabel && (
                 <text 
-                  x="50%" 
-                  y="50%" 
+                  x="0" 
+                  y="0" 
                   textAnchor="middle"
                   dominantBaseline="middle"
                   fill="#000000" 
-                  fontSize="14"
+                  fontSize="16"
                   fontWeight="bold"
                   style={{ 
-                    textShadow: '0 0 3px white, 0 0 3px white, 0 0 3px white, 0 0 3px white',
+                    textShadow: '0 0 4px white, 0 0 4px white, 0 0 4px white, 0 0 4px white',
                     fontFamily: 'Arial, sans-serif'
                   }}
                 >

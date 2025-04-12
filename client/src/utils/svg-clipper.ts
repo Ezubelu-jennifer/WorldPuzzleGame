@@ -3,17 +3,48 @@ import { getPathBounds } from 'svg-path-bounds';
 // Direct scaling approach for SVG paths
 export function optimizeSvgPath(svgPath: string, scaleFactor: number = 1.5): string {
   try {
-    // Improved SVG path scaling that properly handles all SVG path commands
-    const commands = svgPath.match(/([a-z][^a-z]*)/gi);
-    if (!commands) return svgPath;
+    // Skip optimization for very complex paths to prevent errors
+    if (svgPath.length > 5000) {
+      console.warn('Path too complex for optimization, using original');
+      return svgPath;
+    }
     
-    // Get the bounds of the original path
-    const bounds = getPathBounds(svgPath);
+    // Simple path sanitization to handle potential parsing issues
+    // Remove multiple consecutive spaces and normalize commas
+    const sanitizedPath = svgPath
+      .replace(/\s+/g, ' ')
+      .replace(/\s*,\s*/g, ',')
+      .trim();
+    
+    // Try to get path bounds - if this fails, we'll use the original path
+    let bounds;
+    try {
+      bounds = getPathBounds(sanitizedPath);
+    } catch (e) {
+      console.warn('Failed to get path bounds, using original path');
+      return svgPath;
+    }
+    
+    // If bounds calculation returns NaN or invalid values, return original
     const [minX, minY, maxX, maxY] = bounds;
+    if (isNaN(minX) || isNaN(minY) || isNaN(maxX) || isNaN(maxY)) {
+      console.warn('Invalid path bounds, using original path');
+      return svgPath;
+    }
+    
+    // Improved SVG path scaling that properly handles all SVG path commands
+    const commands = sanitizedPath.match(/([a-z][^a-z]*)/gi);
+    if (!commands) return svgPath;
     
     // Calculate the center point for scaling around center
     const centerX = (minX + maxX) / 2;
     const centerY = (minY + maxY) / 2;
+    
+    // Safe parsing of number values
+    const safeParseFloat = (val: string): number => {
+      const parsed = parseFloat(val);
+      return isNaN(parsed) ? 0 : parsed;
+    };
     
     const scaledCommands = commands.map(command => {
       // Get the command letter (first character)
@@ -24,7 +55,9 @@ export function optimizeSvgPath(svgPath: string, scaleFactor: number = 1.5): str
         // Commands that have coordinate values
         
         // Extract all numbers from the command
-        const parts = command.substring(1).trim().split(/[\s,]+/);
+        const parts = command.substring(1).trim().split(/[\s,]+/).filter(p => p.length > 0);
+        if (parts.length === 0) return command; // Skip if no valid parts
+        
         const isRelative = cmd === cmd.toLowerCase();
         
         // Process the coordinates differently based on the command type
@@ -33,7 +66,7 @@ export function optimizeSvgPath(svgPath: string, scaleFactor: number = 1.5): str
         if (/[ML]/i.test(cmd)) {
           // Move and Line commands: x,y pairs
           processedParts = parts.map((val, index) => {
-            const num = parseFloat(val);
+            const num = safeParseFloat(val);
             
             // Scale around center point for absolute coordinates
             if (!isRelative) {
@@ -48,7 +81,7 @@ export function optimizeSvgPath(svgPath: string, scaleFactor: number = 1.5): str
         } else if (/[H]/i.test(cmd)) {
           // Horizontal commands: x values only
           processedParts = parts.map(val => {
-            const num = parseFloat(val);
+            const num = safeParseFloat(val);
             return isRelative
               ? num * scaleFactor
               : centerX + (num - centerX) * scaleFactor;
@@ -56,7 +89,7 @@ export function optimizeSvgPath(svgPath: string, scaleFactor: number = 1.5): str
         } else if (/[V]/i.test(cmd)) {
           // Vertical commands: y values only
           processedParts = parts.map(val => {
-            const num = parseFloat(val);
+            const num = safeParseFloat(val);
             return isRelative
               ? num * scaleFactor
               : centerY + (num - centerY) * scaleFactor;
@@ -64,7 +97,7 @@ export function optimizeSvgPath(svgPath: string, scaleFactor: number = 1.5): str
         } else if (/[CSQTA]/i.test(cmd)) {
           // Curve commands: multiple coordinate pairs
           processedParts = parts.map((val, index) => {
-            const num = parseFloat(val);
+            const num = safeParseFloat(val);
             
             if (!isRelative) {
               return index % 2 === 0
@@ -80,7 +113,12 @@ export function optimizeSvgPath(svgPath: string, scaleFactor: number = 1.5): str
         }
         
         // Recombine the command letter with processed coordinates
-        return cmd + processedParts.join(' ');
+        // Format numbers to reduce floating point precision issues
+        const formattedParts = processedParts.map(p => 
+          typeof p === 'number' ? p.toFixed(2) : p
+        );
+        
+        return cmd + formattedParts.join(' ');
       } else {
         // Commands without coordinates (Z)
         return command;
