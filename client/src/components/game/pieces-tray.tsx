@@ -61,7 +61,7 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
   ];
   
   return (
-    <div ref={trayRef} className="flex flex-wrap gap-1 overflow-x-auto py-2 px-3 min-h-[140px] max-h-[320px] overflow-y-auto">
+    <div ref={trayRef} className="flex flex-wrap gap-2 overflow-x-auto py-2 px-3 min-h-[160px] max-h-[400px] overflow-y-auto">
       {allRegions.map((region, index) => {
         // Assign color from our palette, cycling through if needed
         const colorIndex = index % colors.length;
@@ -83,7 +83,8 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
         return (
           <div 
             key={region.id}
-            className={`flex-shrink-0 relative w-24 h-24 rounded-md shadow-sm border p-1 flex items-center justify-center ${region.isPlaced ? 'bg-gray-100 opacity-60' : 'bg-white cursor-grab'}`}
+            className={`flex-shrink-0 relative w-32 h-32 rounded-md shadow-md border-2 p-1 flex items-center justify-center 
+              ${region.isPlaced ? 'bg-gray-100 opacity-60 border-gray-300' : 'bg-white cursor-grab border-blue-200 hover:border-blue-400'}`}
           >
             {svgData && svgRegion ? (
               // Use the SVG thumbnail for the region
@@ -95,7 +96,7 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
                     regionName={region.name}
                     color={fillColor}
                     strokeColor={strokeColor}
-                    strokeWidth={2}
+                    strokeWidth={3}
                     width="100%"
                     height="100%"
                     showLabel={false}
@@ -113,7 +114,7 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
                 </div>
                 
                 {/* Region name label */}
-                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[8px] py-0.5 px-1 font-medium text-center rounded-b-sm truncate">
+                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs py-1 px-2 font-medium text-center rounded-b-sm truncate">
                   {region.name}
                 </div>
               </div>
@@ -126,9 +127,16 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
                   containerRef={trayRef}
                   isTrayPiece
                 />
-                <span className="text-[8px] font-bold text-center absolute bottom-0.5 text-white drop-shadow-md pointer-events-none z-10">
+                <span className="text-xs font-bold text-center absolute bottom-1 text-white drop-shadow-md pointer-events-none z-10">
                   {region.name}
                 </span>
+              </div>
+            )}
+            
+            {/* Status indicator */}
+            {region.isPlaced && (
+              <div className="absolute top-1 right-1 bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md">
+                ✓
               </div>
             )}
           </div>

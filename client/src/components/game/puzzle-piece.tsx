@@ -4,6 +4,7 @@ import { RegionPiece } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { getSvgDataById } from "@/data/svg-map-data";
 import { getViewBoxFromSVG } from "@/data/svg-parser";
+import { Button } from "@/components/ui/button";
 
 interface PuzzlePieceProps {
   region: RegionPiece;
@@ -25,6 +26,8 @@ export function PuzzlePiece({
   const pieceRef = useRef<HTMLDivElement>(null);
   const [svgPathData, setSvgPathData] = useState<string | null>(null);
   const [viewBox, setViewBox] = useState<string>("0 0 100 100");
+  const [rotation, setRotation] = useState<number>(0);
+  const [scale, setScale] = useState<number>(1);
   
   // Initialize position
   const initialX = region.currentX || (isTrayPiece ? 0 : Math.random() * 100);
@@ -224,33 +227,113 @@ export function PuzzlePiece({
     }
   }, [region.isPlaced, snapToPosition, region.correctX, region.correctY, setPosition]);
 
+  // Handle rotation of the piece
+  const rotateLeft = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent drag from starting
+    setRotation((prev) => prev - 45);
+  };
+
+  const rotateRight = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent drag from starting
+    setRotation((prev) => prev + 45);
+  };
+
+  // Handle scaling of the piece
+  const increaseSize = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent drag from starting
+    setScale((prev) => Math.min(prev + 0.1, 1.5)); // Max scale 1.5x
+  };
+
+  const decreaseSize = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent drag from starting
+    setScale((prev) => Math.max(prev - 0.1, 0.7)); // Min scale 0.7x
+  };
+
+  // Reset transformations
+  const resetTransformations = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent drag from starting
+    setRotation(0);
+    setScale(1);
+  };
+
   // Determine piece size based on whether it's in the tray or on the board
-  const pieceSize = isTrayPiece ? 100 : 150;
+  const basePieceSize = isTrayPiece ? 100 : 150;
+  const pieceSize = basePieceSize * scale;
 
   return (
     <div
       ref={pieceRef}
       className={cn(
         "absolute transition-transform",
-        isDragging ? "z-10 scale-105" : "",
+        isDragging ? "z-10" : "",
         region.isPlaced ? "cursor-default" : "cursor-move",
-        isTrayPiece ? "inline-block" : ""
+        isTrayPiece ? "inline-block" : "",
+        region.isPlaced ? "" : "group" // Add group for hover effects
       )}
       style={{ 
         top: `${position.y}px`, 
         left: `${position.x}px`,
         opacity: region.isPlaced ? 0.9 : 1,
-        transform: isDragging ? "scale(1.05)" : "scale(1)",
-        transition: "transform 0.1s ease, opacity 0.3s ease",
         width: `${pieceSize}px`,
-        height: `${pieceSize}px`
+        height: `${pieceSize}px`,
+        transition: "opacity 0.3s ease",
       }}
       {...dragHandlers}
     >
+      {/* Control buttons (only visible when hovering and not placed) */}
+      {!region.isPlaced && !isTrayPiece && (
+        <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex space-x-1">
+          <Button 
+            size="icon" 
+            variant="secondary"
+            className="w-6 h-6 bg-white/80 hover:bg-white text-black" 
+            onClick={rotateLeft}
+          >
+            ↺
+          </Button>
+          <Button 
+            size="icon" 
+            variant="secondary"
+            className="w-6 h-6 bg-white/80 hover:bg-white text-black" 
+            onClick={rotateRight}
+          >
+            ↻
+          </Button>
+          <Button 
+            size="icon" 
+            variant="secondary" 
+            className="w-6 h-6 bg-white/80 hover:bg-white text-black"
+            onClick={increaseSize}
+          >
+            +
+          </Button>
+          <Button 
+            size="icon" 
+            variant="secondary" 
+            className="w-6 h-6 bg-white/80 hover:bg-white text-black"
+            onClick={decreaseSize}
+          >
+            -
+          </Button>
+          <Button 
+            size="icon" 
+            variant="secondary" 
+            className="w-6 h-6 bg-white/80 hover:bg-white text-black"
+            onClick={resetTransformations}
+          >
+            ↺↻
+          </Button>
+        </div>
+      )}
+
       <svg 
         viewBox={viewBox} 
         className="w-full h-full" 
-        style={{ overflow: 'visible' }}
+        style={{ 
+          overflow: 'visible',
+          transform: `rotate(${rotation}deg)`,
+          transition: "transform 0.3s ease"
+        }}
       >
         <path 
           d={svgPathData || region.svgPath} 
@@ -264,7 +347,7 @@ export function PuzzlePiece({
           y="50%" 
           textAnchor="middle" 
           dominantBaseline="middle"
-          fill={region.isPlaced ? "#ffffff" : "#ffffff"} 
+          fill="#ffffff" 
           fontSize={isTrayPiece ? "12" : "14"}
           fontWeight="bold"
           style={{ 
