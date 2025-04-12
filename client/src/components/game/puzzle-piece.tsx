@@ -169,10 +169,10 @@ export function PuzzlePiece({
       if (match && match[1]) {
         // Found a matching path - optimize with SVG Clipper!
         try {
-          // Scale the SVG path by 2.5x to make it more prominent
-          const optimizedPath = optimizeSvgPath(match[1], 2.5);
+          // Scale the SVG path by 3.0x to make it more prominent
+          const optimizedPath = optimizeSvgPath(match[1], 3.0);
+          console.log(`Optimized SVG path for ${region.name} with scale factor 3.0`);
           setSvgPathData(optimizedPath);
-          console.log(`Optimized SVG path for ${region.name} with scale factor 2.5`);
         } catch (error) {
           console.warn(`Failed to optimize path for ${region.name}, using original`, error);
           setSvgPathData(match[1]);
@@ -181,10 +181,10 @@ export function PuzzlePiece({
         // If no match found but we have a valid path from backend, use it
         if (region.svgPath && region.svgPath.includes('M')) {
           try {
-            // Optimize the backend path too
-            const optimizedPath = optimizeSvgPath(region.svgPath, 1.8);
+            // Optimize the backend path too with a higher scale factor
+            const optimizedPath = optimizeSvgPath(region.svgPath, 3.0);
             setSvgPathData(optimizedPath);
-            console.log(`Using optimized backend SVG path for ${region.name}`);
+            console.log(`Using optimized backend SVG path for ${region.name} with scale factor 3.0`);
           } catch (error) {
             console.warn(`Failed to optimize backend path for ${region.name}`, error);
             setSvgPathData(region.svgPath);
@@ -195,9 +195,9 @@ export function PuzzlePiece({
           const flexMatch = flexRegex.exec(svgData);
           if (flexMatch && flexMatch[1]) {
             try {
-              const optimizedPath = optimizeSvgPath(flexMatch[1], 1.8);
+              const optimizedPath = optimizeSvgPath(flexMatch[1], 3.0);
               setSvgPathData(optimizedPath);
-              console.log(`Using optimized flexible SVG path for ${region.name}`);
+              console.log(`Using optimized flexible SVG path for ${region.name} with scale factor 3.0`);
             } catch (error) {
               console.warn(`Failed to optimize flexible path for ${region.name}`, error);
               setSvgPathData(flexMatch[1]);

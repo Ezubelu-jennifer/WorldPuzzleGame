@@ -47,8 +47,8 @@ export function RegionThumbnail({
       
       if (pathMatch && pathMatch[1]) {
         try {
-          // Optimize the SVG path using our clipper with a higher scale factor
-          const optimizedPath = optimizeSvgPath(pathMatch[1], 2.5);
+          // Optimize the SVG path using our clipper with an even higher scale factor
+          const optimizedPath = optimizeSvgPath(pathMatch[1], 3.0);
           setPathData(optimizedPath);
         } catch (error) {
           console.warn(`Failed to optimize path for ${regionId}, using original`, error);
