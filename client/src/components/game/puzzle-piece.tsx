@@ -30,8 +30,7 @@ export function PuzzlePiece({
   const [rotation, setRotation] = useState<number>(0);
   const [scale, setScale] = useState<number>(1);
   // Animation states for dynamic sizing during interaction
-  const [animationScale, setAnimationScale] = useState<number>(1);
-  const [isFirstTap, setIsFirstTap] = useState<boolean>(false);
+  const [isEnlarged, setIsEnlarged] = useState<boolean>(false);
   
   // Initialize position
   const initialX = region.currentX || (isTrayPiece ? 0 : Math.random() * 100);
@@ -223,13 +222,11 @@ export function PuzzlePiece({
     initialPosition: { x: initialX, y: initialY },
     onDragStart: () => {
       // Start animation - make piece significantly bigger when first tapped
-      setIsFirstTap(true);
-      setAnimationScale(3.0); // Initially grow the piece much larger when tapped
+      setIsEnlarged(true);
     },
     onDragEnd: (finalPosition) => {
-      // Reset animation scale
-      setAnimationScale(1); 
-      setIsFirstTap(false);
+      // Reset animation state
+      setIsEnlarged(false);
       
       // Calculate position relative to container
       if (containerRef.current && pieceRef.current) {
@@ -257,27 +254,8 @@ export function PuzzlePiece({
     }
   }, [region.isPlaced, snapToPosition, region.correctX, region.correctY, setPosition]);
   
-  // Effect to gradually reduce size during dragging
-  useEffect(() => {
-    if (isDragging) {
-      if (isFirstTap) {
-        // First tap animation - keep it big initially
-        setIsFirstTap(false);
-      } else {
-        // After initial tap, gradually reduce size during dragging
-        const timer = setTimeout(() => {
-          setAnimationScale(prev => {
-            return Math.max(prev * 0.9, 1.2); // Reduce size by 10% each time until 1.2
-          });
-        }, 100); // Update every 100ms for smoother animation
-        
-        return () => clearTimeout(timer);
-      }
-    } else {
-      // Reset animation scale when not dragging
-      setAnimationScale(3.0);
-    }
-  }, [isDragging, isFirstTap, position]);
+  // We no longer need the gradual size reduction effect
+  // The animation will be handled by CSS transitions
 
   // Handle rotation of the piece
   const rotateLeft = (e: React.MouseEvent) => {
@@ -387,11 +365,11 @@ export function PuzzlePiece({
         className="w-full h-full" 
         style={{ 
           overflow: 'visible',
-          transform: `rotate(${rotation}deg) scale(${isDragging ? animationScale : 2.2})`,
+          transform: `rotate(${rotation}deg) scale(${isDragging || isEnlarged ? 3.5 : 2.2})`,
           transformOrigin: "center center", // Ensure rotation happens from center
           background: 'transparent',
           filter: isDragging ? 'drop-shadow(0px 6px 12px rgba(0,0,0,0.25))' : 'none',
-          transition: isDragging ? "none" : "transform 0.3s ease"
+          transition: isDragging ? "transform 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55)" : "transform 0.3s ease"
         }}
         preserveAspectRatio="xMidYMid meet"
       >
