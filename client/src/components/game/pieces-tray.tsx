@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useGame } from "@/context/game-context";
-import { PuzzlePiece } from "@/components/game/puzzle-piece";
+import { StatePiece } from "@/components/game/state-piece";
 import { RegionThumbnail } from "@/components/region-thumbnail";
 import { getSvgDataById } from "@/data/svg-map-data";
 import { extractNigeriaRegions, extractKenyaRegions } from "@/data/svg-parser";
@@ -114,7 +114,7 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
             ) : (
               // Fallback to regular puzzle piece
               <div className="absolute inset-0 flex items-center justify-center">
-                <PuzzlePiece
+                <StatePiece
                   region={regionWithColor}
                   onDrop={onPieceDrop}
                   containerRef={trayRef}

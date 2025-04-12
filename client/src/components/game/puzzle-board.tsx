@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useGame } from "@/context/game-context";
 import { useDrop } from "@/hooks/useDrop";
-import { PuzzlePiece } from "@/components/game/puzzle-piece";
+import { StatePiece } from "@/components/game/state-piece";
 import { Button } from "@/components/ui/button";
 import { getSvgDataById } from "@/data/svg-map-data";
 import { getViewBoxFromSVG, extractNigeriaRegions, extractKenyaRegions } from "@/data/svg-parser";
