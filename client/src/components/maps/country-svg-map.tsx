@@ -233,8 +233,8 @@ export function CountrySvgMap({
               key={`silhouette-${region.id}`}
               d={region.path}
               fill="#e5e5e5" // Light gray fill for the puzzle outline
-              stroke="#cccccc" // Very light gray for slight definition
-              strokeWidth="0.5"
+              stroke="#999999" // Darker gray for more prominent border
+              strokeWidth="2.5" // Much thicker border
               style={{ pointerEvents: "none" }}
             />
           ))}

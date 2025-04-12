@@ -157,8 +157,8 @@ export function PuzzleBoard({
               <path 
                 d={outlinePath} 
                 fill="#e5e5e5" 
-                stroke="#cccccc"
-                strokeWidth="0.5"
+                stroke="#999999"
+                strokeWidth="2.5"
                 style={{
                   filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.3))'
                 }}
