@@ -397,7 +397,7 @@ export function PuzzlePiece({
       className={cn(
         "absolute transition-transform",
         isDragging ? "z-10" : "",
-        region.isPlaced ? "cursor-default" : "cursor-move",
+        region.isPlaced ? "cursor-default" : "",
         isTrayPiece ? "inline-block" : "",
         region.isPlaced ? "" : "group" // Add group for hover effects
       )}
@@ -410,10 +410,9 @@ export function PuzzlePiece({
         height: pieceSize,
         transition: isDragging ? "none" : "opacity 0.3s ease",
         background: 'transparent',
-        transformOrigin: "center center"
+        transformOrigin: "center center",
+        pointerEvents: region.isPlaced ? 'none' : 'auto' // Only allow pointer events when not placed
       }}
-      onMouseDown={handleMouseDown}
-      onTouchStart={handleTouchStart}
     >
       {/* Control buttons (only visible when hovering and not placed) */}
       {!region.isPlaced && !isTrayPiece && (
@@ -473,11 +472,12 @@ export function PuzzlePiece({
           transform: `rotate(${rotation}deg)`,
           transformOrigin: "center center", // Ensure rotation happens from center
           background: 'transparent',
+          pointerEvents: 'none', // Important - disable pointer events for the SVG itself
         }}
         preserveAspectRatio="xMidYMid meet"
       >
         {/* No background elements - just the state shape centered precisely */}
-        <g transform="translate(50, 50) scale(0.7)" style={{ transformOrigin: "center" }}>
+        <g transform="translate(50, 50) scale(0.7)" style={{ transformOrigin: "center", pointerEvents: "none" }}>
           <path 
             d={svgPathData || region.svgPath} 
             fill={region.isPlaced ? region.fillColor : "#ef4444"} // Red for unplaced pieces
@@ -487,8 +487,11 @@ export function PuzzlePiece({
             strokeLinejoin="round"
             strokeLinecap="round"
             style={{ 
-              transformOrigin: 'center center'
+              transformOrigin: 'center center',
+              cursor: !region.isPlaced ? 'move' : 'default'
             }}
+            onMouseDown={!region.isPlaced ? handleMouseDown : undefined}
+            onTouchStart={!region.isPlaced ? handleTouchStart : undefined}
           />
         </g>
 
