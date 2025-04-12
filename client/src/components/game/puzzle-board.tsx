@@ -170,7 +170,7 @@ export function PuzzleBoard({
         {/* Puzzle Pieces that have been placed on the board */}
         {hasRegions && gameState.regions.map(region => 
           region.isPlaced && (
-            <PuzzlePiece
+            <StatePiece
               key={region.id}
               region={region}
               snapToPosition
