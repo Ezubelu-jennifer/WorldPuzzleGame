@@ -81,14 +81,30 @@ export function RegionThumbnail({
               stroke="#b91c1c" /* Darker red for stroke */
               strokeWidth={1}
               style={{
-                transform: 'scale(2.2)', /* Make it much larger to fill the space */
+                transform: 'scale(2.8)', /* Make it much larger to match the screenshot */
                 transformOrigin: 'center',
                 filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.2))'
               }}
             />
+            {/* Add state name text in the center of the SVG */}
+            <text 
+              x="50%" 
+              y="50%" 
+              textAnchor="middle" 
+              dominantBaseline="middle"
+              fontSize="8" 
+              fill="white"
+              fontWeight="bold"
+              style={{
+                textShadow: '0px 1px 1px rgba(0,0,0,0.5)'
+              }}
+            >
+              {regionName}
+            </text>
           </svg>
           
-          {showLabel && (
+          {/* Original label - hidden now */}
+          {false && showLabel && (
             <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs px-1 py-0.5 text-center truncate">
               {regionName}
             </div>
