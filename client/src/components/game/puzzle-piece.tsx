@@ -222,9 +222,10 @@ export function PuzzlePiece({
   const { isDragging, position, setPosition, dragHandlers } = useDrag({
     initialPosition: { x: initialX, y: initialY },
     onDragStart: () => {
-      // Start animation - make piece bigger when first tapped
+      // Start animation - make piece significantly bigger when first tapped
       setIsFirstTap(true);
-      setAnimationScale(2.0); // Initially grow the piece larger when tapped
+      setAnimationScale(3.0); // Initially grow the piece much larger when tapped
+      console.log("Drag started, setting initial scale to 3.0");
     },
     onDragEnd: (finalPosition) => {
       // Reset animation scale
@@ -260,20 +261,25 @@ export function PuzzlePiece({
   // Effect to gradually reduce size during dragging
   useEffect(() => {
     if (isDragging) {
-      // Start with large size when first tapped, then gradually reduce
       if (isFirstTap) {
-        // This runs once when drag starts
+        // First tap animation - keep it big initially
         setIsFirstTap(false);
+        console.log("First tap animation, size:", animationScale);
       } else {
         // After initial tap, gradually reduce size during dragging
+        console.log("Reducing animation scale, current:", animationScale);
         const timer = setTimeout(() => {
-          setAnimationScale(prev => Math.max(prev * 0.95, 1.0)); // Gradually reduce to normal size (1.0)
-        }, 50); // Update every 50ms
+          setAnimationScale(prev => {
+            const newScale = Math.max(prev * 0.95, 1.2);
+            console.log("New animation scale:", newScale);
+            return newScale;
+          });
+        }, 100); // Update every 100ms for smoother animation
         
         return () => clearTimeout(timer);
       }
     }
-  }, [isDragging, isFirstTap, position]);
+  }, [isDragging, isFirstTap, position, animationScale]);
 
   // Handle rotation of the piece
   const rotateLeft = (e: React.MouseEvent) => {
@@ -383,11 +389,16 @@ export function PuzzlePiece({
         className="w-full h-full" 
         style={{ 
           overflow: 'visible',
-          transform: `rotate(${rotation}deg) scale(${isDragging ? animationScale : 2.2})`, // Apply animation scale when dragging
-          transition: isDragging ? "transform 0.05s ease-out" : "transform 0.3s ease",
-          background: 'transparent',
+          transform: rotation ? `rotate(${rotation}deg)` : 'none', // Only apply rotation here
           transformOrigin: "center center", // Ensure rotation happens from center
+          background: 'transparent',
           filter: isDragging ? 'drop-shadow(0px 6px 12px rgba(0,0,0,0.25))' : 'none',
+          // Apply different animations based on state
+          animation: isDragging 
+            ? 'shrink 0.7s forwards ease-out' // When dragging, gradually shrink
+            : 'pulse 0.5s ease-in-out', // Otherwise show pulse animation
+          animationPlayState: isDragging ? 'running' : 'paused', // Only play shrink when dragging
+          scale: isDragging ? animationScale : 2.2 // Fallback scale
         }}
         preserveAspectRatio="xMidYMid meet"
       >
