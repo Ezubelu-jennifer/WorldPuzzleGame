@@ -366,7 +366,7 @@ export function PuzzlePiece({
             }}
           >
             <path 
-              d={region.svgPath} 
+              d={svgPathData || region.svgPath} 
               fill={region.isPlaced ? region.fillColor : "#ef4444"} // Red for unplaced pieces
               stroke={region.strokeColor || "#333"}
               strokeWidth="1"
