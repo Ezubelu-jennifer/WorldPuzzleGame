@@ -120,6 +120,15 @@ export function CountrySvgMap({
     return colors[index % colors.length];
   };
   
+  // Create a map to deduplicate regions with the same ID
+  const uniqueRegions = regions.reduce((acc, region) => {
+    // Only add if we haven't seen this ID before
+    if (!acc.some(r => r.id === region.id)) {
+      acc.push(region);
+    }
+    return acc;
+  }, [] as RegionData[]);
+  
   // Handle zoom in/out
   const handleZoomIn = () => {
     setZoom(prev => Math.min(prev * 1.5, 8)); // Limit max zoom
@@ -217,8 +226,8 @@ export function CountrySvgMap({
         onTouchEnd={handleTouchEnd}
         onWheel={handleWheel}
       >
-        {/* Fill the map with regions */}
-        {regions.map((region, index) => {
+        {/* Fill the map with regions (using uniqueRegions to avoid duplicate keys) */}
+        {uniqueRegions.map((region, index) => {
           const isHighlighted = region.id === highlightRegion;
           const fill = isHighlighted ? "#f87171" : "#757575"; // Use gray for the puzzle outline
           const stroke = isHighlighted ? "#b91c1c" : "#757575"; // Same gray for stroke to remove boundaries
@@ -241,7 +250,7 @@ export function CountrySvgMap({
           );
         })}
         
-        {showLabels && regions.map(region => {
+        {showLabels && uniqueRegions.map(region => {
           // For simplicity, we'll use fixed label positions
           // In a production app, you'd calculate center points dynamically
           return (
