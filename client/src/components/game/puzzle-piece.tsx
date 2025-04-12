@@ -169,10 +169,10 @@ export function PuzzlePiece({
       if (match && match[1]) {
         // Found a matching path - optimize with SVG Clipper!
         try {
-          // Scale the SVG path by 3.0x to make it more prominent
-          const optimizedPath = optimizeSvgPath(match[1], 3.0);
+          // Use original scale to preserve actual proportions
+          const optimizedPath = optimizeSvgPath(match[1], 1.0);
           setSvgPathData(optimizedPath);
-          console.log(`Optimized SVG path for ${region.name} with scale factor 3.0`);
+          console.log(`Optimized SVG path for ${region.name} with actual proportions`);
         } catch (error) {
           console.warn(`Failed to optimize path for ${region.name}, using original`, error);
           setSvgPathData(match[1]);
@@ -181,8 +181,8 @@ export function PuzzlePiece({
         // If no match found but we have a valid path from backend, use it
         if (region.svgPath && region.svgPath.includes('M')) {
           try {
-            // Optimize the backend path too
-            const optimizedPath = optimizeSvgPath(region.svgPath, 1.8);
+            // Optimize the backend path while preserving proportions
+            const optimizedPath = optimizeSvgPath(region.svgPath, 1.0);
             setSvgPathData(optimizedPath);
             console.log(`Using optimized backend SVG path for ${region.name}`);
           } catch (error) {
@@ -195,7 +195,7 @@ export function PuzzlePiece({
           const flexMatch = flexRegex.exec(svgData);
           if (flexMatch && flexMatch[1]) {
             try {
-              const optimizedPath = optimizeSvgPath(flexMatch[1], 1.8);
+              const optimizedPath = optimizeSvgPath(flexMatch[1], 1.0);
               setSvgPathData(optimizedPath);
               console.log(`Using optimized flexible SVG path for ${region.name}`);
             } catch (error) {
@@ -278,7 +278,7 @@ export function PuzzlePiece({
   };
 
   // Determine piece size based on whether it's in the tray or on the board
-  const basePieceSize = isTrayPiece ? 130 : 220;
+  const basePieceSize = isTrayPiece ? 160 : 280;
   const pieceSize = basePieceSize * scale;
 
   return (
@@ -352,7 +352,7 @@ export function PuzzlePiece({
         className="w-full h-full" 
         style={{ 
           overflow: 'visible',
-          transform: `rotate(${rotation}deg) scale(2.0)`, // Scale up the SVG by 100%
+          transform: `rotate(${rotation}deg) scale(1.0)`, // Use actual size
           transition: "transform 0.3s ease"
         }}
       >
