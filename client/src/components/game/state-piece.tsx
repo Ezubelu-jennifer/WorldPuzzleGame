@@ -12,7 +12,7 @@ interface StatePieceProps {
   containerRef: RefObject<HTMLDivElement>;
   snapToPosition?: boolean;
   isTrayPiece?: boolean;
-  useThumbnail?: boolean; // Whether to use the thumbnail instead of rendering SVG
+  useThumbnail?: boolean;
 }
 
 interface Position {
@@ -25,10 +25,9 @@ export function StatePiece({
   onDrop, 
   containerRef,
   snapToPosition = false,
-  isTrayPiece = false,
-  useThumbnail = false
+  isTrayPiece = false
 }: StatePieceProps) {
-  // State for this component
+  // State
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [svgPathData, setSvgPathData] = useState<string | null>(null);
   const [viewBox, setViewBox] = useState<string>("0 0 100 100");
@@ -38,137 +37,129 @@ export function StatePiece({
   });
   const [rotation, setRotation] = useState<number>(0);
   const [scale, setScale] = useState<number>(1);
-  const [isEnlarged, setIsEnlarged] = useState<boolean>(false);
   
-  // Get the country ID to match with the right SVG
+  // Country ID
   const countryId = region.countryId || 0;
 
-  // Refs
-  const pieceRef = useRef<HTMLDivElement>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
+  // Path reference
   const pathRef = useRef<SVGPathElement>(null);
-  const dragOffset = useRef<Position>({ x: 0, y: 0 });
+  const svgRef = useRef<SVGSVGElement>(null);
   
-  // Piece size - using a mask to ensure accurate shape-only dragging
-  const pieceSize = isTrayPiece ? 100 : 150; // Slightly larger when on board
+  // Size calculation (important for positioning)
+  const size = isTrayPiece ? 80 : 140;
 
-  // Fetch the SVG data for this region
+  // Fetch SVG data for this region
   useEffect(() => {
     if (!region) return;
     
     try {
-      // Get the SVG data for the appropriate country
+      // Get SVG data
       let svgData = getSvgDataById(countryId);
       if (!svgData) return;
       
-      // Extract the viewBox from the SVG
+      // Get viewBox
       const viewBoxStr = getViewBoxFromSVG(svgData);
       if (viewBoxStr) {
         setViewBox(viewBoxStr);
       }
       
+      // Use region path directly
       setSvgPathData(region.svgPath);
-      
     } catch (error) {
-      console.error("Error processing region SVG path:", error);
+      console.error("Error processing SVG:", error);
     }
   }, [region, countryId]);
 
-  // Mouse event handlers for dragging - ONLY for the path element
-  const handlePathMouseDown = useCallback((e: React.MouseEvent<SVGPathElement>) => {
+  // Drag handlers - using fixed position SVG
+  const handleDragStart = useCallback((e: React.MouseEvent<SVGPathElement>) => {
     if (region.isPlaced) return;
     e.stopPropagation();
-    
-    // Get the path's position in the SVG
-    const pathElement = e.currentTarget;
-    const rect = pathElement.getBoundingClientRect();
-    
-    // Center the drag point on the cursor
-    dragOffset.current = {
-      x: rect.width / 2,
-      y: rect.height / 2
-    };
+    e.preventDefault();
     
     setIsDragging(true);
-    setIsEnlarged(true); // Enlarge on start
     
+    // Get path element's center
+    const pathElement = e.currentTarget;
+    const rect = pathElement.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    // Calculate offset from cursor to center
+    const offsetX = e.clientX - centerX;
+    const offsetY = e.clientY - centerY;
+    
+    // Set initial position
+    setPosition({
+      x: e.clientX - offsetX - size/2,
+      y: e.clientY - offsetY - size/2
+    });
+    
+    // Add document event listeners
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  }, [region.isPlaced]);
+  }, [region.isPlaced, size]);
   
+  // Mouse move handler
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
     
-    // Position the piece so its center is exactly at the cursor
-    // Use half of pieceSize to position the top-left corner correctly
-    const halfSize = pieceSize / 2;
+    // Update position directly at the cursor
     setPosition({
-      x: e.clientX - halfSize,
-      y: e.clientY - halfSize
+      x: e.clientX - size/2,
+      y: e.clientY - size/2
     });
-  }, [isDragging, pieceSize]);
+  }, [isDragging, size]);
   
+  // Mouse up/drop handler
   const handleMouseUp = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
     
+    // Remove listeners
     document.removeEventListener('mousemove', handleMouseMove);
     document.removeEventListener('mouseup', handleMouseUp);
     
+    // Reset dragging state
     setIsDragging(false);
-    setIsEnlarged(false);
     
-    // Try to place the piece if we have a container
-    if (containerRef.current && e.target instanceof Node) {
+    // Handle drop if we have a container
+    if (containerRef.current) {
       const containerRect = containerRef.current.getBoundingClientRect();
-      
-      // Calculate position relative to the container
       const relX = e.clientX - containerRect.left;
       const relY = e.clientY - containerRect.top;
       
-      // Check if the drop was successful
-      const dropSuccess = onDrop(region.id, relX, relY);
-      
-      // If drop was not successful (piece didn't snap into place), return it to original position
-      if (!dropSuccess && !snapToPosition) {
-        // Return to tray or other original position logic here
-      }
+      // Try to drop the piece
+      onDrop(region.id, relX, relY);
     }
-  }, [isDragging, region, onDrop, containerRef, snapToPosition]);
+  }, [isDragging, region.id, onDrop, containerRef]);
 
-  // Touch events - ONLY for the path element
-  const handlePathTouchStart = useCallback((e: React.TouchEvent<SVGPathElement>) => {
+  // Touch handlers
+  const handleTouchStart = useCallback((e: React.TouchEvent<SVGPathElement>) => {
     if (region.isPlaced || e.touches.length !== 1) return;
     e.stopPropagation();
     e.preventDefault();
     
-    const pathElement = e.currentTarget;
-    const rect = pathElement.getBoundingClientRect();
-    
-    // Center the drag point on the touch point
-    dragOffset.current = {
-      x: rect.width / 2,
-      y: rect.height / 2
-    };
-    
     setIsDragging(true);
-    setIsEnlarged(true);
+    
+    const touch = e.touches[0];
+    setPosition({
+      x: touch.clientX - size/2,
+      y: touch.clientY - size/2
+    });
     
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleTouchEnd);
-  }, [region.isPlaced]);
+  }, [region.isPlaced, size]);
   
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!isDragging || e.touches.length !== 1) return;
-    e.preventDefault(); // Prevent scrolling
+    e.preventDefault();
     
     const touch = e.touches[0];
-    // Position the piece so its center is exactly at the touch point
-    const halfSize = pieceSize / 2;
     setPosition({
-      x: touch.clientX - halfSize,
-      y: touch.clientY - halfSize
+      x: touch.clientX - size/2,
+      y: touch.clientY - size/2
     });
-  }, [isDragging, pieceSize]);
+  }, [isDragging, size]);
   
   const handleTouchEnd = useCallback((e: TouchEvent) => {
     if (!isDragging) return;
@@ -177,247 +168,77 @@ export function StatePiece({
     document.removeEventListener('touchend', handleTouchEnd);
     
     setIsDragging(false);
-    setIsEnlarged(false);
     
-    // Try to place the piece if we have a container
     if (containerRef.current && e.changedTouches.length === 1) {
       const touch = e.changedTouches[0];
       const containerRect = containerRef.current.getBoundingClientRect();
       
-      // Calculate position relative to the container
       const relX = touch.clientX - containerRect.left;
       const relY = touch.clientY - containerRect.top;
       
-      // Check if the drop was successful
-      const dropSuccess = onDrop(region.id, relX, relY);
-      
-      // If drop was not successful (piece didn't snap into place), return it to original position
-      if (!dropSuccess && !snapToPosition) {
-        // Return to tray or other original position logic here
-      }
+      onDrop(region.id, relX, relY);
     }
-  }, [isDragging, region, onDrop, containerRef, snapToPosition]);
+  }, [isDragging, region.id, onDrop, containerRef]);
 
-  // Buttons for piece manipulation
-  const rotateLeft = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent drag from starting
-    setRotation((prev) => prev - 15); // Rotate 15 degrees left
-  };
-
-  const rotateRight = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent drag from starting
-    setRotation((prev) => prev + 15); // Rotate 15 degrees right
-  };
-
-  const increaseSize = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent drag from starting
-    setScale((prev) => Math.min(prev + 0.1, 1.3)); // Max scale 1.3x
-  };
-
-  const decreaseSize = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent drag from starting
-    setScale((prev) => Math.max(prev - 0.1, 0.7)); // Min scale 0.7x
-  };
-
-  // Reset transformations
-  const resetTransformations = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent drag from starting
-    setRotation(0);
-    setScale(1);
-  };
-
+  // Build the SVG element directly
   return (
-    <div
-      ref={pieceRef}
-      className={cn(
-        "absolute transition-transform",
-        isDragging ? "z-50" : "",
-        region.isPlaced ? "cursor-default" : "",
-        isTrayPiece ? "inline-block" : "",
-        region.isPlaced ? "" : "group", // Add group for hover effects
-        "pointer-events-none" // CRITICAL: Explicitly disable ALL pointer events on the container
-      )}
-      style={{ 
+    <svg
+      ref={svgRef}
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox={viewBox}
+      width={size}
+      height={size}
+      className={isDragging ? "z-50" : ""}
+      style={{
         position: isDragging ? 'fixed' : 'absolute', 
         top: position.y,
         left: position.x,
         opacity: region.isPlaced ? 0.9 : 1,
-        width: pieceSize,
-        height: pieceSize,
-        transition: isDragging ? "none" : "opacity 0.3s ease",
-        background: 'transparent',
-        transformOrigin: "center center"
+        transform: `rotate(${rotation}deg) scale(${scale})`,
+        transition: isDragging ? 'none' : 'all 0.3s ease',
+        pointerEvents: 'none', // The SVG itself has no pointer events
+        overflow: 'visible'
       }}
     >
-      {/* Control buttons (only visible when hovering and not placed) */}
-      {!region.isPlaced && !isTrayPiece && (
-        <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex space-x-1 pointer-events-auto">
-          <Button 
-            size="icon" 
-            variant="secondary"
-            className="w-6 h-6 bg-white/80 hover:bg-white text-black pointer-events-auto" 
-            onClick={rotateLeft}
-          >
-            ↺
-          </Button>
-          <Button 
-            size="icon" 
-            variant="secondary"
-            className="w-6 h-6 bg-white/80 hover:bg-white text-black pointer-events-auto" 
-            onClick={rotateRight}
-          >
-            ↻
-          </Button>
-          <Button 
-            size="icon" 
-            variant="secondary" 
-            className="w-6 h-6 bg-white/80 hover:bg-white text-black pointer-events-auto"
-            onClick={increaseSize}
-          >
-            +
-          </Button>
-          <Button 
-            size="icon" 
-            variant="secondary" 
-            className="w-6 h-6 bg-white/80 hover:bg-white text-black pointer-events-auto"
-            onClick={decreaseSize}
-          >
-            -
-          </Button>
-          <Button 
-            size="icon" 
-            variant="secondary" 
-            className="w-6 h-6 bg-white/80 hover:bg-white text-black pointer-events-auto"
-            onClick={resetTransformations}
-          >
-            ↺↻
-          </Button>
-        </div>
-      )}
-
-      <svg 
-        ref={svgRef}
-        viewBox={viewBox} 
-        className={cn(
-          "w-full h-full puzzle-piece", 
-          isDragging && "puzzle-piece-dragging",
-          isEnlarged && !isDragging && "puzzle-piece-enlarged"
-        )}
-        style={{ 
-          overflow: 'visible',
-          transform: `rotate(${rotation}deg)`,
-          transformOrigin: "center center", // Ensure rotation happens from center
-          background: 'transparent',
-          pointerEvents: 'none', // SVG has no pointer events either
-        }}
-        preserveAspectRatio="xMidYMid meet"
-      >
-        {/* Create a mask definition that matches the shape */}
-        <defs>
-          <mask id={`mask-${region.id}`}>
-            {/* White shape = visible area */}
-            <path
-              d={svgPathData || region.svgPath}
-              fill="white"
-            />
-          </mask>
-        </defs>
+      <g transform="translate(50, 50) scale(0.7)">
+        {/* Shadow for depth - slightly offset */}
+        <path 
+          d={svgPathData || region.svgPath} 
+          fill="rgba(0,0,0,0.2)"
+          transform="translate(2, 2) scale(7.5)"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+          style={{ pointerEvents: 'none' }}
+        />
         
-        {/* No background elements - just the state shape centered precisely */}
-        <g transform="translate(50, 50) scale(0.7)" style={{ transformOrigin: "center", pointerEvents: 'none' }}>
-          {/* Main path that takes pointer events to trigger dragging */}
-          <path 
-            ref={pathRef}
-            d={svgPathData || region.svgPath} 
-            fill={region.isPlaced ? region.fillColor : "#ef4444"} // Red for unplaced pieces
-            stroke={region.strokeColor}
-            strokeWidth="2" // Reduced for cleaner appearance at smaller size
-            transform="scale(7.5)" // Significantly increased scale to fill the much smaller container
-            strokeLinejoin="round"
-            strokeLinecap="round"
-            style={{ 
-              transformOrigin: 'center center',
-              cursor: !region.isPlaced ? 'move' : 'default',
-              pointerEvents: 'auto', // ONLY the path gets pointer events!
-              filter: 'drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.3))'
-            }}
-            onMouseDown={!region.isPlaced ? handlePathMouseDown : undefined}
-            onTouchStart={!region.isPlaced ? handlePathTouchStart : undefined}
-          />
-        </g>
+        {/* The actual interactive path */}
+        <path 
+          ref={pathRef}
+          d={svgPathData || region.svgPath} 
+          fill={region.isPlaced ? region.fillColor : "#ef4444"}
+          stroke={region.strokeColor}
+          strokeWidth="2"
+          transform="scale(7.5)"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+          style={{ 
+            transformOrigin: 'center center',
+            cursor: !region.isPlaced ? 'move' : 'default',
+            pointerEvents: region.isPlaced ? 'none' : 'auto', // Only enable pointer events when not placed
+            filter: 'drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.3))'
+          }}
+          onMouseDown={!region.isPlaced ? handleDragStart : undefined}
+          onTouchStart={!region.isPlaced ? handleTouchStart : undefined}
+        />
 
-        {/* Centroid indicator (red dot) - only visible during dragging */}
-        {isDragging && (
-          <>
-            {/* Outermost pulse effect */}
-            <circle 
-              cx="50%" 
-              cy="50%" 
-              r="12" 
-              fill="none" 
-              stroke="rgba(255,0,0,0.3)"
-              strokeWidth="4"
-              style={{ 
-                filter: 'drop-shadow(0px 0px 8px rgba(255,0,0,0.7))',
-                animation: 'pulse 2s infinite',
-                transformOrigin: 'center',
-                pointerEvents: 'none'
-              }}
-            />
-            {/* Middle pulse effect */}
-            <circle 
-              cx="50%" 
-              cy="50%" 
-              r="9" 
-              fill="none" 
-              stroke="rgba(255,0,0,0.5)"
-              strokeWidth="3"
-              style={{ 
-                filter: 'drop-shadow(0px 0px 6px rgba(255,0,0,0.6))',
-                animation: 'pulse 1.5s infinite 0.2s',
-                transformOrigin: 'center',
-                pointerEvents: 'none'
-              }}
-            />
-            {/* Inner pulse ring */}
-            <circle 
-              cx="50%" 
-              cy="50%" 
-              r="6" 
-              fill="none" 
-              stroke="rgba(255,0,0,0.7)"
-              strokeWidth="2"
-              style={{ 
-                filter: 'drop-shadow(0px 0px 4px rgba(255,0,0,0.7))',
-                animation: 'pulse 1s infinite 0.4s',
-                transformOrigin: 'center',
-                pointerEvents: 'none'
-              }}
-            />
-            {/* Main red dot */}
-            <circle 
-              cx="50%" 
-              cy="50%" 
-              r="4" 
-              fill="red" 
-              stroke="white"
-              strokeWidth="2"
-              style={{ 
-                filter: 'drop-shadow(0px 0px 5px rgba(255,0,0,0.9))',
-                opacity: 1,
-                pointerEvents: 'none'
-              }}
-            />
-          </>
-        )}
-
+        {/* Region label */}
         <text 
-          x="50%" 
-          y="50%" 
+          x="0" 
+          y="0" 
           textAnchor="middle"
           dominantBaseline="middle"
           fill="#000000" 
-          fontSize={isTrayPiece ? "12" : "14"} // Slightly reduced text size
+          fontSize="24"
           fontWeight="bold"
           style={{ 
             textShadow: '0 0 3px white, 0 0 3px white, 0 0 3px white, 0 0 3px white',
@@ -427,7 +248,17 @@ export function StatePiece({
         >
           {region.name}
         </text>
-      </svg>
-    </div>
+      </g>
+      
+      {/* Drag indicator */}
+      {isDragging && (
+        <g>
+          <circle cx="50%" cy="50%" r="10" fill="none" stroke="rgba(255,0,0,0.5)" strokeWidth="3"
+            style={{ animation: 'pulse 1.5s infinite', pointerEvents: 'none' }} />
+          <circle cx="50%" cy="50%" r="4" fill="red" stroke="white" strokeWidth="1" 
+            style={{ pointerEvents: 'none' }} />
+        </g>
+      )}
+    </svg>
   );
 }
