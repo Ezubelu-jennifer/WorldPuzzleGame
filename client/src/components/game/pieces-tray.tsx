@@ -91,8 +91,9 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
         return (
           <div 
             key={region.id}
-            className={`flex-shrink-0 relative w-20 h-20 rounded-md shadow-md border-2 flex items-center justify-center 
-              ${region.isPlaced ? 'bg-gray-100 opacity-60 border-gray-300' : 'bg-white cursor-grab border-transparent hover:border-blue-300'}`}
+            className={`flex-shrink-0 relative w-20 h-20 rounded-md 
+              ${region.isPlaced ? 'opacity-60' : ''}`}
+            style={{ background: 'transparent', border: 'none' }}
           >
             {svgData && svgRegion ? (
               // Use the SVG thumbnail for the region, with direct draggable and rotatable support
@@ -112,18 +113,13 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
                 regionPieceId={region.id}
               />
             ) : (
-              // Fallback to regular puzzle piece
-              <div className="absolute inset-0 flex items-center justify-center">
-                <StatePiece
-                  region={regionWithColor}
-                  onDrop={onPieceDrop}
-                  containerRef={trayRef}
-                  isTrayPiece
-                />
-                <span className="text-xs font-bold text-center text-white drop-shadow-md pointer-events-none z-10">
-                  {region.name}
-                </span>
-              </div>
+              // Render directly - NO container div
+              <StatePiece
+                region={regionWithColor}
+                onDrop={onPieceDrop}
+                containerRef={trayRef}
+                isTrayPiece
+              />
             )}
             
             {/* Status indicator */}
