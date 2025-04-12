@@ -167,21 +167,40 @@ export function PuzzlePiece({
                   (alternativeMatches.length > 0 ? alternativeMatches[0] : null);
       
       if (match && match[1]) {
-        // Found a matching path!
-        setSvgPathData(match[1]);
-        console.log(`Found SVG path for ${region.name} in ${countryId === 1 ? 'Nigeria' : 'Kenya'}`);
+        // Found a matching path - optimize with SVG Clipper!
+        try {
+          const optimizedPath = optimizeSvgPath(match[1], 1.8); // Scale factor of 1.8
+          setSvgPathData(optimizedPath);
+          console.log(`Optimized SVG path for ${region.name} in ${countryId === 1 ? 'Nigeria' : 'Kenya'}`);
+        } catch (error) {
+          console.warn(`Failed to optimize path for ${region.name}, using original`, error);
+          setSvgPathData(match[1]);
+        }
       } else {
         // If no match found but we have a valid path from backend, use it
         if (region.svgPath && region.svgPath.includes('M')) {
-          setSvgPathData(region.svgPath);
-          console.log(`Using backend SVG path for ${region.name}`);
+          try {
+            // Optimize the backend path too
+            const optimizedPath = optimizeSvgPath(region.svgPath, 1.8);
+            setSvgPathData(optimizedPath);
+            console.log(`Using optimized backend SVG path for ${region.name}`);
+          } catch (error) {
+            console.warn(`Failed to optimize backend path for ${region.name}`, error);
+            setSvgPathData(region.svgPath);
+          }
         } else {
           // Last resort: try a very flexible search in the SVG data
           const flexRegex = new RegExp(`<path[^>]*d="(M[^"]+)"[^>]*`, 'i');
           const flexMatch = flexRegex.exec(svgData);
           if (flexMatch && flexMatch[1]) {
-            setSvgPathData(flexMatch[1]);
-            console.log(`Using flexible SVG path for ${region.name}`);
+            try {
+              const optimizedPath = optimizeSvgPath(flexMatch[1], 1.8);
+              setSvgPathData(optimizedPath);
+              console.log(`Using optimized flexible SVG path for ${region.name}`);
+            } catch (error) {
+              console.warn(`Failed to optimize flexible path for ${region.name}`, error);
+              setSvgPathData(flexMatch[1]);
+            }
           } else {
             // Fallback to the original path
             setSvgPathData(region.svgPath);

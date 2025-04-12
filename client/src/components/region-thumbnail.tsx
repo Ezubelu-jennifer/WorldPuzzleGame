@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { optimizeSvgPath } from "@/utils/svg-clipper";
 
 interface RegionThumbnailProps {
   svgData: string;
@@ -45,7 +46,14 @@ export function RegionThumbnail({
       const pathMatch = svgData.match(pathRegex);
       
       if (pathMatch && pathMatch[1]) {
-        setPathData(pathMatch[1]);
+        try {
+          // Optimize the SVG path using our clipper
+          const optimizedPath = optimizeSvgPath(pathMatch[1], 1.8);
+          setPathData(optimizedPath);
+        } catch (error) {
+          console.warn(`Failed to optimize path for ${regionId}, using original`, error);
+          setPathData(pathMatch[1]); 
+        }
       } else {
         console.warn(`Path for region ${regionId} not found`);
       }
