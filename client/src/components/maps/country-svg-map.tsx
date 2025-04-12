@@ -227,14 +227,14 @@ export function CountrySvgMap({
         onWheel={handleWheel}
       >
         {/* Country outer silhouette - draw once as a background to add shadow effect */}
-        <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.3))">
+        <g filter="drop-shadow(0px 3px 6px rgba(0,0,0,0.4))">
           {uniqueRegions.map((region) => (
             <path
               key={`silhouette-${region.id}`}
               d={region.path}
               fill="#e5e5e5" // Light gray fill for the puzzle outline
-              stroke="#cccccc" // Very light gray for slight definition
-              strokeWidth="0.5"
+              stroke="#666666" // Darker gray for stronger border definition
+              strokeWidth="2"
               style={{ pointerEvents: "none" }}
             />
           ))}
@@ -245,7 +245,7 @@ export function CountrySvgMap({
           const isHighlighted = region.id === highlightRegion;
           const fill = isHighlighted ? "#f87171" : "#e5e5e5"; // Light gray for unplaced regions
           const stroke = isHighlighted ? "#b91c1c" : "transparent"; // No visible stroke for inner boundaries
-          const strokeWidth = isHighlighted ? "1.5" : "0";
+          const strokeWidth = isHighlighted ? "3" : "0"; // Thicker stroke for highlighted regions
           
           return (
             <path
@@ -258,7 +258,10 @@ export function CountrySvgMap({
               data-name={region.name}
               aria-label={region.name}
               className="transition-colors duration-200 hover:opacity-80"
-              style={{ cursor: "pointer" }}
+              style={{ 
+                cursor: "pointer",
+                filter: isHighlighted ? 'drop-shadow(0px 3px 4px rgba(185,28,28,0.5))' : 'none' // Add drop shadow to highlighted regions
+              }}
               onClick={() => handleRegionClick(region.id, region.name)}
             />
           );
