@@ -61,8 +61,12 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
   ];
   
   return (
-    <div ref={trayRef} className="flex flex-wrap gap-2 overflow-x-auto py-2 px-3 min-h-[160px] max-h-[400px] overflow-y-auto">
-      {allRegions.map((region, index) => {
+    <div className="relative min-h-[160px] border-t border-b border-gray-200 bg-gray-50">
+      <div className="absolute left-0 top-1/2 -translate-y-1/2 bg-gradient-to-r from-gray-50 to-transparent w-10 h-full z-10 pointer-events-none"></div>
+      <div className="absolute right-0 top-1/2 -translate-y-1/2 bg-gradient-to-l from-gray-50 to-transparent w-10 h-full z-10 pointer-events-none"></div>
+      
+      <div ref={trayRef} className="flex gap-3 overflow-x-auto py-3 px-4 min-h-[160px] whitespace-nowrap overflow-y-hidden">
+        {allRegions.map((region, index) => {
         // Assign color from our palette, cycling through if needed
         const colorIndex = index % colors.length;
         const fillColor = colors[colorIndex].fill;
@@ -148,6 +152,7 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
           All pieces have been placed!
         </div>
       )}
+      </div>
     </div>
   );
 }
