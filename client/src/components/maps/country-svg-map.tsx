@@ -232,8 +232,10 @@ export function CountrySvgMap({
           <path
             d={uniqueRegions.map(region => region.path).join(' ')}
             fill="#e5e5e5" // Light gray fill for the puzzle outline
-            stroke="#666666" // Darker gray for stronger border definition
-            strokeWidth="3" 
+            stroke="#555555" // Darker gray for stronger border definition
+            strokeWidth="5" // Thicker outer border
+            strokeLinejoin="round"
+            strokeLinecap="round"
             style={{ pointerEvents: "none" }}
           />
         </g>
