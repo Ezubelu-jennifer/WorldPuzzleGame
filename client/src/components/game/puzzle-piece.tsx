@@ -362,14 +362,16 @@ export function PuzzlePiece({
 
       <svg 
         viewBox={viewBox} 
-        className="w-full h-full" 
+        className={cn(
+          "w-full h-full puzzle-piece", 
+          isDragging && "puzzle-piece-dragging",
+          isEnlarged && !isDragging && "puzzle-piece-enlarged"
+        )}
         style={{ 
           overflow: 'visible',
-          transform: `rotate(${rotation}deg) scale(${isDragging || isEnlarged ? 3.5 : 2.2})`,
+          transform: `rotate(${rotation}deg)`,
           transformOrigin: "center center", // Ensure rotation happens from center
           background: 'transparent',
-          filter: isDragging ? 'drop-shadow(0px 6px 12px rgba(0,0,0,0.25))' : 'none',
-          transition: isDragging ? "transform 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55)" : "transform 0.3s ease"
         }}
         preserveAspectRatio="xMidYMid meet"
       >
