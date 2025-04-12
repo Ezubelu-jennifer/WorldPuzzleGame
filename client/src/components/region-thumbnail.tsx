@@ -68,7 +68,7 @@ export function RegionThumbnail({
   
   return (
     <div 
-      className={`region-thumbnail ${className} overflow-hidden rounded-md bg-gray-100`}
+      className={`region-thumbnail ${className} overflow-visible`}
       style={styles}
       onClick={handleClick}
     >

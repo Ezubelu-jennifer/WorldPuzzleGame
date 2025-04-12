@@ -65,7 +65,7 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
       <div className="absolute left-0 top-1/2 -translate-y-1/2 bg-gradient-to-r from-green-700 to-transparent w-16 h-full z-10 pointer-events-none"></div>
       <div className="absolute right-0 top-1/2 -translate-y-1/2 bg-gradient-to-l from-green-700 to-transparent w-16 h-full z-10 pointer-events-none"></div>
       
-      <div ref={trayRef} className="flex gap-1 overflow-x-auto py-2 px-2 min-h-[110px] whitespace-nowrap overflow-y-hidden">
+      <div ref={trayRef} className="flex gap-0 overflow-x-auto py-2 px-2 min-h-[100px] whitespace-nowrap overflow-y-hidden">
         {allRegions.map((region, index) => {
         // Assign color from our palette, cycling through if needed
         const colorIndex = index % colors.length;
@@ -87,7 +87,7 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
         return (
           <div 
             key={region.id}
-            className={`flex-shrink-0 relative w-24 h-24 rounded-sm shadow-sm flex items-center justify-center 
+            className={`flex-shrink-0 relative w-16 h-16 flex items-center justify-center 
               ${region.isPlaced ? 'opacity-40' : 'cursor-grab'}`}
           >
             {svgData && svgRegion ? (
@@ -118,9 +118,7 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
                 </div>
                 
                 {/* Region name label */}
-                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-sm py-2 px-3 font-medium text-center rounded-b-sm truncate">
-                  {region.name}
-                </div>
+                {/* Region name removed to match screenshot */}
               </div>
             ) : (
               // Fallback to regular puzzle piece
@@ -137,9 +135,9 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
               </div>
             )}
             
-            {/* Status indicator */}
+            {/* Status indicator - smaller and more subtle checkmark, like in the screenshot */}
             {region.isPlaced && (
-              <div className="absolute top-2 right-2 bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-md text-lg">
+              <div className="absolute top-1 right-1 bg-green-600 text-white rounded-full w-4 h-4 flex items-center justify-center shadow-sm text-xs">
                 ✓
               </div>
             )}
