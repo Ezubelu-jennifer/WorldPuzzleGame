@@ -141,6 +141,12 @@ export function clipSvgPath(svgPath: string, targetSize: { width: number, height
  */
 export function optimizeSvgPath(svgPath: string, scaleFactor: number = 3.0): string {
   try {
+    // Validate the input path
+    if (!svgPath || !svgPath.includes('M')) {
+      console.warn('Invalid SVG path provided to optimizeSvgPath:', svgPath);
+      return svgPath;
+    }
+    
     // First we get the bounds of the path
     const bounds = getPathBounds(svgPath);
     const [minX, minY, maxX, maxY] = bounds;
@@ -149,14 +155,35 @@ export function optimizeSvgPath(svgPath: string, scaleFactor: number = 3.0): str
     const originalWidth = maxX - minX;
     const originalHeight = maxY - minY;
     
+    // Check for valid dimensions
+    if (originalWidth <= 0 || originalHeight <= 0 || isNaN(originalWidth) || isNaN(originalHeight)) {
+      console.warn('Invalid SVG path bounds:', bounds);
+      return svgPath;
+    }
+    
     // Calculate the target size based on the scale factor
     const targetSize = {
       width: originalWidth * scaleFactor,
       height: originalHeight * scaleFactor
     };
     
+    // Extra logging for debugging
+    if (scaleFactor >= 5.0) {
+      console.log('Using large scale factor for SVG path optimization:', scaleFactor);
+      console.log('Original bounds:', [minX, minY, maxX, maxY]);
+      console.log('Target size:', targetSize);
+    }
+    
     // Use the clipSvgPath function to properly scale the path
-    return clipSvgPath(svgPath, targetSize);
+    const result = clipSvgPath(svgPath, targetSize);
+    
+    // Validate the result
+    if (!result || !result.includes('M')) {
+      console.warn('SVG clipper produced invalid path');
+      return svgPath;
+    }
+    
+    return result;
   } catch (error) {
     console.warn('SVG path optimization failed:', error);
     return svgPath;

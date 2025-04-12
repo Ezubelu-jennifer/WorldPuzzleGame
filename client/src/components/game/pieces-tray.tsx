@@ -123,13 +123,14 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
                 </div>
               </div>
             ) : (
-              // Fallback to regular puzzle piece
+              // Fallback to regular puzzle piece, but improved visual representation
               <div className="absolute inset-0 flex items-center justify-center">
                 <PuzzlePiece
                   region={regionWithColor}
                   onDrop={onPieceDrop}
                   containerRef={trayRef}
                   isTrayPiece
+                  useThumbnail={true}
                 />
                 <span className="text-sm font-bold text-center absolute bottom-2 text-white drop-shadow-md pointer-events-none z-10">
                   {region.name}

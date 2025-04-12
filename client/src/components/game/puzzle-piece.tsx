@@ -369,10 +369,11 @@ export function PuzzlePiece({
               d={svgPathData || region.svgPath} 
               fill={region.isPlaced ? region.fillColor : "#ef4444"} // Red for unplaced pieces
               stroke={region.strokeColor || "#333"}
-              strokeWidth="1"
+              strokeWidth={useThumbnail ? "2" : "1"}
               style={{ 
                 transformOrigin: 'center center',
-                transform: 'scale(0.7)', // Fixed scale for consistent size
+                transform: useThumbnail ? 'scale(0.8)' : 'scale(0.7)', // Larger for thumbnails
+                filter: useThumbnail ? 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' : 'none',
               }}
             />
           </svg>
