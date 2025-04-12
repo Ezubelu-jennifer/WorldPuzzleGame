@@ -19,13 +19,29 @@
 }
 
 .puzzle-piece-enlarged {
-  transform: scale(3.0) !important;
+  transform: scale(2.5) !important;
   filter: drop-shadow(0px 8px 15px rgba(0,0,0,0.35)) !important;
   transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
 }
 
 .puzzle-piece-dragging {
-  transform: scale(1.0) !important;
+  transform: scale(0.95) !important; /* Slightly smaller during drag for better fit */
   filter: drop-shadow(0px 6px 12px rgba(0,0,0,0.25)) !important;
   transition: transform 0.15s cubic-bezier(0, 0, 0.2, 1) !important;
+}
+
+/* Pulse animation for the centroid indicator */
+@keyframes pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
 }

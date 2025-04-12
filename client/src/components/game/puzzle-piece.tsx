@@ -237,6 +237,17 @@ export function PuzzlePiece({
     if (region.isPlaced) return;
     e.stopPropagation();
     
+    // Calculate initial position relative to mouse to ensure centered dragging
+    const rect = pieceRef.current?.getBoundingClientRect();
+    if (rect) {
+      // We want all pieces to drag from their exact center regardless of size or shape
+      // This ensures consistent positioning for all piece sizes
+      dragOffset.current = {
+        x: rect.width / 2,
+        y: rect.height / 2
+      };
+    }
+    
     setIsDragging(true);
     setIsEnlarged(true); // Enlarge on start
     
@@ -287,6 +298,17 @@ export function PuzzlePiece({
     if (region.isPlaced || e.touches.length !== 1) return;
     e.stopPropagation();
     e.preventDefault();
+    
+    // Calculate initial position relative to touch to ensure centered dragging
+    const rect = pieceRef.current?.getBoundingClientRect();
+    if (rect) {
+      // We want all pieces to drag from their exact center regardless of size or shape
+      // This ensures consistent positioning for all piece sizes
+      dragOffset.current = {
+        x: rect.width / 2,
+        y: rect.height / 2
+      };
+    }
     
     setIsDragging(true);
     setIsEnlarged(true);
@@ -472,18 +494,35 @@ export function PuzzlePiece({
 
         {/* Centroid indicator (red dot) - only visible during dragging */}
         {isDragging && (
-          <circle 
-            cx="50%" 
-            cy="50%" 
-            r="5" 
-            fill="red" 
-            stroke="white"
-            strokeWidth="2"
-            style={{ 
-              filter: 'drop-shadow(0px 0px 3px rgba(0,0,0,0.5))',
-              opacity: 0.9
-            }}
-          />
+          <>
+            {/* Large outer pulse effect */}
+            <circle 
+              cx="50%" 
+              cy="50%" 
+              r="8" 
+              fill="none" 
+              stroke="rgba(255,0,0,0.4)"
+              strokeWidth="3"
+              style={{ 
+                filter: 'drop-shadow(0px 0px 4px rgba(255,0,0,0.5))',
+                animation: 'pulse 1.5s infinite',
+                transformOrigin: 'center'
+              }}
+            />
+            {/* Main red dot */}
+            <circle 
+              cx="50%" 
+              cy="50%" 
+              r="4" 
+              fill="red" 
+              stroke="white"
+              strokeWidth="2"
+              style={{ 
+                filter: 'drop-shadow(0px 0px 3px rgba(0,0,0,0.5))',
+                opacity: 1
+              }}
+            />
+          </>
         )}
 
         <text 
