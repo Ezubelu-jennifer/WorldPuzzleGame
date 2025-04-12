@@ -224,7 +224,7 @@ export function PuzzlePiece({
     onDragStart: () => {
       // Start animation - make piece bigger when first tapped
       setIsFirstTap(true);
-      setAnimationScale(1.6); // Initially grow the piece when tapped
+      setAnimationScale(2.0); // Initially grow the piece larger when tapped
     },
     onDragEnd: (finalPosition) => {
       // Reset animation scale
@@ -256,6 +256,24 @@ export function PuzzlePiece({
       setPosition({ x: region.correctX, y: region.correctY });
     }
   }, [region.isPlaced, snapToPosition, region.correctX, region.correctY, setPosition]);
+  
+  // Effect to gradually reduce size during dragging
+  useEffect(() => {
+    if (isDragging) {
+      // Start with large size when first tapped, then gradually reduce
+      if (isFirstTap) {
+        // This runs once when drag starts
+        setIsFirstTap(false);
+      } else {
+        // After initial tap, gradually reduce size during dragging
+        const timer = setTimeout(() => {
+          setAnimationScale(prev => Math.max(prev * 0.95, 1.0)); // Gradually reduce to normal size (1.0)
+        }, 50); // Update every 50ms
+        
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [isDragging, isFirstTap, position]);
 
   // Handle rotation of the piece
   const rotateLeft = (e: React.MouseEvent) => {
@@ -366,9 +384,10 @@ export function PuzzlePiece({
         style={{ 
           overflow: 'visible',
           transform: `rotate(${rotation}deg) scale(${isDragging ? animationScale : 2.2})`, // Apply animation scale when dragging
-          transition: isDragging ? "transform 0.15s ease" : "transform 0.3s ease",
+          transition: isDragging ? "transform 0.05s ease-out" : "transform 0.3s ease",
           background: 'transparent',
-          transformOrigin: "center center" // Ensure rotation happens from center
+          transformOrigin: "center center", // Ensure rotation happens from center
+          filter: isDragging ? 'drop-shadow(0px 6px 12px rgba(0,0,0,0.25))' : 'none',
         }}
         preserveAspectRatio="xMidYMid meet"
       >
@@ -383,7 +402,6 @@ export function PuzzlePiece({
             strokeLinejoin="round"
             strokeLinecap="round"
             style={{ 
-              filter: isDragging ? 'drop-shadow(0px 4px 8px rgba(0,0,0,0.5))' : 'drop-shadow(0px 2px 4px rgba(0,0,0,0.4))',
               transformOrigin: 'center center'
             }}
           />
