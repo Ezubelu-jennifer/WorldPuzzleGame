@@ -156,9 +156,12 @@ export function CountryDetails({ country, onBack, onPlay }: CountryDetailsProps)
                 const { fill, stroke } = getRegionColor(index);
                 const isSelected = region.id === selectedRegion;
                 
+                // Create a unique key that includes the ID and name to avoid duplicate key errors
+                const uniqueKey = `${region.id}-${region.name.replace(/\s+/g, '-')}`;
+                
                 return (
                   <div 
-                    key={region.id} 
+                    key={uniqueKey} 
                     className={`bg-gray-50 rounded-md border ${isSelected ? 'border-primary ring-2 ring-primary/30' : 'border-gray-200'} p-2 hover:shadow-md transition`}
                     onClick={() => handleRegionClick(region.id, region.name)}
                   >

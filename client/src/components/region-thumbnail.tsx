@@ -43,8 +43,16 @@ export function RegionThumbnail({
       }
       
       // Extract the path for this specific region
+      // First, try to find an exact ID match
       const pathRegex = new RegExp(`<path[^>]*id="${regionId}"[^>]*d="([^"]+)"`, 'i');
-      const pathMatch = svgData.match(pathRegex);
+      let pathMatch = svgData.match(pathRegex);
+      
+      // If no match and it's a custom ID (KE-CUSTOM-*, KE-MISSING-*, etc), try to extract by region name
+      if (!pathMatch && (regionId.includes('CUSTOM') || regionId.includes('MISSING') || regionId.includes('GEN'))) {
+        // Look for the path with the regionName in title attribute
+        const nameRegex = new RegExp(`<path[^>]*title="${regionName}"[^>]*d="([^"]+)"`, 'i');
+        pathMatch = svgData.match(nameRegex);
+      }
       
       if (pathMatch && pathMatch[1]) {
         try {
@@ -81,7 +89,16 @@ export function RegionThumbnail({
           setPathData(pathMatch[1]); 
         }
       } else {
-        console.warn(`Path for region ${regionId} not found`);
+        // For missing or custom paths, create a simple shape as fallback
+        if (regionId.includes('CUSTOM') || regionId.includes('MISSING') || regionId.includes('GEN')) {
+          console.warn(`Creating fallback shape for ${regionId} (${regionName})`);
+          
+          // Create a simple rounded rectangle shape as fallback
+          const fallbackPath = "M10,10 L90,10 Q100,10 100,20 L100,80 Q100,90 90,90 L10,90 Q0,90 0,80 L0,20 Q0,10 10,10 Z";
+          setPathData(fallbackPath);
+        } else {
+          console.warn(`Path for region ${regionId} not found`);
+        }
       }
     } catch (error) {
       console.error("Error extracting region path:", error);

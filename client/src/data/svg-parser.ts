@@ -254,8 +254,9 @@ export function extractKenyaRegions(svgData: string) {
       existingRegion.path = path;
       console.log(`Updated path for ${countyName}`);
     } else {
-      // Find the appropriate county ID for this name
-      const countyId = Object.entries(countyNames).find(([_, name]) => name === countyName)?.[0] || 'KE-XX';
+      // Find the appropriate county ID for this name or create a unique one
+      const countyIdEntry = Object.entries(countyNames).find(([_, name]) => name === countyName);
+      const countyId = countyIdEntry ? countyIdEntry[0] : `KE-CUSTOM-${countyName.replace(/[^a-zA-Z0-9]/g, '')}`;
       if (countyId) {
         regions.push({
           id: countyId,
@@ -267,8 +268,10 @@ export function extractKenyaRegions(svgData: string) {
     }
     
     // Make sure it's added to the uniqueRegionMap too
+    const uniqueCountyId = Object.entries(countyNames).find(([_, name]) => name === countyName)?.[0] 
+      || `KE-CUSTOM-${countyName.replace(/[^a-zA-Z0-9]/g, '')}`;
     uniqueRegionMap.set(countyName, {
-      id: Object.entries(countyNames).find(([_, name]) => name === countyName)?.[0] || 'KE-XX',
+      id: uniqueCountyId,
       name: countyName,
       path: path
     });
@@ -281,7 +284,8 @@ export function extractKenyaRegions(svgData: string) {
       console.warn(`Adding missing Kenya county: ${countyName}`);
       
       // Find a valid ID for this county
-      const countyId = Object.entries(countyNames).find(([_, name]) => name === countyName)?.[0] || 'KE-XX';
+      const countyIdEntry = Object.entries(countyNames).find(([_, name]) => name === countyName);
+      const countyId = countyIdEntry ? countyIdEntry[0] : `KE-MISSING-${countyName.replace(/[^a-zA-Z0-9]/g, '')}`;
       
       uniqueRegionMap.set(countyName, {
         id: countyId,
