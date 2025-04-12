@@ -228,16 +228,14 @@ export function CountrySvgMap({
       >
         {/* Country outer silhouette - draw once as a background to add shadow effect */}
         <g filter="drop-shadow(0px 3px 6px rgba(0,0,0,0.4))">
-          {uniqueRegions.map((region) => (
-            <path
-              key={`silhouette-${region.id}`}
-              d={region.path}
-              fill="#e5e5e5" // Light gray fill for the puzzle outline
-              stroke="#666666" // Darker gray for stronger border definition
-              strokeWidth="2"
-              style={{ pointerEvents: "none" }}
-            />
-          ))}
+          {/* First, render a merged country shape outline without internal borders */}
+          <path
+            d={uniqueRegions.map(region => region.path).join(' ')}
+            fill="#e5e5e5" // Light gray fill for the puzzle outline
+            stroke="#666666" // Darker gray for stronger border definition
+            strokeWidth="3" 
+            style={{ pointerEvents: "none" }}
+          />
         </g>
           
         {/* Interactive region paths */}
