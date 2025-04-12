@@ -298,6 +298,7 @@ export function PuzzlePiece({
         width: `${pieceSize}px`,
         height: `${pieceSize}px`,
         transition: "opacity 0.3s ease",
+        background: 'transparent',
       }}
       {...dragHandlers}
     >
@@ -353,12 +354,12 @@ export function PuzzlePiece({
         style={{ 
           overflow: 'visible',
           transform: `rotate(${rotation}deg) scale(2.2)`, // Match scale with thumbnail
-          transition: "transform 0.3s ease"
+          transition: "transform 0.3s ease",
+          background: 'transparent'
         }}
         preserveAspectRatio="xMidYMid meet"
       >
-        {/* Background circle for consistent sizing */}
-        <circle cx="50%" cy="50%" r="35%" fill="transparent" />
+        {/* No background elements - just the state shape */}
         <g transform="translate(50, 50) scale(0.7)" style={{ transformOrigin: "center" }}>
           <path 
             d={svgPathData || region.svgPath} 
