@@ -303,8 +303,8 @@ export function PuzzlePiece({
       )}
       style={{ 
         position: isDragging ? 'fixed' : 'absolute', 
-        top: position.y - (isDragging ? pieceSize/2 : 0),
-        left: position.x - (isDragging ? pieceSize/2 : 0),
+        top: position.y,
+        left: position.x,
         opacity: region.isPlaced ? 0.9 : 1,
         width: pieceSize,
         height: pieceSize,

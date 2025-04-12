@@ -59,11 +59,14 @@ export function useDrag({
   const handleMouseMove = (e: MouseEvent | globalThis.MouseEvent) => {
     if (!dragRef.current.dragging) return;
     
-    // Position the element directly under the cursor (hand palm)
-    // With the translate(-50%, -50%) transform, we can simply position at exact cursor coordinates
+    // Calculate offset from the original position
+    const offsetX = e.clientX - dragStartPositionRef.current.x;
+    const offsetY = e.clientY - dragStartPositionRef.current.y;
+    
+    // Apply offset to the element's original position
     const newPosition = {
-      x: e.clientX,
-      y: e.clientY,
+      x: elementStartPositionRef.current.x + offsetX,
+      y: elementStartPositionRef.current.y + offsetY,
     };
     
     setPosition(newPosition);
@@ -80,14 +83,9 @@ export function useDrag({
     document.removeEventListener("mousemove", handleMouseMove);
     document.removeEventListener("mouseup", handleMouseUp);
     
-    // Use the current cursor position directly since we use transform to center
-    const finalPosition = {
-      x: e.clientX,
-      y: e.clientY,
-    };
-    
     if (onDragEnd && wasDraggingRef.current) {
-      onDragEnd(finalPosition, true);
+      // Use the current position which should be tracked by our state
+      onDragEnd(position, true);
       wasDraggingRef.current = false;
     }
   };
@@ -127,11 +125,14 @@ export function useDrag({
     
     e.preventDefault(); // Prevent scrolling while dragging
     
-    // Position element directly under the finger touch point
-    // Using transform: translate(-50%, -50%) we can use exact touch coordinates
+    // Calculate offset from the original touch position
+    const offsetX = e.touches[0].clientX - dragStartPositionRef.current.x;
+    const offsetY = e.touches[0].clientY - dragStartPositionRef.current.y;
+    
+    // Apply offset to the element's original position
     const newPosition = {
-      x: e.touches[0].clientX,
-      y: e.touches[0].clientY,
+      x: elementStartPositionRef.current.x + offsetX,
+      y: elementStartPositionRef.current.y + offsetY,
     };
     
     setPosition(newPosition);
