@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { extractNigeriaRegions, extractKenyaRegions, getViewBoxFromSVG, createUnifiedCountryOutline } from "@/data/svg-parser";
+import { extractNigeriaRegions, extractKenyaRegions, getViewBoxFromSVG } from "@/data/svg-parser";
 import { ZoomIn, ZoomOut, Maximize } from "lucide-react";
 
 interface CountrySvgMapProps {
@@ -226,27 +226,26 @@ export function CountrySvgMap({
         onTouchEnd={handleTouchEnd}
         onWheel={handleWheel}
       >
-        {/* Country outer silhouette with thick border and no internal lines */}
-        <g filter="drop-shadow(0px 4px 8px rgba(0,0,0,0.5))">
-          {/* Single merged country shape with outer border only */}
-          <path
-            d={createUnifiedCountryOutline(uniqueRegions.map(region => region.path))}
-            fill="#e5e5e5" // Light gray fill for the puzzle outline
-            stroke="#444444" // Darker gray for stronger border definition
-            strokeWidth="7" // Extra thick outer border
-            strokeLinejoin="round"
-            strokeLinecap="round"
-            style={{ pointerEvents: "none" }}
-          />
+        {/* Country outer silhouette - draw once as a background to add shadow effect */}
+        <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.3))">
+          {uniqueRegions.map((region) => (
+            <path
+              key={`silhouette-${region.id}`}
+              d={region.path}
+              fill="#e5e5e5" // Light gray fill for the puzzle outline
+              stroke="#cccccc" // Very light gray for slight definition
+              strokeWidth="0.5"
+              style={{ pointerEvents: "none" }}
+            />
+          ))}
         </g>
           
-        {/* Invisible interactive regions for click handling only */}
+        {/* Interactive region paths */}
         {uniqueRegions.map((region) => {
           const isHighlighted = region.id === highlightRegion;
-          // Only highlighted regions get a visible fill/stroke
-          const fill = isHighlighted ? "#f87171" : "transparent"; 
-          const stroke = isHighlighted ? "#b91c1c" : "transparent";
-          const strokeWidth = isHighlighted ? "4" : "0";
+          const fill = isHighlighted ? "#f87171" : "#e5e5e5"; // Light gray for unplaced regions
+          const stroke = isHighlighted ? "#b91c1c" : "transparent"; // No visible stroke for inner boundaries
+          const strokeWidth = isHighlighted ? "1.5" : "0";
           
           return (
             <path
@@ -258,11 +257,8 @@ export function CountrySvgMap({
               strokeWidth={strokeWidth}
               data-name={region.name}
               aria-label={region.name}
-              className="transition-colors duration-200"
-              style={{ 
-                cursor: "pointer",
-                filter: isHighlighted ? 'drop-shadow(0px 4px 8px rgba(185,28,28,0.6))' : 'none'
-              }}
+              className="transition-colors duration-200 hover:opacity-80"
+              style={{ cursor: "pointer" }}
               onClick={() => handleRegionClick(region.id, region.name)}
             />
           );

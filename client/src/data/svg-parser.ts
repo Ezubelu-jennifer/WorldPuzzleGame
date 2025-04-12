@@ -338,17 +338,3 @@ export function getMapBoundaries(svgData: string) {
     maxY: minY + height
   };
 }
-
-/**
- * Creates a unified country outline path from all region paths
- * This helps create a solid shape with no internal boundaries
- */
-export function createUnifiedCountryOutline(paths: string[]): string {
-  // If no paths or only one path, just return it
-  if (paths.length === 0) return "";
-  if (paths.length === 1) return paths[0];
-  
-  // For a proper solution, we would ideally use a path-merging algorithm
-  // But for now, joining the paths with spaces is what works best with SVG
-  return paths.join(' ');
-}

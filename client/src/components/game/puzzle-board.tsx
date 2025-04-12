@@ -157,13 +157,10 @@ export function PuzzleBoard({
               <path 
                 d={outlinePath} 
                 fill="#e5e5e5" 
-                stroke="#444444" 
-                strokeWidth="7"
-                strokeLinejoin="round"
-                strokeLinecap="round"
+                stroke="#cccccc"
+                strokeWidth="0.5"
                 style={{
-                  filter: 'drop-shadow(0px 4px 8px rgba(0,0,0,0.5))',
-                  opacity: 0.95
+                  filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.3))'
                 }}
               />
             </svg>

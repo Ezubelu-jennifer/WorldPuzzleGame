@@ -364,8 +364,8 @@ export function PuzzlePiece({
           <path 
             d={svgPathData || region.svgPath} 
             fill={region.isPlaced ? region.fillColor : "#ef4444"} // Red for unplaced pieces
-            stroke={region.isPlaced ? "transparent" : region.strokeColor} // No stroke for placed pieces to avoid internal lines
-            strokeWidth={region.isPlaced ? "0" : "3"} // No stroke for placed pieces
+            stroke={region.strokeColor}
+            strokeWidth="3" // Thicker stroke for bold appearance
             transform="scale(5.5)" // Increased to exactly 5.5x scale per request
             strokeLinejoin="round"
             strokeLinecap="round"
