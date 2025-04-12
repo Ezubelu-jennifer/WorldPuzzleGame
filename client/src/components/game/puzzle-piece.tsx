@@ -331,7 +331,7 @@ export function PuzzlePiece({
         className="w-full h-full" 
         style={{ 
           overflow: 'visible',
-          transform: `rotate(${rotation}deg)`,
+          transform: `rotate(${rotation}deg) scale(1.5)`, // Scale up the SVG by 50%
           transition: "transform 0.3s ease"
         }}
       >
@@ -339,8 +339,12 @@ export function PuzzlePiece({
           d={svgPathData || region.svgPath} 
           fill={region.isPlaced ? region.fillColor : "#ef4444"} // Red for unplaced pieces
           stroke={region.strokeColor}
-          strokeWidth="3"
-          style={{ filter: isDragging ? 'drop-shadow(0px 4px 8px rgba(0,0,0,0.3))' : 'none' }}
+          strokeWidth="4" // Increased stroke width for better visibility 
+          style={{ 
+            filter: isDragging ? 'drop-shadow(0px 6px 12px rgba(0,0,0,0.5))' : 'drop-shadow(0px 2px 4px rgba(0,0,0,0.3))',
+            // Apply transform-origin to center for better rotation
+            transformOrigin: 'center center'
+          }}
         />
         <text 
           x="50%" 
