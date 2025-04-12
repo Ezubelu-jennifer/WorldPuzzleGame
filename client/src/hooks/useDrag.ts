@@ -59,12 +59,12 @@ export function useDrag({
   const handleMouseMove = (e: MouseEvent | globalThis.MouseEvent) => {
     if (!dragRef.current.dragging) return;
     
-    const deltaX = e.clientX - dragStartPositionRef.current.x;
-    const deltaY = e.clientY - dragStartPositionRef.current.y;
-    
+    // Position the element directly under the cursor (hand palm)
+    // Keeping a constant offset to make the region appear centered under the cursor
+    const pieceSize = 60; // Approximate half size of the piece
     const newPosition = {
-      x: elementStartPositionRef.current.x + deltaX,
-      y: elementStartPositionRef.current.y + deltaY,
+      x: e.clientX - pieceSize,
+      y: e.clientY - pieceSize,
     };
     
     setPosition(newPosition);
@@ -81,13 +81,11 @@ export function useDrag({
     document.removeEventListener("mousemove", handleMouseMove);
     document.removeEventListener("mouseup", handleMouseUp);
     
-    // Get final position
-    const deltaX = e.clientX - dragStartPositionRef.current.x;
-    const deltaY = e.clientY - dragStartPositionRef.current.y;
-    
+    // Use the current cursor position with the same offset as in handleMouseMove
+    const pieceSize = 60;
     const finalPosition = {
-      x: elementStartPositionRef.current.x + deltaX,
-      y: elementStartPositionRef.current.y + deltaY,
+      x: e.clientX - pieceSize,
+      y: e.clientY - pieceSize,
     };
     
     if (onDragEnd && wasDraggingRef.current) {
@@ -131,12 +129,12 @@ export function useDrag({
     
     e.preventDefault(); // Prevent scrolling while dragging
     
-    const deltaX = e.touches[0].clientX - dragStartPositionRef.current.x;
-    const deltaY = e.touches[0].clientY - dragStartPositionRef.current.y;
-    
+    // Position element directly under the finger touch point
+    // Keep constant offset to center piece under finger
+    const pieceSize = 60; // Approximate half size of the piece
     const newPosition = {
-      x: elementStartPositionRef.current.x + deltaX,
-      y: elementStartPositionRef.current.y + deltaY,
+      x: e.touches[0].clientX - pieceSize,
+      y: e.touches[0].clientY - pieceSize,
     };
     
     setPosition(newPosition);
@@ -154,7 +152,9 @@ export function useDrag({
     document.removeEventListener("touchend", handleTouchEnd);
     
     if (onDragEnd && wasDraggingRef.current) {
-      // For touch, use the last known position
+      // Important: use the current position which should be under the finger
+      // This is more reliable than trying to calculate a new position at touchend
+      // since sometimes the finger position isn't available in the touchend event
       onDragEnd(position, true);
       wasDraggingRef.current = false;
     }
