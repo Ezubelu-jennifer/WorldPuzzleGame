@@ -299,6 +299,8 @@ export function PuzzlePiece({
         height: `${pieceSize}px`,
         transition: "opacity 0.3s ease",
         background: 'transparent',
+        transformOrigin: "center center",
+        transform: isDragging ? `translate(-50%, -50%)` : "none",
       }}
       {...dragHandlers}
     >

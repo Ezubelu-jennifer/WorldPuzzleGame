@@ -60,11 +60,10 @@ export function useDrag({
     if (!dragRef.current.dragging) return;
     
     // Position the element directly under the cursor (hand palm)
-    // Using a much smaller offset to make the shape center almost directly under the cursor
-    const pieceSize = 30; // Much smaller offset for more direct placement
+    // With the translate(-50%, -50%) transform, we can simply position at exact cursor coordinates
     const newPosition = {
-      x: e.clientX - pieceSize,
-      y: e.clientY - pieceSize,
+      x: e.clientX,
+      y: e.clientY,
     };
     
     setPosition(newPosition);
@@ -81,11 +80,10 @@ export function useDrag({
     document.removeEventListener("mousemove", handleMouseMove);
     document.removeEventListener("mouseup", handleMouseUp);
     
-    // Use the current cursor position with the same offset as in handleMouseMove
-    const pieceSize = 30; // Match the same offset used in handleMouseMove
+    // Use the current cursor position directly since we use transform to center
     const finalPosition = {
-      x: e.clientX - pieceSize,
-      y: e.clientY - pieceSize,
+      x: e.clientX,
+      y: e.clientY,
     };
     
     if (onDragEnd && wasDraggingRef.current) {
@@ -130,11 +128,10 @@ export function useDrag({
     e.preventDefault(); // Prevent scrolling while dragging
     
     // Position element directly under the finger touch point
-    // Keep constant offset to center piece under finger
-    const pieceSize = 30; // Match the smaller offset used in mouse handling
+    // Using transform: translate(-50%, -50%) we can use exact touch coordinates
     const newPosition = {
-      x: e.touches[0].clientX - pieceSize,
-      y: e.touches[0].clientY - pieceSize,
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
     };
     
     setPosition(newPosition);
