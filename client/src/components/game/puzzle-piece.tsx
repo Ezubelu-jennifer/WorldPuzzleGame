@@ -15,6 +15,11 @@ interface PuzzlePieceProps {
   useThumbnail?: boolean; // Whether to use the thumbnail instead of rendering SVG
 }
 
+interface Position {
+  x: number;
+  y: number;
+}
+
 export function PuzzlePiece({ 
   region, 
   onDrop, 
@@ -28,18 +33,23 @@ export function PuzzlePiece({
   const [viewBox, setViewBox] = useState<string>("0 0 100 100");
   const [rotation, setRotation] = useState<number>(0);
   const [scale, setScale] = useState<number>(1);
+  
   // Animation states for dynamic sizing during interaction
   const [isEnlarged, setIsEnlarged] = useState<boolean>(false);
   
   // State for position, dragging and animations
-  const [position, setPosition] = useState({ 
+  const [position, setPosition] = useState<Position>({ 
     x: region.currentX || (isTrayPiece ? 0 : Math.random() * 100),
     y: region.currentY || (isTrayPiece ? 0 : Math.random() * 100)
   });
   const [isDragging, setIsDragging] = useState(false);
   
+  // Determine piece size based on whether it's in the tray or on the board 
+  const basePieceSize = isTrayPiece ? 25 : 35; // Smaller size for better direct positioning
+  const pieceSize = basePieceSize * scale;
+  
   // Refs for drag calculations
-  const dragOffset = useRef({ x: 0, y: 0 });
+  const dragOffset = useRef<Position>({ x: 0, y: 0 });
 
   // Try to get the actual SVG path for this region from the SVG data
   useEffect(() => {
@@ -222,32 +232,17 @@ export function PuzzlePiece({
     }
   }, [region.id, region.name, region.svgPath, region.countryId]);
 
-  // Mouse and touch event handlers for dragging
+  // Mouse event handlers for dragging
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (region.isPlaced) return;
     e.stopPropagation();
-    
-    // We want all pieces to drag from their exact center regardless of size or shape
-    // This ensures consistent positioning for all piece sizes
-    const rect = pieceRef.current?.getBoundingClientRect();
-    if (rect) {
-      // Calculate distance from mouse to center of piece
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      
-      // Set offset to force the piece center to be at the mouse position
-      dragOffset.current = {
-        x: centerX - position.x,
-        y: centerY - position.y
-      };
-    }
     
     setIsDragging(true);
     setIsEnlarged(true); // Enlarge on start
     
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  }, [region.isPlaced, position]);
+  }, [region.isPlaced]);
   
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
@@ -293,26 +288,12 @@ export function PuzzlePiece({
     e.stopPropagation();
     e.preventDefault();
     
-    const touch = e.touches[0];
-    const rect = pieceRef.current?.getBoundingClientRect();
-    if (rect) {
-      // Apply the same center-based offset calculation as in mouse events
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      
-      // Set offset to force the piece center to be at touch position
-      dragOffset.current = {
-        x: centerX - position.x,
-        y: centerY - position.y
-      };
-    }
-    
     setIsDragging(true);
     setIsEnlarged(true);
     
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleTouchEnd);
-  }, [region.isPlaced, position]);
+  }, [region.isPlaced]);
   
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!isDragging || e.touches.length !== 1) return;
@@ -359,9 +340,6 @@ export function PuzzlePiece({
     }
   }, [region.isPlaced, snapToPosition, region.correctX, region.correctY]);
   
-  // We no longer need the gradual size reduction effect
-  // The animation will be handled by CSS transitions
-
   // Handle rotation of the piece
   const rotateLeft = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent drag from starting
@@ -390,11 +368,6 @@ export function PuzzlePiece({
     setRotation(0);
     setScale(1);
   };
-
-  // Determine piece size based on whether it's in the tray or on the board 
-  // Using much smaller pieces for more direct palm positioning
-  const basePieceSize = isTrayPiece ? 25 : 35; // Even smaller size for better direct positioning
-  const pieceSize = basePieceSize * scale;
 
   return (
     <div
