@@ -4,6 +4,7 @@ import { RegionPiece } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { getSvgDataById } from "@/data/svg-map-data";
 import { getViewBoxFromSVG } from "@/data/svg-parser";
+import { optimizeSvgPath } from "@/utils/svg-clipper";
 import { Button } from "@/components/ui/button";
 
 interface PuzzlePieceProps {
