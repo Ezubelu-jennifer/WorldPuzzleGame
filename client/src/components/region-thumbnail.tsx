@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { optimizeSvgPath } from "@/utils/svg-clipper";
+import { getPathBounds } from "svg-path-bounds";
 
 interface RegionThumbnailProps {
   svgData: string;
@@ -38,7 +39,7 @@ export function RegionThumbnail({
       // Extract viewBox
       const viewBoxMatch = svgData.match(/viewBox="([^"]+)"/);
       if (viewBoxMatch && viewBoxMatch[1]) {
-        setViewBox(viewBoxMatch[1]);
+        setViewBox("0 0 100 100"); // Use a normalized viewBox for consistent positioning
       }
       
       // Extract the path for this specific region
@@ -47,9 +48,34 @@ export function RegionThumbnail({
       
       if (pathMatch && pathMatch[1]) {
         try {
-          // Optimize the SVG path using our clipper with a higher scale factor
-          const optimizedPath = optimizeSvgPath(pathMatch[1], 2.5);
-          setPathData(optimizedPath);
+          // Get the original path
+          const originalPath = pathMatch[1];
+          
+          // Get the bounds of the path to normalize it
+          const bounds = getPathBounds(originalPath);
+          const [minX, minY, maxX, maxY] = bounds;
+          
+          // Calculate the width and height
+          const width = maxX - minX;
+          const height = maxY - minY;
+          
+          // Calculate the center of the path
+          const centerX = minX + width / 2;
+          const centerY = minY + height / 2;
+          
+          // Center the path in the middle of the 100x100 viewBox
+          const scaleFactor = 55 / Math.max(width, height);
+          
+          // Create a simplified optimized path centered in the viewBox
+          // This is a simplified approach that modifies the path string directly
+          const normalizedPath = optimizeSvgPath(originalPath, 1.0); // First get optimized path
+          
+          // Set as the path data
+          setViewBox("0 0 100 100");
+          
+          // Now we will use SVG transformation to center and scale the path
+          // rather than modifying the path data directly
+          setPathData(normalizedPath);
         } catch (error) {
           console.warn(`Failed to optimize path for ${regionId}, using original`, error);
           setPathData(pathMatch[1]); 
@@ -83,26 +109,37 @@ export function RegionThumbnail({
       {pathData ? (
         <div className="w-full h-full relative">
           <svg viewBox={viewBox} width="100%" height="100%">
-            {/* Background circle for consistent sizing */}
-            <circle 
-              cx="50%" 
-              cy="50%" 
-              r="40%" 
-              fill="rgba(255,255,255,0.2)"
-              stroke="rgba(0,0,0,0.05)"
-              strokeWidth="1"
+            {/* Solid background for consistent positioning */}
+            <rect
+              x="0" 
+              y="0" 
+              width="100%" 
+              height="100%"
+              fill="rgba(255,255,255,0.1)"
+              rx="5"
             />
-            <path
-              d={pathData}
-              fill={color}
-              stroke={strokeColor}
-              strokeWidth={strokeWidth + 2}
-              style={{
-                transform: 'scale(2.5)', 
-                transformOrigin: 'center',
-                filter: 'drop-shadow(0px 2px 3px rgba(0,0,0,0.4))'
-              }}
-            />
+            {/* Create a fixed-size centered container for the state shape */}
+            <g>
+              <path
+                d={pathData}
+                fill={color}
+                stroke={strokeColor}
+                strokeWidth={strokeWidth + 2}
+                transform="translate(25 25) scale(0.5)"
+                style={{
+                  transformBox: 'fill-box',
+                  transformOrigin: 'center',
+                  filter: 'drop-shadow(0px 3px 4px rgba(0,0,0,0.5))'
+                }}
+              />
+              {/* Add a centered positioning indicator */}
+              <circle
+                cx="50%"
+                cy="50%"
+                r="2"
+                fill="transparent"
+              />
+            </g>
           </svg>
           
           {showLabel && (
