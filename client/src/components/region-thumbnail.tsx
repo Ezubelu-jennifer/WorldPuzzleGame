@@ -125,30 +125,32 @@ export function RegionThumbnail({
     >
       {pathData ? (
         <div className="w-full h-full relative">
-          <svg viewBox={viewBox} width="100%" height="100%">
-            {/* No background */}
+          <svg viewBox={viewBox} width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+            {/* Background circle for consistent sizing */}
+            <circle cx="50%" cy="50%" r="35%" fill="transparent" />
             {/* Create a fixed-size centered container for the state shape */}
             <g>
               <path
                 d={pathData}
                 fill={color}
                 stroke={strokeColor}
-                strokeWidth={strokeWidth + 1}
-                transform="scale(2.0)"
+                strokeWidth={strokeWidth + 2} // Thicker border for bolder appearance
+                transform="scale(2.2)" // Slightly larger scale
                 style={{
                   transformBox: 'fill-box',
                   transformOrigin: 'center',
-                  filter: 'drop-shadow(0px 2px 3px rgba(0,0,0,0.3))'
+                  filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.4))'
                 }}
               />
-              {/* Add text label on the shape */}
+              {/* Add text label IN the shape */}
               {showLabel && (
                 <text 
                   x="50%" 
-                  y="85%" 
+                  y="50%" 
                   textAnchor="middle"
+                  dominantBaseline="middle"
                   fill="#000000" 
-                  fontSize="7"
+                  fontSize="6"
                   fontWeight="bold"
                   style={{ 
                     textShadow: '0 0 2px white, 0 0 2px white, 0 0 2px white, 0 0 2px white'

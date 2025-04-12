@@ -352,28 +352,32 @@ export function PuzzlePiece({
         className="w-full h-full" 
         style={{ 
           overflow: 'visible',
-          transform: `rotate(${rotation}deg) scale(2.0)`, // Scale to match the image
+          transform: `rotate(${rotation}deg) scale(2.2)`, // Match scale with thumbnail
           transition: "transform 0.3s ease"
         }}
+        preserveAspectRatio="xMidYMid meet"
       >
+        {/* Background circle for consistent sizing */}
+        <circle cx="50%" cy="50%" r="35%" fill="transparent" />
         <path 
           d={svgPathData || region.svgPath} 
           fill={region.isPlaced ? region.fillColor : "#ef4444"} // Red for unplaced pieces
           stroke={region.strokeColor}
-          strokeWidth="1" // Thinner stroke as shown in the image
+          strokeWidth="2" // Thicker stroke for bold appearance
           strokeLinejoin="round"
           strokeLinecap="round"
           style={{ 
-            filter: isDragging ? 'drop-shadow(0px 4px 8px rgba(0,0,0,0.4))' : 'drop-shadow(0px 2px 3px rgba(0,0,0,0.3))',
+            filter: isDragging ? 'drop-shadow(0px 4px 8px rgba(0,0,0,0.5))' : 'drop-shadow(0px 2px 4px rgba(0,0,0,0.4))',
             transformOrigin: 'center center'
           }}
         />
         <text 
           x="50%" 
-          y="85%" 
+          y="50%" 
           textAnchor="middle"
+          dominantBaseline="middle"
           fill="#000000" 
-          fontSize={isTrayPiece ? "7" : "10"}
+          fontSize={isTrayPiece ? "6" : "8"}
           fontWeight="bold"
           style={{ 
             textShadow: '0 0 2px white, 0 0 2px white, 0 0 2px white, 0 0 2px white'

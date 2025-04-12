@@ -91,7 +91,7 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
         return (
           <div 
             key={region.id}
-            className={`flex-shrink-0 relative w-24 h-20 rounded-md shadow-md border-2 flex items-center justify-center 
+            className={`flex-shrink-0 relative w-20 h-20 rounded-md shadow-md border-2 flex items-center justify-center 
               ${region.isPlaced ? 'bg-gray-100 opacity-60 border-gray-300' : 'bg-white cursor-grab border-transparent hover:border-blue-300'}`}
           >
             {svgData && svgRegion ? (
