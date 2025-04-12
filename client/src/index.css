@@ -14,20 +14,23 @@
 
 /* Add animation classes for the puzzle pieces */
 .puzzle-piece {
-  transform: scale(2.2);
+  transform: scale(3.0); /* Increased from 2.2 to 3.0 */
   transition: transform 0.3s ease;
+  z-index: 2; /* Ensure pieces are above other elements */
 }
 
 .puzzle-piece-enlarged {
-  transform: scale(2.5) !important;
-  filter: drop-shadow(0px 8px 15px rgba(0,0,0,0.35)) !important;
+  transform: scale(3.5) !important; /* Increased from 2.5 to 3.5 */
+  filter: drop-shadow(0px 8px 15px rgba(255,0,0,0.35)) !important; /* Red shadow for better visibility */
   transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+  z-index: 100 !important; /* Ensure piece is on top when enlarged */
 }
 
 .puzzle-piece-dragging {
-  transform: scale(0.95) !important; /* Slightly smaller during drag for better fit */
-  filter: drop-shadow(0px 6px 12px rgba(0,0,0,0.25)) !important;
+  transform: scale(1.0) !important; /* Now exactly 1.0 (actual size) for accurate fit */
+  filter: drop-shadow(0px 6px 12px rgba(255,0,0,0.35)) !important; /* Red shadow for better visibility */
   transition: transform 0.15s cubic-bezier(0, 0, 0.2, 1) !important;
+  z-index: 50 !important; /* Ensure piece is on top when dragging */
 }
 
 /* Pulse animation for the centroid indicator */
@@ -35,13 +38,29 @@
   0% {
     transform: scale(0.8);
     opacity: 0.8;
+    filter: blur(0px) drop-shadow(0px 0px 2px rgba(255,0,0,0.7));
   }
   50% {
-    transform: scale(1.2);
-    opacity: 0.5;
+    transform: scale(1.3);
+    opacity: 0.6;
+    filter: blur(1px) drop-shadow(0px 0px 6px rgba(255,0,0,0.9));
   }
   100% {
     transform: scale(0.8);
     opacity: 0.8;
+    filter: blur(0px) drop-shadow(0px 0px 2px rgba(255,0,0,0.7));
   }
+}
+
+/* Add a shine effect to help with visibility */
+.region-piece-container {
+  position: relative;
+  overflow: visible !important;
+  z-index: 5;
+}
+
+/* Make SVG paths more visible */
+path {
+  stroke-linejoin: round;
+  stroke-linecap: round;
 }

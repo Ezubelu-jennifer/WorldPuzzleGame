@@ -495,17 +495,45 @@ export function PuzzlePiece({
         {/* Centroid indicator (red dot) - only visible during dragging */}
         {isDragging && (
           <>
-            {/* Large outer pulse effect */}
+            {/* Outermost pulse effect */}
             <circle 
               cx="50%" 
               cy="50%" 
-              r="8" 
+              r="12" 
               fill="none" 
-              stroke="rgba(255,0,0,0.4)"
+              stroke="rgba(255,0,0,0.3)"
+              strokeWidth="4"
+              style={{ 
+                filter: 'drop-shadow(0px 0px 8px rgba(255,0,0,0.7))',
+                animation: 'pulse 2s infinite',
+                transformOrigin: 'center'
+              }}
+            />
+            {/* Middle pulse effect */}
+            <circle 
+              cx="50%" 
+              cy="50%" 
+              r="9" 
+              fill="none" 
+              stroke="rgba(255,0,0,0.5)"
               strokeWidth="3"
               style={{ 
-                filter: 'drop-shadow(0px 0px 4px rgba(255,0,0,0.5))',
-                animation: 'pulse 1.5s infinite',
+                filter: 'drop-shadow(0px 0px 6px rgba(255,0,0,0.6))',
+                animation: 'pulse 1.5s infinite 0.2s',
+                transformOrigin: 'center'
+              }}
+            />
+            {/* Inner pulse ring */}
+            <circle 
+              cx="50%" 
+              cy="50%" 
+              r="6" 
+              fill="none" 
+              stroke="rgba(255,0,0,0.7)"
+              strokeWidth="2"
+              style={{ 
+                filter: 'drop-shadow(0px 0px 4px rgba(255,0,0,0.7))',
+                animation: 'pulse 1s infinite 0.4s',
                 transformOrigin: 'center'
               }}
             />
@@ -518,7 +546,7 @@ export function PuzzlePiece({
               stroke="white"
               strokeWidth="2"
               style={{ 
-                filter: 'drop-shadow(0px 0px 3px rgba(0,0,0,0.5))',
+                filter: 'drop-shadow(0px 0px 5px rgba(255,0,0,0.9))',
                 opacity: 1
               }}
             />
