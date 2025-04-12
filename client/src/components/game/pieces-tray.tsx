@@ -108,6 +108,8 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
                     width="100%"
                     height="100%"
                     showLabel={true}
+                    draggable={true}
+                    rotatable={true}
                   />
                 </div>
                 

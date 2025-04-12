@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { optimizeSvgPath } from "@/utils/svg-clipper";
 import { getPathBounds } from "svg-path-bounds";
 import { Button } from "@/components/ui/button";
+import { useDrag } from "@/hooks/useDrag";
 
 interface RegionThumbnailProps {
   svgData: string;
@@ -39,6 +40,24 @@ export function RegionThumbnail({
   const [rotation, setRotation] = useState<number>(0);
   const [scale, setScale] = useState<number>(1);
   const thumbnailRef = useRef<HTMLDivElement>(null);
+  
+  // Set up drag functionality if draggable is enabled
+  const { isDragging, position, dragHandlers } = useDrag({
+    onDragStart: () => {
+      // Add any needed drag start behavior
+      document.body.style.cursor = "grabbing";
+    },
+    onDragEnd: (position, dropped) => {
+      // Reset cursor and handle any post-drag behavior
+      document.body.style.cursor = "auto";
+      
+      // If there's a custom click handler and we didn't actually drag (just clicked), 
+      // trigger the click handler
+      if (!isDragging && onClick) {
+        onClick();
+      }
+    }
+  });
   
   useEffect(() => {
     if (!svgData || !regionId) return;
@@ -113,6 +132,35 @@ export function RegionThumbnail({
     }
   }, [svgData, regionId]);
 
+  // Rotation functions
+  const rotateLeft = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRotation(prev => prev - 15);
+  };
+
+  const rotateRight = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRotation(prev => prev + 15);
+  };
+
+  // Scaling functions
+  const increaseSize = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setScale(prev => Math.min(prev + 0.1, 1.5));
+  };
+
+  const decreaseSize = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setScale(prev => Math.max(prev - 0.1, 0.5));
+  };
+
+  // Reset transformations
+  const resetTransformations = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRotation(0);
+    setScale(1);
+  };
+
   const handleClick = () => {
     if (onClick) {
       onClick();
@@ -122,18 +170,82 @@ export function RegionThumbnail({
   const styles = {
     width: typeof width === 'number' ? `${width}px` : width,
     height: typeof height === 'number' ? `${height}px` : height,
-    cursor: onClick ? 'pointer' : 'default'
+    cursor: onClick || (draggable || rotatable) ? 'pointer' : 'default',
+    position: 'relative' as const
   };
   
   return (
     <div 
-      className={`region-thumbnail ${className} overflow-visible`}
-      style={styles}
-      onClick={handleClick}
+      ref={thumbnailRef}
+      className={`region-thumbnail ${className} overflow-visible group ${isDragging ? 'z-50' : ''}`}
+      style={{
+        ...styles,
+        ...(draggable && isDragging ? {
+          position: 'fixed',
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+          zIndex: 9999,
+          pointerEvents: 'none',
+          opacity: 0.8,
+          transform: `rotate(${rotation}deg) scale(${scale})`,
+          transformOrigin: 'center center',
+          transition: 'none'
+        } : {})
+      }}
+      {...(draggable ? {
+        ...dragHandlers,
+        onMouseDown: (e) => {
+          dragHandlers.onMouseDown(e);
+          e.stopPropagation();
+        },
+        onTouchStart: (e) => {
+          dragHandlers.onTouchStart(e);
+          e.stopPropagation();
+        }
+      } : { onClick: handleClick })}
     >
+      {/* Control buttons for rotation and scaling (only visible when hovering) */}
+      {rotatable && (
+        <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex space-x-1">
+          <Button 
+            size="icon" 
+            variant="secondary"
+            className="w-6 h-6 bg-white/80 hover:bg-white text-black" 
+            onClick={rotateLeft}
+          >
+            ↺
+          </Button>
+          <Button 
+            size="icon" 
+            variant="secondary"
+            className="w-6 h-6 bg-white/80 hover:bg-white text-black" 
+            onClick={rotateRight}
+          >
+            ↻
+          </Button>
+          <Button 
+            size="icon" 
+            variant="secondary" 
+            className="w-6 h-6 bg-white/80 hover:bg-white text-black"
+            onClick={resetTransformations}
+          >
+            ↺↻
+          </Button>
+        </div>
+      )}
+      
       {pathData ? (
         <div className="w-full h-full relative">
-          <svg viewBox={viewBox} width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+          <svg 
+            viewBox={viewBox} 
+            width="100%" 
+            height="100%" 
+            preserveAspectRatio="xMidYMid meet"
+            style={{
+              transform: `rotate(${rotation}deg) scale(${scale})`,
+              transition: "transform 0.3s ease"
+            }}
+          >
             {/* Background for better boundaries */}
             <rect x="0" y="0" width="100%" height="100%" fill="transparent" />
             
