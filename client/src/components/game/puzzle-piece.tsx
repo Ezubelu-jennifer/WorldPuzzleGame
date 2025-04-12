@@ -227,15 +227,18 @@ export function PuzzlePiece({
     if (region.isPlaced) return;
     e.stopPropagation();
     
-    // Calculate offset between mouse position and piece center
-    // This ensures the piece drags from the click point, not the top-left corner
+    // We want all pieces to drag from their exact center regardless of size or shape
+    // This ensures consistent positioning for all piece sizes
     const rect = pieceRef.current?.getBoundingClientRect();
     if (rect) {
-      // Calculate offset from the mouse position to the center of the piece
-      // This maintains the relative position of the cursor on the piece during drag
+      // Calculate distance from mouse to center of piece
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      
+      // Set offset to force the piece center to be at the mouse position
       dragOffset.current = {
-        x: e.clientX - position.x, 
-        y: e.clientY - position.y
+        x: centerX - position.x,
+        y: centerY - position.y
       };
     }
     
@@ -249,12 +252,14 @@ export function PuzzlePiece({
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
     
-    // Use the offset to keep the piece positioned relative to cursor
+    // Position the piece so its center is exactly at the cursor
+    // Use half of pieceSize to position the top-left corner correctly
+    const halfSize = pieceSize / 2;
     setPosition({
-      x: e.clientX - dragOffset.current.x,
-      y: e.clientY - dragOffset.current.y
+      x: e.clientX - halfSize,
+      y: e.clientY - halfSize
     });
-  }, [isDragging]);
+  }, [isDragging, pieceSize]);
   
   const handleMouseUp = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
@@ -291,10 +296,14 @@ export function PuzzlePiece({
     const touch = e.touches[0];
     const rect = pieceRef.current?.getBoundingClientRect();
     if (rect) {
-      // Apply the same offset calculation as in mouse events
+      // Apply the same center-based offset calculation as in mouse events
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      
+      // Set offset to force the piece center to be at touch position
       dragOffset.current = {
-        x: touch.clientX - position.x,
-        y: touch.clientY - position.y
+        x: centerX - position.x,
+        y: centerY - position.y
       };
     }
     
@@ -310,11 +319,13 @@ export function PuzzlePiece({
     e.preventDefault(); // Prevent scrolling
     
     const touch = e.touches[0];
+    // Position the piece so its center is exactly at the touch point
+    const halfSize = pieceSize / 2;
     setPosition({
-      x: touch.clientX - dragOffset.current.x,
-      y: touch.clientY - dragOffset.current.y
+      x: touch.clientX - halfSize,
+      y: touch.clientY - halfSize
     });
-  }, [isDragging]);
+  }, [isDragging, pieceSize]);
   
   const handleTouchEnd = useCallback((e: TouchEvent) => {
     if (!isDragging) return;
@@ -382,7 +393,7 @@ export function PuzzlePiece({
 
   // Determine piece size based on whether it's in the tray or on the board 
   // Using much smaller pieces for more direct palm positioning
-  const basePieceSize = isTrayPiece ? 30 : 40; // Extremely reduced size for the most direct hand-palm positioning
+  const basePieceSize = isTrayPiece ? 25 : 35; // Even smaller size for better direct positioning
   const pieceSize = basePieceSize * scale;
 
   return (
@@ -485,13 +496,30 @@ export function PuzzlePiece({
             }}
           />
         </g>
+
+        {/* Centroid indicator (red dot) - only visible during dragging */}
+        {isDragging && (
+          <circle 
+            cx="50%" 
+            cy="50%" 
+            r="5" 
+            fill="red" 
+            stroke="white"
+            strokeWidth="2"
+            style={{ 
+              filter: 'drop-shadow(0px 0px 3px rgba(0,0,0,0.5))',
+              opacity: 0.9
+            }}
+          />
+        )}
+
         <text 
           x="50%" 
           y="50%" 
           textAnchor="middle"
           dominantBaseline="middle"
           fill="#000000" 
-          fontSize={isTrayPiece ? "14" : "16"}
+          fontSize={isTrayPiece ? "12" : "14"} // Slightly reduced text size
           fontWeight="bold"
           style={{ 
             textShadow: '0 0 3px white, 0 0 3px white, 0 0 3px white, 0 0 3px white',
