@@ -227,13 +227,15 @@ export function PuzzlePiece({
     if (region.isPlaced) return;
     e.stopPropagation();
     
-    // Calculate offset between mouse position and piece position
-    // This is key to prevent the piece from jumping to cursor
+    // Calculate offset between mouse position and piece center
+    // This ensures the piece drags from the click point, not the top-left corner
     const rect = pieceRef.current?.getBoundingClientRect();
     if (rect) {
+      // Calculate offset from the mouse position to the center of the piece
+      // This maintains the relative position of the cursor on the piece during drag
       dragOffset.current = {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
+        x: e.clientX - position.x, 
+        y: e.clientY - position.y
       };
     }
     
@@ -242,7 +244,7 @@ export function PuzzlePiece({
     
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  }, [region.isPlaced]);
+  }, [region.isPlaced, position]);
   
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
@@ -289,9 +291,10 @@ export function PuzzlePiece({
     const touch = e.touches[0];
     const rect = pieceRef.current?.getBoundingClientRect();
     if (rect) {
+      // Apply the same offset calculation as in mouse events
       dragOffset.current = {
-        x: touch.clientX - rect.left,
-        y: touch.clientY - rect.top
+        x: touch.clientX - position.x,
+        y: touch.clientY - position.y
       };
     }
     
@@ -300,7 +303,7 @@ export function PuzzlePiece({
     
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleTouchEnd);
-  }, [region.isPlaced]);
+  }, [region.isPlaced, position]);
   
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!isDragging || e.touches.length !== 1) return;
@@ -378,8 +381,8 @@ export function PuzzlePiece({
   };
 
   // Determine piece size based on whether it's in the tray or on the board 
-  // Using even smaller pieces for more direct palm positioning
-  const basePieceSize = isTrayPiece ? 40 : 60; // Significantly reduced size for the most direct hand-palm positioning
+  // Using much smaller pieces for more direct palm positioning
+  const basePieceSize = isTrayPiece ? 30 : 40; // Extremely reduced size for the most direct hand-palm positioning
   const pieceSize = basePieceSize * scale;
 
   return (
