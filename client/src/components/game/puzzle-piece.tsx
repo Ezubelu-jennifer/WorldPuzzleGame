@@ -355,25 +355,24 @@ export function PuzzlePiece({
         }}
       >
         {/* This div acts like the ClipPath in Flutter */}
-        <div className="relative w-full h-full">
-          {/* SVG with path clipped to container (similar to Flutter's SvgClipper) */}
+        <div className="relative w-full h-full bg-white rounded-md border-2 border-gray-300 overflow-hidden">
+          {/* Direct SVG rendering of state shape - simplified for clarity */}
           <svg 
-            viewBox="0 0 100 100" 
+            viewBox={`0 0 100 100`} 
             className="w-full h-full" 
             style={{ 
               overflow: 'visible',
               filter: isDragging ? 'drop-shadow(0px 6px 12px rgba(0,0,0,0.5))' : 'drop-shadow(0px 2px 4px rgba(0,0,0,0.3))',
             }}
-            preserveAspectRatio="xMidYMid meet"
           >
             <path 
-              d={svgPathData || region.svgPath} 
+              d={region.svgPath} 
               fill={region.isPlaced ? region.fillColor : "#ef4444"} // Red for unplaced pieces
-              stroke={region.strokeColor}
-              strokeWidth="2.5"
+              stroke={region.strokeColor || "#333"}
+              strokeWidth="1"
               style={{ 
                 transformOrigin: 'center center',
-                transform: `scale(${scale * 0.95})`, // Scale the path content slightly smaller than container
+                transform: 'scale(0.7)', // Fixed scale for consistent size
               }}
             />
           </svg>
