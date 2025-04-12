@@ -226,26 +226,27 @@ export function CountrySvgMap({
         onTouchEnd={handleTouchEnd}
         onWheel={handleWheel}
       >
-        {/* Country outer silhouette - draw once as a background to add shadow effect */}
-        <g filter="drop-shadow(0px 3px 6px rgba(0,0,0,0.4))">
-          {/* First, render a merged country shape outline without internal borders */}
+        {/* Country outer silhouette with thick border and no internal lines */}
+        <g filter="drop-shadow(0px 4px 8px rgba(0,0,0,0.5))">
+          {/* Single merged country shape with outer border only */}
           <path
             d={uniqueRegions.map(region => region.path).join(' ')}
             fill="#e5e5e5" // Light gray fill for the puzzle outline
-            stroke="#555555" // Darker gray for stronger border definition
-            strokeWidth="5" // Thicker outer border
+            stroke="#444444" // Darker gray for stronger border definition
+            strokeWidth="7" // Extra thick outer border
             strokeLinejoin="round"
             strokeLinecap="round"
             style={{ pointerEvents: "none" }}
           />
         </g>
           
-        {/* Interactive region paths */}
+        {/* Invisible interactive regions for click handling only */}
         {uniqueRegions.map((region) => {
           const isHighlighted = region.id === highlightRegion;
-          const fill = isHighlighted ? "#f87171" : "#e5e5e5"; // Light gray for unplaced regions
-          const stroke = isHighlighted ? "#b91c1c" : "transparent"; // No visible stroke for inner boundaries
-          const strokeWidth = isHighlighted ? "3" : "0"; // Thicker stroke for highlighted regions
+          // Only highlighted regions get a visible fill/stroke
+          const fill = isHighlighted ? "#f87171" : "transparent"; 
+          const stroke = isHighlighted ? "#b91c1c" : "transparent";
+          const strokeWidth = isHighlighted ? "4" : "0";
           
           return (
             <path
@@ -257,10 +258,10 @@ export function CountrySvgMap({
               strokeWidth={strokeWidth}
               data-name={region.name}
               aria-label={region.name}
-              className="transition-colors duration-200 hover:opacity-80"
+              className="transition-colors duration-200"
               style={{ 
                 cursor: "pointer",
-                filter: isHighlighted ? 'drop-shadow(0px 3px 4px rgba(185,28,28,0.5))' : 'none' // Add drop shadow to highlighted regions
+                filter: isHighlighted ? 'drop-shadow(0px 4px 8px rgba(185,28,28,0.6))' : 'none'
               }}
               onClick={() => handleRegionClick(region.id, region.name)}
             />

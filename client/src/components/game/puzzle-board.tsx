@@ -157,8 +157,8 @@ export function PuzzleBoard({
               <path 
                 d={outlinePath} 
                 fill="#e5e5e5" 
-                stroke="#555555"
-                strokeWidth="5"
+                stroke="#444444" 
+                strokeWidth="7"
                 strokeLinejoin="round"
                 strokeLinecap="round"
                 style={{
