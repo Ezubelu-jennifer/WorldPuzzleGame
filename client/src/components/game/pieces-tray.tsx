@@ -61,11 +61,11 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
   ];
   
   return (
-    <div className="relative min-h-[160px] border-t border-b border-gray-200 bg-gray-50">
-      <div className="absolute left-0 top-1/2 -translate-y-1/2 bg-gradient-to-r from-gray-50 to-transparent w-10 h-full z-10 pointer-events-none"></div>
-      <div className="absolute right-0 top-1/2 -translate-y-1/2 bg-gradient-to-l from-gray-50 to-transparent w-10 h-full z-10 pointer-events-none"></div>
+    <div className="relative min-h-[200px] border-t border-b border-gray-200 bg-gray-50">
+      <div className="absolute left-0 top-1/2 -translate-y-1/2 bg-gradient-to-r from-gray-50 to-transparent w-16 h-full z-10 pointer-events-none"></div>
+      <div className="absolute right-0 top-1/2 -translate-y-1/2 bg-gradient-to-l from-gray-50 to-transparent w-16 h-full z-10 pointer-events-none"></div>
       
-      <div ref={trayRef} className="flex gap-3 overflow-x-auto py-3 px-4 min-h-[160px] whitespace-nowrap overflow-y-hidden">
+      <div ref={trayRef} className="flex gap-4 overflow-x-auto py-4 px-6 min-h-[200px] whitespace-nowrap overflow-y-hidden">
         {allRegions.map((region, index) => {
         // Assign color from our palette, cycling through if needed
         const colorIndex = index % colors.length;
@@ -87,7 +87,7 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
         return (
           <div 
             key={region.id}
-            className={`flex-shrink-0 relative w-32 h-32 rounded-md shadow-md border-2 p-1 flex items-center justify-center 
+            className={`flex-shrink-0 relative w-40 h-40 rounded-md shadow-md border-2 p-1 flex items-center justify-center 
               ${region.isPlaced ? 'bg-gray-100 opacity-60 border-gray-300' : 'bg-white cursor-grab border-blue-200 hover:border-blue-400'}`}
           >
             {svgData && svgRegion ? (
@@ -118,7 +118,7 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
                 </div>
                 
                 {/* Region name label */}
-                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs py-1 px-2 font-medium text-center rounded-b-sm truncate">
+                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-sm py-2 px-3 font-medium text-center rounded-b-sm truncate">
                   {region.name}
                 </div>
               </div>
@@ -131,7 +131,7 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
                   containerRef={trayRef}
                   isTrayPiece
                 />
-                <span className="text-xs font-bold text-center absolute bottom-1 text-white drop-shadow-md pointer-events-none z-10">
+                <span className="text-sm font-bold text-center absolute bottom-2 text-white drop-shadow-md pointer-events-none z-10">
                   {region.name}
                 </span>
               </div>
@@ -139,7 +139,7 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
             
             {/* Status indicator */}
             {region.isPlaced && (
-              <div className="absolute top-1 right-1 bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md">
+              <div className="absolute top-2 right-2 bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-md text-lg">
                 ✓
               </div>
             )}

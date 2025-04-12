@@ -257,7 +257,7 @@ export function PuzzlePiece({
   };
 
   // Determine piece size based on whether it's in the tray or on the board
-  const basePieceSize = isTrayPiece ? 100 : 150;
+  const basePieceSize = isTrayPiece ? 130 : 220;
   const pieceSize = basePieceSize * scale;
 
   return (
@@ -348,11 +348,11 @@ export function PuzzlePiece({
           textAnchor="middle" 
           dominantBaseline="middle"
           fill="#ffffff" 
-          fontSize={isTrayPiece ? "12" : "14"}
+          fontSize={isTrayPiece ? "16" : "20"}
           fontWeight="bold"
           style={{ 
-            filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.5))',
-            textShadow: '0 1px 2px rgba(0,0,0,0.5)'
+            filter: 'drop-shadow(0px 2px 3px rgba(0,0,0,0.6))',
+            textShadow: '0 2px 3px rgba(0,0,0,0.6)'
           }}
         >
           {region.name}
