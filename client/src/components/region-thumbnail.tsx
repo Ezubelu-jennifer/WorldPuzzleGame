@@ -125,7 +125,7 @@ export function RegionThumbnail({
                 fill={color}
                 stroke={strokeColor}
                 strokeWidth={strokeWidth + 2}
-                transform="translate(25 25) scale(0.5)"
+                transform="translate(25 25) scale(1.0)"
                 style={{
                   transformBox: 'fill-box',
                   transformOrigin: 'center',

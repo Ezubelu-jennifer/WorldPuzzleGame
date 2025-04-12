@@ -169,10 +169,10 @@ export function PuzzlePiece({
       if (match && match[1]) {
         // Found a matching path - optimize with SVG Clipper!
         try {
-          // Scale the SVG path by 2.5x to make it more prominent
-          const optimizedPath = optimizeSvgPath(match[1], 2.5);
+          // Scale the SVG path by 3.0x to make it more prominent
+          const optimizedPath = optimizeSvgPath(match[1], 3.0);
           setSvgPathData(optimizedPath);
-          console.log(`Optimized SVG path for ${region.name} with scale factor 2.5`);
+          console.log(`Optimized SVG path for ${region.name} with scale factor 3.0`);
         } catch (error) {
           console.warn(`Failed to optimize path for ${region.name}, using original`, error);
           setSvgPathData(match[1]);
@@ -352,7 +352,7 @@ export function PuzzlePiece({
         className="w-full h-full" 
         style={{ 
           overflow: 'visible',
-          transform: `rotate(${rotation}deg) scale(1.5)`, // Scale up the SVG by 50%
+          transform: `rotate(${rotation}deg) scale(2.0)`, // Scale up the SVG by 100%
           transition: "transform 0.3s ease"
         }}
       >
