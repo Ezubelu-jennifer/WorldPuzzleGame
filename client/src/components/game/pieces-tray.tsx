@@ -87,8 +87,8 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
         return (
           <div 
             key={region.id}
-            className={`flex-shrink-0 relative w-40 h-40 rounded-md shadow-md border-2 p-1 flex items-center justify-center 
-              ${region.isPlaced ? 'bg-gray-100 opacity-60 border-gray-300' : 'bg-white cursor-grab border-blue-200 hover:border-blue-400'}`}
+            className={`flex-shrink-0 relative w-40 h-40 rounded-md shadow-lg border-2 p-1 flex items-center justify-center 
+              ${region.isPlaced ? 'bg-gray-100 opacity-60 border-gray-300' : 'bg-white cursor-grab border-blue-300 hover:border-blue-500'}`}
           >
             {svgData && svgRegion ? (
               // Use the SVG thumbnail for the region
@@ -118,7 +118,7 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
                 </div>
                 
                 {/* Region name label */}
-                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-sm py-2 px-3 font-medium text-center rounded-b-sm truncate">
+                <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-sm py-2 px-3 font-semibold text-center rounded-b-sm truncate shadow-sm">
                   {region.name}
                 </div>
               </div>

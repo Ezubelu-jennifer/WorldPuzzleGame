@@ -83,15 +83,24 @@ export function RegionThumbnail({
       {pathData ? (
         <div className="w-full h-full relative">
           <svg viewBox={viewBox} width="100%" height="100%">
+            {/* Background circle for consistent sizing */}
+            <circle 
+              cx="50%" 
+              cy="50%" 
+              r="40%" 
+              fill="rgba(255,255,255,0.2)"
+              stroke="rgba(0,0,0,0.05)"
+              strokeWidth="1"
+            />
             <path
               d={pathData}
               fill={color}
               stroke={strokeColor}
-              strokeWidth={strokeWidth + 1}
+              strokeWidth={strokeWidth + 2}
               style={{
-                transform: 'scale(1.5)',
+                transform: 'scale(2.5)', 
                 transformOrigin: 'center',
-                filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.3))'
+                filter: 'drop-shadow(0px 2px 3px rgba(0,0,0,0.4))'
               }}
             />
           </svg>

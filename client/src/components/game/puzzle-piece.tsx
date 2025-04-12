@@ -360,9 +360,11 @@ export function PuzzlePiece({
           d={svgPathData || region.svgPath} 
           fill={region.isPlaced ? region.fillColor : "#ef4444"} // Red for unplaced pieces
           stroke={region.strokeColor}
-          strokeWidth="4" // Increased stroke width for better visibility 
+          strokeWidth="5" // Increased stroke width for better visibility and definition
+          strokeLinejoin="round"
+          strokeLinecap="round"
           style={{ 
-            filter: isDragging ? 'drop-shadow(0px 6px 12px rgba(0,0,0,0.5))' : 'drop-shadow(0px 2px 4px rgba(0,0,0,0.3))',
+            filter: isDragging ? 'drop-shadow(0px 8px 16px rgba(0,0,0,0.5))' : 'drop-shadow(0px 3px 5px rgba(0,0,0,0.35))',
             // Apply transform-origin to center for better rotation
             transformOrigin: 'center center'
           }}
