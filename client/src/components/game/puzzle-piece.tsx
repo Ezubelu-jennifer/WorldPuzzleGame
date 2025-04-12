@@ -277,8 +277,8 @@ export function PuzzlePiece({
     setScale(1);
   };
 
-  // Determine piece size based on whether it's in the tray or on the board - make larger for 3x scaled shapes
-  const basePieceSize = isTrayPiece ? 200 : 350;
+  // Determine piece size based on whether it's in the tray or on the board - smaller pieces for the tray layout
+  const basePieceSize = isTrayPiece ? 80 : 120;
   const pieceSize = basePieceSize * scale;
 
   return (
@@ -352,7 +352,7 @@ export function PuzzlePiece({
         className="w-full h-full" 
         style={{ 
           overflow: 'visible',
-          transform: `rotate(${rotation}deg) scale(3.0)`, // Make 3x bigger
+          transform: `rotate(${rotation}deg) scale(2.0)`, // Scale to match the image
           transition: "transform 0.3s ease"
         }}
       >
@@ -360,26 +360,23 @@ export function PuzzlePiece({
           d={svgPathData || region.svgPath} 
           fill={region.isPlaced ? region.fillColor : "#ef4444"} // Red for unplaced pieces
           stroke={region.strokeColor}
-          strokeWidth="5" // Increased stroke width for better visibility and definition
+          strokeWidth="1" // Thinner stroke as shown in the image
           strokeLinejoin="round"
           strokeLinecap="round"
           style={{ 
-            filter: isDragging ? 'drop-shadow(0px 8px 16px rgba(0,0,0,0.5))' : 'drop-shadow(0px 3px 5px rgba(0,0,0,0.35))',
-            // Apply transform-origin to center for better rotation
+            filter: isDragging ? 'drop-shadow(0px 4px 8px rgba(0,0,0,0.4))' : 'drop-shadow(0px 2px 3px rgba(0,0,0,0.3))',
             transformOrigin: 'center center'
           }}
         />
         <text 
           x="50%" 
-          y="50%" 
-          textAnchor="middle" 
-          dominantBaseline="middle"
-          fill="#ffffff" 
-          fontSize={isTrayPiece ? "16" : "20"}
+          y="85%" 
+          textAnchor="middle"
+          fill="#000000" 
+          fontSize={isTrayPiece ? "7" : "10"}
           fontWeight="bold"
           style={{ 
-            filter: 'drop-shadow(0px 2px 3px rgba(0,0,0,0.6))',
-            textShadow: '0 2px 3px rgba(0,0,0,0.6)'
+            textShadow: '0 0 2px white, 0 0 2px white, 0 0 2px white, 0 0 2px white'
           }}
         >
           {region.name}

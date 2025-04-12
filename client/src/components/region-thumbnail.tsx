@@ -133,30 +133,30 @@ export function RegionThumbnail({
                 d={pathData}
                 fill={color}
                 stroke={strokeColor}
-                strokeWidth={strokeWidth + 2}
-                transform="scale(3.0)"
+                strokeWidth={strokeWidth + 1}
+                transform="scale(2.0)"
                 style={{
                   transformBox: 'fill-box',
                   transformOrigin: 'center',
-                  filter: 'drop-shadow(0px 3px 4px rgba(0,0,0,0.5))'
+                  filter: 'drop-shadow(0px 2px 3px rgba(0,0,0,0.3))'
                 }}
               />
               {/* Add text label on the shape */}
-              <text 
-                x="50%" 
-                y="50%" 
-                textAnchor="middle" 
-                dominantBaseline="middle"
-                fill="#ffffff" 
-                fontSize="14"
-                fontWeight="bold"
-                style={{ 
-                  filter: 'drop-shadow(0px 2px 3px rgba(0,0,0,0.6))',
-                  textShadow: '0 2px 3px rgba(0,0,0,0.6)'
-                }}
-              >
-                {regionName}
-              </text>
+              {showLabel && (
+                <text 
+                  x="50%" 
+                  y="85%" 
+                  textAnchor="middle"
+                  fill="#000000" 
+                  fontSize="7"
+                  fontWeight="bold"
+                  style={{ 
+                    textShadow: '0 0 2px white, 0 0 2px white, 0 0 2px white, 0 0 2px white'
+                  }}
+                >
+                  {regionName}
+                </text>
+              )}
             </g>
           </svg>
           
