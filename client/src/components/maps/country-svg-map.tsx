@@ -226,12 +226,26 @@ export function CountrySvgMap({
         onTouchEnd={handleTouchEnd}
         onWheel={handleWheel}
       >
-        {/* Fill the map with regions (using uniqueRegions to avoid duplicate keys) */}
-        {uniqueRegions.map((region, index) => {
+        {/* Country outer silhouette - draw once as a background to add shadow effect */}
+        <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.3))">
+          {uniqueRegions.map((region) => (
+            <path
+              key={`silhouette-${region.id}`}
+              d={region.path}
+              fill="#e5e5e5" // Light gray fill for the puzzle outline
+              stroke="#cccccc" // Very light gray for slight definition
+              strokeWidth="0.5"
+              style={{ pointerEvents: "none" }}
+            />
+          ))}
+        </g>
+          
+        {/* Interactive region paths */}
+        {uniqueRegions.map((region) => {
           const isHighlighted = region.id === highlightRegion;
-          const fill = isHighlighted ? "#f87171" : "#757575"; // Use gray for the puzzle outline
-          const stroke = isHighlighted ? "#b91c1c" : "#757575"; // Same gray for stroke to remove boundaries
-          const strokeWidth = isHighlighted ? "1.5" : "0.1"; // Very thin stroke to essentially remove inner boundaries
+          const fill = isHighlighted ? "#f87171" : "#e5e5e5"; // Light gray for unplaced regions
+          const stroke = isHighlighted ? "#b91c1c" : "transparent"; // No visible stroke for inner boundaries
+          const strokeWidth = isHighlighted ? "1.5" : "0";
           
           return (
             <path
@@ -243,7 +257,7 @@ export function CountrySvgMap({
               strokeWidth={strokeWidth}
               data-name={region.name}
               aria-label={region.name}
-              className="transition-colors duration-200 hover:opacity-90"
+              className="transition-colors duration-200 hover:opacity-80"
               style={{ cursor: "pointer" }}
               onClick={() => handleRegionClick(region.id, region.name)}
             />
