@@ -131,28 +131,15 @@ export function extractNigeriaRegions(svgData: string) {
     }
   }
   
-  // Deduplicate regions by ID
-  const uniqueRegions = [];
-  const seenIds = new Set<string>();
-  
-  for (const region of regions) {
-    if (!seenIds.has(region.id)) {
-      seenIds.add(region.id);
-      uniqueRegions.push(region);
-    } else {
-      console.warn(`Found duplicate region ID: ${region.id} (${region.name}) - skipping`);
-    }
-  }
-  
   // Make sure we have the right count
-  if (uniqueRegions.length !== 37) {
-    console.warn(`Expected 37 Nigeria states, but found ${uniqueRegions.length}`);
+  if (regions.length !== 37) {
+    console.warn(`Expected 37 Nigeria states, but found ${regions.length}`);
   }
   
-  console.log(`Found ${uniqueRegions.length} Nigeria regions from SVG data after deduplication`);
-  console.log(`Sample region from SVG:`, uniqueRegions[0]);
+  console.log(`Found ${regions.length} Nigeria regions from SVG data`);
+  console.log(`Sample region from SVG:`, regions[0]);
   
-  return uniqueRegions;
+  return regions;
 }
 
 export function extractKenyaRegions(svgData: string) {
@@ -241,24 +228,11 @@ export function extractKenyaRegions(svgData: string) {
     }
   }
   
-  // Deduplicate regions by ID
-  const uniqueRegionsById = [];
-  const seenIds = new Set<string>();
-  
-  for (const region of regions) {
-    if (!seenIds.has(region.id)) {
-      seenIds.add(region.id);
-      uniqueRegionsById.push(region);
-    } else {
-      console.warn(`Found duplicate region ID: ${region.id} (${region.name}) - skipping`);
-    }
-  }
-  
-  // Then deduplicate by name for the unique region map
+  // Create a "processed" array with unique entries by name (no duplicates)
   const uniqueRegionMap = new Map<string, { id: string; name: string; path: string }>();
   
-  // Add all the extracted regions with unique IDs, ensuring no duplicates by name
-  uniqueRegionsById.forEach(region => {
+  // First add all the extracted regions, ensuring no duplicates by name
+  regions.forEach(region => {
     if (!uniqueRegionMap.has(region.name)) {
       uniqueRegionMap.set(region.name, region);
     }

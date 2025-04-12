@@ -169,10 +169,10 @@ export function PuzzlePiece({
       if (match && match[1]) {
         // Found a matching path - optimize with SVG Clipper!
         try {
-          // Scale the SVG path by 3.0x to make it more prominent
-          const optimizedPath = optimizeSvgPath(match[1], 3.0);
-          console.log(`Optimized SVG path for ${region.name} with scale factor 3.0`);
+          // Scale the SVG path by 2.5x to make it more prominent
+          const optimizedPath = optimizeSvgPath(match[1], 2.5);
           setSvgPathData(optimizedPath);
+          console.log(`Optimized SVG path for ${region.name} with scale factor 2.5`);
         } catch (error) {
           console.warn(`Failed to optimize path for ${region.name}, using original`, error);
           setSvgPathData(match[1]);
@@ -181,10 +181,10 @@ export function PuzzlePiece({
         // If no match found but we have a valid path from backend, use it
         if (region.svgPath && region.svgPath.includes('M')) {
           try {
-            // Optimize the backend path too with a higher scale factor
-            const optimizedPath = optimizeSvgPath(region.svgPath, 3.0);
+            // Optimize the backend path too
+            const optimizedPath = optimizeSvgPath(region.svgPath, 1.8);
             setSvgPathData(optimizedPath);
-            console.log(`Using optimized backend SVG path for ${region.name} with scale factor 3.0`);
+            console.log(`Using optimized backend SVG path for ${region.name}`);
           } catch (error) {
             console.warn(`Failed to optimize backend path for ${region.name}`, error);
             setSvgPathData(region.svgPath);
@@ -195,9 +195,9 @@ export function PuzzlePiece({
           const flexMatch = flexRegex.exec(svgData);
           if (flexMatch && flexMatch[1]) {
             try {
-              const optimizedPath = optimizeSvgPath(flexMatch[1], 3.0);
+              const optimizedPath = optimizeSvgPath(flexMatch[1], 1.8);
               setSvgPathData(optimizedPath);
-              console.log(`Using optimized flexible SVG path for ${region.name} with scale factor 3.0`);
+              console.log(`Using optimized flexible SVG path for ${region.name}`);
             } catch (error) {
               console.warn(`Failed to optimize flexible path for ${region.name}`, error);
               setSvgPathData(flexMatch[1]);
@@ -347,60 +347,42 @@ export function PuzzlePiece({
         </div>
       )}
 
-      <div 
-        className="w-full h-full flex items-center justify-center p-1"
-        style={{
-          transform: `rotate(${rotation}deg)`,
+      <svg 
+        viewBox={viewBox} 
+        className="w-full h-full" 
+        style={{ 
+          overflow: 'visible',
+          transform: `rotate(${rotation}deg) scale(1.5)`, // Scale up the SVG by 50%
           transition: "transform 0.3s ease"
         }}
       >
-        {/* This div acts like the ClipPath in Flutter */}
-        <div className="relative w-full h-full bg-white rounded-md border-2 border-gray-300 overflow-hidden">
-          {/* Direct SVG rendering of state shape - simplified for clarity */}
-          <svg 
-            viewBox={`0 0 100 100`} 
-            className="w-full h-full" 
-            style={{ 
-              overflow: 'visible',
-              filter: isDragging ? 'drop-shadow(0px 6px 12px rgba(0,0,0,0.5))' : 'drop-shadow(0px 2px 4px rgba(0,0,0,0.3))',
-            }}
-          >
-            <path 
-              d={svgPathData || region.svgPath} 
-              fill={region.isPlaced ? region.fillColor : "#ef4444"} // Red for unplaced pieces
-              stroke={region.strokeColor || "#333"}
-              strokeWidth={useThumbnail ? "2" : "1"}
-              style={{ 
-                transformOrigin: 'center center',
-                transform: useThumbnail ? 'scale(0.8)' : 'scale(0.7)', // Larger for thumbnails
-                filter: useThumbnail ? 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' : 'none',
-              }}
-            />
-          </svg>
-          
-          {/* Text overlay in the center */}
-          <div 
-            className="absolute inset-0 flex items-center justify-center"
-            style={{
-              pointerEvents: 'none'
-            }}
-          >
-            <span 
-              className="text-white font-bold text-center px-1 py-0.5 rounded"
-              style={{ 
-                fontSize: isTrayPiece ? "14px" : "18px",
-                textShadow: '0 2px 3px rgba(0,0,0,0.7)',
-                maxWidth: '90%',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              {region.name}
-            </span>
-          </div>
-        </div>
-      </div>
+        <path 
+          d={svgPathData || region.svgPath} 
+          fill={region.isPlaced ? region.fillColor : "#ef4444"} // Red for unplaced pieces
+          stroke={region.strokeColor}
+          strokeWidth="4" // Increased stroke width for better visibility 
+          style={{ 
+            filter: isDragging ? 'drop-shadow(0px 6px 12px rgba(0,0,0,0.5))' : 'drop-shadow(0px 2px 4px rgba(0,0,0,0.3))',
+            // Apply transform-origin to center for better rotation
+            transformOrigin: 'center center'
+          }}
+        />
+        <text 
+          x="50%" 
+          y="50%" 
+          textAnchor="middle" 
+          dominantBaseline="middle"
+          fill="#ffffff" 
+          fontSize={isTrayPiece ? "16" : "20"}
+          fontWeight="bold"
+          style={{ 
+            filter: 'drop-shadow(0px 2px 3px rgba(0,0,0,0.6))',
+            textShadow: '0 2px 3px rgba(0,0,0,0.6)'
+          }}
+        >
+          {region.name}
+        </text>
+      </svg>
     </div>
   );
 }
