@@ -27,27 +27,63 @@ export function extractNigeriaRegions(svgData: string) {
     "NG-YO": "Yobe", "NG-ZA": "Zamfara"
   };
   
-  // First try to extract all path elements with id and title attributes
-  const regex = /<path[^>]*id="([^"]+)"[^>]*title="([^"]+)"[^>]*d="([^"]+)"/g;
-  let match;
+  // First try to extract all path elements with id and title attributes, where title follows id
+  const regex1 = /<path[^>]*id="([^"]+)"[^>]*title="([^"]+)"[^>]*d="([^"]+)"/g;
+  let match1;
   
-  while ((match = regex.exec(svgData)) !== null) {
+  while ((match1 = regex1.exec(svgData)) !== null) {
     regions.push({
-      id: match[1],
-      name: match[2],
-      path: match[3]
+      id: match1[1],
+      name: match1[2],
+      path: match1[3]
     });
   }
   
-  // If we didn't find any regions, try alternative approach to extract paths
-  if (regions.length === 0) {
-    // Try simpler regex to just extract paths with IDs
+  // Try another pattern where title comes before id
+  const regex2 = /<path[^>]*title="([^"]+)"[^>]*id="([^"]+)"[^>]*d="([^"]+)"/g;
+  let match2;
+  
+  while ((match2 = regex2.exec(svgData)) !== null) {
+    regions.push({
+      id: match2[2],
+      name: match2[1],
+      path: match2[3]
+    });
+  }
+  
+  // Try another pattern with more flexible attribute ordering
+  const regex3 = /<path[^>]*class="land"[^>]*id="([^"]+)"[^>]*d="([^"]+)"/g;
+  let match3;
+  
+  while ((match3 = regex3.exec(svgData)) !== null) {
+    const id = match3[1];
+    if (stateIds.includes(id)) {
+      // Extract the title if it exists
+      const titleRegex = new RegExp(`<path[^>]*id="${id}"[^>]*title="([^"]+)"`, 'i');
+      const titleMatch = svgData.match(titleRegex);
+      const name = titleMatch ? titleMatch[1] : stateNames[id] || id.replace('NG-', '');
+      
+      regions.push({
+        id: id,
+        name: name,
+        path: match3[2]
+      });
+    }
+  }
+  
+  // If we still don't have all regions, try a simpler approach to extract remaining paths
+  if (regions.length < stateIds.length) {
+    console.log(`Found ${regions.length} regions so far, trying simpler extraction for the rest`);
+    
+    // Try to get all path elements with any pattern
     const simpleRegex = /<path[^>]*id="([^"]+)"[^>]*d="([^"]+)"/g;
     let simpleMatch;
     
+    const existingIds = regions.map(r => r.id);
+    
     while ((simpleMatch = simpleRegex.exec(svgData)) !== null) {
       const id = simpleMatch[1];
-      if (stateIds.includes(id)) {
+      if (stateIds.includes(id) && !existingIds.includes(id)) {
         regions.push({
           id: id,
           name: stateNames[id] || id.replace('NG-', ''),
@@ -129,27 +165,60 @@ export function extractKenyaRegions(svgData: string) {
     "KE-45": "Kisii", "KE-46": "Nyamira", "KE-47": "Nairobi"
   };
   
-  // First try to extract all path elements with id and title attributes
-  const regex = /<path[^>]*id="([^"]+)"[^>]*title="([^"]+)"[^>]*d="([^"]+)"/g;
-  let match;
+  // First try to extract all path elements with id and title attributes - title follows id
+  const regex1 = /<path[^>]*id="([^"]+)"[^>]*title="([^"]+)"[^>]*d="([^"]+)"/g;
+  let match1;
   
-  while ((match = regex.exec(svgData)) !== null) {
+  while ((match1 = regex1.exec(svgData)) !== null) {
     regions.push({
-      id: match[1],
-      name: match[2],
-      path: match[3]
+      id: match1[1],
+      name: match1[2],
+      path: match1[3]
     });
   }
   
-  // If we didn't find any regions, try alternative approach
-  if (regions.length === 0) {
-    // Try simpler regex to just extract paths with IDs
+  // Try another pattern where title comes before id
+  const regex2 = /<path[^>]*title="([^"]+)"[^>]*id="([^"]+)"[^>]*d="([^"]+)"/g;
+  let match2;
+  
+  while ((match2 = regex2.exec(svgData)) !== null) {
+    regions.push({
+      id: match2[2],
+      name: match2[1],
+      path: match2[3]
+    });
+  }
+  
+  // Try to extract with more flexible attribute ordering - class first
+  const regex3 = /<path[^>]*class="land"[^>]*id="([^"]+)"[^>]*d="([^"]+)"/g;
+  let match3;
+  
+  while ((match3 = regex3.exec(svgData)) !== null) {
+    const id = match3[1];
+    
+    // Extract the title if it exists
+    const titleRegex = new RegExp(`<path[^>]*id="${id}"[^>]*title="([^"]+)"`, 'i');
+    const titleMatch = svgData.match(titleRegex);
+    const name = titleMatch ? titleMatch[1] : countyNames[id] || id.replace('KE-', 'County ');
+    
+    regions.push({
+      id: id,
+      name: name,
+      path: match3[2]
+    });
+  }
+  
+  // If we still don't have enough regions, use the very generic pattern
+  if (regions.length < 40) {  // Kenya has 47 counties, but allow some missing
+    // Try simpler regex to just extract any paths with IDs
     const simpleRegex = /<path[^>]*id="([^"]+)"[^>]*d="([^"]+)"/g;
     let simpleMatch;
     
+    const existingIds = regions.map(r => r.id);
+    
     while ((simpleMatch = simpleRegex.exec(svgData)) !== null) {
       const id = simpleMatch[1];
-      if (countyIds.includes(id)) {
+      if (!existingIds.includes(id)) {
         regions.push({
           id: id,
           name: countyNames[id] || id.replace('KE-', 'County '),
