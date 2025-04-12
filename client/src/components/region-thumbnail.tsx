@@ -102,22 +102,14 @@ export function RegionThumbnail({
   
   return (
     <div 
-      className={`region-thumbnail ${className} overflow-hidden rounded-md bg-gray-100`}
+      className={`region-thumbnail ${className} overflow-visible`}
       style={styles}
       onClick={handleClick}
     >
       {pathData ? (
         <div className="w-full h-full relative">
           <svg viewBox={viewBox} width="100%" height="100%">
-            {/* Solid background for consistent positioning */}
-            <rect
-              x="0" 
-              y="0" 
-              width="100%" 
-              height="100%"
-              fill="rgba(255,255,255,0.1)"
-              rx="5"
-            />
+            {/* No background */}
             {/* Create a fixed-size centered container for the state shape */}
             <g>
               <path
@@ -125,28 +117,33 @@ export function RegionThumbnail({
                 fill={color}
                 stroke={strokeColor}
                 strokeWidth={strokeWidth + 2}
-                transform="scale(0.9)"
+                transform="scale(3.0)"
                 style={{
                   transformBox: 'fill-box',
                   transformOrigin: 'center',
                   filter: 'drop-shadow(0px 3px 4px rgba(0,0,0,0.5))'
                 }}
               />
-              {/* Add a centered positioning indicator */}
-              <circle
-                cx="50%"
-                cy="50%"
-                r="2"
-                fill="transparent"
-              />
+              {/* Add text label on the shape */}
+              <text 
+                x="50%" 
+                y="50%" 
+                textAnchor="middle" 
+                dominantBaseline="middle"
+                fill="#ffffff" 
+                fontSize="14"
+                fontWeight="bold"
+                style={{ 
+                  filter: 'drop-shadow(0px 2px 3px rgba(0,0,0,0.6))',
+                  textShadow: '0 2px 3px rgba(0,0,0,0.6)'
+                }}
+              >
+                {regionName}
+              </text>
             </g>
           </svg>
           
-          {showLabel && (
-            <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs px-1 py-0.5 text-center truncate">
-              {regionName}
-            </div>
-          )}
+          {/* State name is now rendered directly in the SVG */}
         </div>
       ) : (
         <div className="flex items-center justify-center w-full h-full">

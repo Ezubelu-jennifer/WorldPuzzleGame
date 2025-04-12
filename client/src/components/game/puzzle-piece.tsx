@@ -277,8 +277,8 @@ export function PuzzlePiece({
     setScale(1);
   };
 
-  // Determine piece size based on whether it's in the tray or on the board
-  const basePieceSize = isTrayPiece ? 160 : 280;
+  // Determine piece size based on whether it's in the tray or on the board - make larger for 3x scaled shapes
+  const basePieceSize = isTrayPiece ? 200 : 350;
   const pieceSize = basePieceSize * scale;
 
   return (
@@ -352,7 +352,7 @@ export function PuzzlePiece({
         className="w-full h-full" 
         style={{ 
           overflow: 'visible',
-          transform: `rotate(${rotation}deg) scale(1.0)`, // Use actual size
+          transform: `rotate(${rotation}deg) scale(3.0)`, // Make 3x bigger
           transition: "transform 0.3s ease"
         }}
       >
