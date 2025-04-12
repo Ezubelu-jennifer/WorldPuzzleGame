@@ -60,8 +60,8 @@ export function useDrag({
     if (!dragRef.current.dragging) return;
     
     // Position the element directly under the cursor (hand palm)
-    // Keeping a constant offset to make the region appear centered under the cursor
-    const pieceSize = 60; // Approximate half size of the piece
+    // Using a much smaller offset to make the shape center almost directly under the cursor
+    const pieceSize = 30; // Much smaller offset for more direct placement
     const newPosition = {
       x: e.clientX - pieceSize,
       y: e.clientY - pieceSize,
@@ -82,7 +82,7 @@ export function useDrag({
     document.removeEventListener("mouseup", handleMouseUp);
     
     // Use the current cursor position with the same offset as in handleMouseMove
-    const pieceSize = 60;
+    const pieceSize = 30; // Match the same offset used in handleMouseMove
     const finalPosition = {
       x: e.clientX - pieceSize,
       y: e.clientY - pieceSize,
@@ -131,7 +131,7 @@ export function useDrag({
     
     // Position element directly under the finger touch point
     // Keep constant offset to center piece under finger
-    const pieceSize = 60; // Approximate half size of the piece
+    const pieceSize = 30; // Match the smaller offset used in mouse handling
     const newPosition = {
       x: e.touches[0].clientX - pieceSize,
       y: e.touches[0].clientY - pieceSize,

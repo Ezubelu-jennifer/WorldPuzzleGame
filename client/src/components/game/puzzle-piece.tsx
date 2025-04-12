@@ -355,11 +355,12 @@ export function PuzzlePiece({
           overflow: 'visible',
           transform: `rotate(${rotation}deg) scale(2.2)`, // Match scale with thumbnail
           transition: "transform 0.3s ease",
-          background: 'transparent'
+          background: 'transparent',
+          transformOrigin: "center center" // Ensure rotation happens from center
         }}
         preserveAspectRatio="xMidYMid meet"
       >
-        {/* No background elements - just the state shape */}
+        {/* No background elements - just the state shape centered precisely */}
         <g transform="translate(50, 50) scale(0.7)" style={{ transformOrigin: "center" }}>
           <path 
             d={svgPathData || region.svgPath} 
