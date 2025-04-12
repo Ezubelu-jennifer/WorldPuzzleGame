@@ -1,137 +1,96 @@
-import ClipperLib from 'clipper-lib';
 import { getPathBounds } from 'svg-path-bounds';
 
-// Define interfaces for ClipperLib types if needed
-interface IntPoint {
-  X: number;
-  Y: number;
-}
-
-type Path = IntPoint[];
-type Paths = Path[];
-
-// Convert SVG path to Clipper points
-export function svgPathToClipperPoints(svgPath: string): Path {
+// Direct scaling approach for SVG paths
+export function optimizeSvgPath(svgPath: string, scaleFactor: number = 1.5): string {
   try {
-    // Parse the SVG path to extract points
-    const pathRegex = /([MLHVCSQTAZmlhvcsqtaz])([^MLHVCSQTAZmlhvcsqtaz]*)/g;
-    const pathMatch = svgPath.match(pathRegex);
-    
-    if (!pathMatch) {
-      console.error('Failed to parse SVG path:', svgPath);
-      return [];
-    }
-    
-    // Get the bounding box of the SVG path
-    const bounds = getPathBounds(svgPath);
-    const [minX, minY, maxX, maxY] = bounds;
-    
-    // Generate points along the path (simplified approach)
-    const points: IntPoint[] = [];
-    const scale = 1000; // Scale factor to convert to integer coordinates
-    
-    // Sample points along the path
-    const numPoints = 100; // Number of points to sample
-    
-    for (let i = 0; i < numPoints; i++) {
-      const t = i / (numPoints - 1);
-      // Simple linear interpolation around the path
-      const x = Math.round((minX + t * (maxX - minX)) * scale);
-      const y = Math.round((minY + t * (maxY - minY)) * scale);
-      points.push({ X: x, Y: y });
-    }
-    
-    return points;
-  } catch (error) {
-    console.error('Error converting SVG path to Clipper points:', error);
-    return [];
-  }
-}
-
-// Scale a path by a factor
-export function scalePath(path: Path, scaleFactor: number): Path {
-  try {
-    const solution: Paths = [];
-    const clipper = new ClipperLib.ClipperOffset();
-    
-    clipper.AddPath(path, ClipperLib.JoinType.jtRound, ClipperLib.EndType.etClosedPolygon);
-    clipper.Execute(solution, scaleFactor);
-    
-    return solution.length > 0 ? solution[0] : path;
-  } catch (error) {
-    console.error('Error scaling path:', error);
-    return path;
-  }
-}
-
-// Convert Clipper points back to SVG path
-export function clipperPointsToSvgPath(points: Path): string {
-  if (points.length === 0) return '';
-  
-  let svgPath = `M ${points[0].X} ${points[0].Y} `;
-  
-  for (let i = 1; i < points.length; i++) {
-    svgPath += `L ${points[i].X} ${points[i].Y} `;
-  }
-  
-  svgPath += 'Z'; // Close the path
-  return svgPath;
-}
-
-// Fallback simplified scaling if ClipperLib fails
-function simpleScalePath(svgPath: string, scaleFactor: number): string {
-  try {
-    // This is a very basic approach that just attempts to
-    // scale the path by modifying the coordinates
-    const scale = scaleFactor;
+    // Improved SVG path scaling that properly handles all SVG path commands
+    const commands = svgPath.match(/([a-z][^a-z]*)/gi);
+    if (!commands) return svgPath;
     
     // Get the bounds of the original path
     const bounds = getPathBounds(svgPath);
     const [minX, minY, maxX, maxY] = bounds;
     
-    // Calculate the center point
+    // Calculate the center point for scaling around center
     const centerX = (minX + maxX) / 2;
     const centerY = (minY + maxY) / 2;
     
-    // Regular expression to find coordinates
-    const coordRegex = /([0-9]+(?:\.[0-9]+)?)/g;
-    
-    // Scale coordinates around the center
-    let scaledPath = svgPath.replace(coordRegex, (match) => {
-      const coord = parseFloat(match);
-      return String(coord * scale);
+    const scaledCommands = commands.map(command => {
+      // Get the command letter (first character)
+      const cmd = command.charAt(0);
+      
+      // Handle different types of commands
+      if (/[MLHVCSQTA]/i.test(cmd)) {
+        // Commands that have coordinate values
+        
+        // Extract all numbers from the command
+        const parts = command.substring(1).trim().split(/[\s,]+/);
+        const isRelative = cmd === cmd.toLowerCase();
+        
+        // Process the coordinates differently based on the command type
+        let processedParts;
+        
+        if (/[ML]/i.test(cmd)) {
+          // Move and Line commands: x,y pairs
+          processedParts = parts.map((val, index) => {
+            const num = parseFloat(val);
+            
+            // Scale around center point for absolute coordinates
+            if (!isRelative) {
+              return index % 2 === 0
+                ? centerX + (num - centerX) * scaleFactor
+                : centerY + (num - centerY) * scaleFactor;
+            } else {
+              // For relative coordinates, just scale directly
+              return num * scaleFactor;
+            }
+          });
+        } else if (/[H]/i.test(cmd)) {
+          // Horizontal commands: x values only
+          processedParts = parts.map(val => {
+            const num = parseFloat(val);
+            return isRelative
+              ? num * scaleFactor
+              : centerX + (num - centerX) * scaleFactor;
+          });
+        } else if (/[V]/i.test(cmd)) {
+          // Vertical commands: y values only
+          processedParts = parts.map(val => {
+            const num = parseFloat(val);
+            return isRelative
+              ? num * scaleFactor
+              : centerY + (num - centerY) * scaleFactor;
+          });
+        } else if (/[CSQTA]/i.test(cmd)) {
+          // Curve commands: multiple coordinate pairs
+          processedParts = parts.map((val, index) => {
+            const num = parseFloat(val);
+            
+            if (!isRelative) {
+              return index % 2 === 0
+                ? centerX + (num - centerX) * scaleFactor
+                : centerY + (num - centerY) * scaleFactor;
+            } else {
+              return num * scaleFactor;
+            }
+          });
+        } else {
+          // Unknown commands, keep as is
+          processedParts = parts;
+        }
+        
+        // Recombine the command letter with processed coordinates
+        return cmd + processedParts.join(' ');
+      } else {
+        // Commands without coordinates (Z)
+        return command;
+      }
     });
     
-    return scaledPath;
+    // Join all transformed commands back into an SVG path string
+    return scaledCommands.join('');
   } catch (error) {
-    console.error('Error in simple path scaling:', error);
-    return svgPath;
-  }
-}
-
-// Optimize and scale an SVG path
-export function optimizeSvgPath(svgPath: string, scaleFactor: number = 1.5): string {
-  try {
-    // Try ClipperLib approach first
-    const clipperPoints = svgPathToClipperPoints(svgPath);
-    
-    if (clipperPoints.length > 0) {
-      try {
-        // Scale the path
-        const scaledPoints = scalePath(clipperPoints, scaleFactor * 100);
-        
-        // Convert back to SVG path
-        return clipperPointsToSvgPath(scaledPoints);
-      } catch (error) {
-        console.warn('ClipperLib scaling failed, trying simple scaling', error);
-        return simpleScalePath(svgPath, scaleFactor);
-      }
-    } else {
-      // If we couldn't get clipper points, try simple scaling
-      return simpleScalePath(svgPath, scaleFactor);
-    }
-  } catch (error) {
-    console.warn('Could not optimize SVG path, returning original', error);
+    console.warn('SVG path scaling failed:', error);
     return svgPath;
   }
 }

@@ -169,9 +169,10 @@ export function PuzzlePiece({
       if (match && match[1]) {
         // Found a matching path - optimize with SVG Clipper!
         try {
-          const optimizedPath = optimizeSvgPath(match[1], 1.8); // Scale factor of 1.8
+          // Scale the SVG path by 2.5x to make it more prominent
+          const optimizedPath = optimizeSvgPath(match[1], 2.5);
           setSvgPathData(optimizedPath);
-          console.log(`Optimized SVG path for ${region.name} in ${countryId === 1 ? 'Nigeria' : 'Kenya'}`);
+          console.log(`Optimized SVG path for ${region.name} with scale factor 2.5`);
         } catch (error) {
           console.warn(`Failed to optimize path for ${region.name}, using original`, error);
           setSvgPathData(match[1]);
