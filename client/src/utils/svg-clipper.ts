@@ -18,7 +18,7 @@ const KNOWN_CENTROIDS: Record<string, { x: number, y: number }> = {
   "NG-ED": { x: 274.8, y: 458.8 }, // Edo
   "NG-EK": { x: 263.9, y: 434.1 }, // Ekiti
   "NG-EN": { x: 310.5, y: 486.1 }, // Enugu
-  "NG-FC": { x: 362.8, y: 362.3 }, // Federal Capital Territory
+  "NG-FC": { x: 331.0, y: 374.5 }, // Federal Capital Territory - CORRECTED POSITION
   "NG-GO": { x: 445.6, y: 292.8 }, // Gombe
   "NG-IM": { x: 303.2, y: 512.6 }, // Imo
   "NG-JI": { x: 402.6, y: 220.9 }, // Jigawa
@@ -68,7 +68,7 @@ const KNOWN_CENTROIDS: Record<string, { x: number, y: number }> = {
   "KE-23": { x: 412.7, y: 573.6 }, // Turkana
   "KE-24": { x: 226.4, y: 298.9 }, // West Pokot
   "KE-25": { x: 185.3, y: 330.1 }, // Samburu
-  "KE-26": { x: 95.5, y: 440.5 },  // Trans Nzoia
+  "KE-26": { x: 78.2, y: 416.4 },  // Trans Nzoia - CORRECTED POSITION
   "KE-27": { x: 122.7, y: 459.3 }, // Uasin Gishu
   "KE-28": { x: 172.1, y: 483.7 }, // Elgeyo-Marakwet
   "KE-29": { x: 198.9, y: 522.3 }, // Nandi
@@ -94,7 +94,7 @@ const KNOWN_CENTROIDS: Record<string, { x: number, y: number }> = {
   // Additional mappings for Kenya counties with custom IDs
   "KE-CUSTOM-TaitaTaveta": { x: 243.5, y: 578.6 }, // Taita-Taveta
   "KE-CUSTOM-Tharaka": { x: 382.1, y: 427.6 },    // Tharaka-Nithi
-  "KE-CUSTOM-TransNzoia": { x: 95.5, y: 440.5 },  // Trans Nzoia
+  "KE-CUSTOM-TransNzoia": { x: 78.2, y: 416.4 },  // Trans Nzoia - CORRECTED POSITION
   "KE-CUSTOM-KeiyoMarakwet": { x: 172.1, y: 483.7 } // Elgeyo-Marakwet
 };
 

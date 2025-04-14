@@ -325,6 +325,11 @@ export function PuzzleBoard({
                           centroid = { x, y };
                         }
                       }
+
+                      // Final safety check to ensure we always have a centroid
+                      if (!centroid) {
+                        centroid = { x: 400, y: 400 }; // Default center position as absolute last resort
+                      }
                       
                       // Calculate appropriate dot size based on viewBox
                       const [, , width, height] = viewBox.split(' ').map(Number);
