@@ -357,14 +357,14 @@ export function PuzzleBoard({
                       
                       // Calculate appropriate dot size based on viewBox
                       const [, , width, height] = viewBox.split(' ').map(Number);
-                      const baseDotSize = Math.min(width, height) * 0.018; // Larger dots for better visibility
-                      const dotSize = isPrimary ? baseDotSize * 1.3 : baseDotSize;
+                      const baseDotSize = Math.min(width, height) * 0.025; // Larger dots for better visibility
+                      const dotSize = isPrimary ? baseDotSize * 1.5 : baseDotSize * 1.2;
                       
-                      // Set dot styles based on whether this is the primary (dragged) piece
-                      const dotColor = isPrimary ? "rgba(255,50,50,1)" : "rgba(255,220,0,1)";
-                      const outlineColor = isPrimary ? "white" : "rgba(255,255,255,0.95)";
-                      const pulseSpeed = isPrimary ? "1.8s" : "3s";
-                      const opacity = isPrimary ? 1 : 0.9;
+                      // Set dot styles - using only red dots as per user request
+                      const dotColor = "rgba(255,0,0,1)"; // Pure red for all dots
+                      const outlineColor = "white"; // White outline for better contrast
+                      const pulseSpeed = isPrimary ? "1.5s" : "2.5s"; // Faster pulse animation
+                      const opacity = isPrimary ? 1 : 0; // Hide non-primary (secondary) dots
                       
                       return (
                         <g key={`dot-${gameRegion.id}`} className={isPrimary ? "primary-dot" : "secondary-dot"}>
@@ -402,12 +402,12 @@ export function PuzzleBoard({
                                 cy={centroid.y} 
                                 r={dotSize * 3.5} 
                                 fill="none" 
-                                stroke="#00FF00" 
+                                stroke={dotColor} 
                                 strokeWidth={dotSize * 0.4}
                                 strokeDasharray="3,3"
                                 style={{ 
                                   animation: `pulse 1.5s infinite ease-in-out`,
-                                  opacity: 0.8
+                                  opacity: opacity * 0.8
                                 }}
                               />
                               
@@ -441,10 +441,10 @@ export function PuzzleBoard({
                                 cx={centroid.x} 
                                 cy={centroid.y} 
                                 r={dotSize * 1.2} 
-                                fill={isPrimary ? "#FF3366" : "#33FF66"} 
+                                fill={dotColor} 
                                 style={{ 
                                   filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.9))',
-                                  opacity: 0.9
+                                  opacity: opacity
                                 }}
                               />
                               
