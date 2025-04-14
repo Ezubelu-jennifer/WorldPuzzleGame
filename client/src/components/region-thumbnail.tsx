@@ -298,7 +298,7 @@ export function RegionThumbnail({
             fill={color}
             stroke={strokeColor}
             strokeWidth={strokeWidth + 3}
-            transform="scale(5.5)"
+            transform="scale(6.5)" /* Increased scale factor for larger shapes */
             style={{
               transformBox: 'fill-box',
               transformOrigin: 'center',
@@ -314,10 +314,10 @@ export function RegionThumbnail({
               textAnchor="middle"
               dominantBaseline="middle"
               fill="#000000" 
-              fontSize={regionId.startsWith("KE-") ? "40" : "60"} // Smaller font for Kenya counties which tend to have longer names
+              fontSize={regionId.startsWith("KE-") ? "50" : "70"} // Smaller font for Kenya counties which tend to have longer names
               fontWeight="900"
               style={{ 
-                textShadow: '0 0 10px white, 0 0 10px white, 0 0 10px white, 0 0 10px white',
+                textShadow: '0 0 15px white, 0 0 15px white, 0 0 15px white, 0 0 15px white, 0 2px 4px rgba(0,0,0,0.8)',
                 fontFamily: 'Arial, sans-serif'
               }}
             >
@@ -403,7 +403,7 @@ export function RegionThumbnail({
                 fill="white"
                 stroke="white"
                 strokeWidth={(strokeWidth + 3) + 4} // Extra thick white border for visibility
-                transform="scale(5.5)" // Increased to exactly 5.5x scale per request
+                transform="scale(6.5)" /* Increased scale factor for larger shapes */ // Increased to exactly 5.5x scale per request
                 style={{
                   transformBox: 'fill-box',
                   transformOrigin: 'center',
@@ -417,7 +417,7 @@ export function RegionThumbnail({
                 fill="#000000"
                 stroke="#000000"
                 strokeWidth={strokeWidth + 3}
-                transform="translate(2, 2) scale(5.5)" // Offset shadow
+                transform="translate(2, 2) scale(7.0)" // Increased offset shadow size
                 style={{
                   transformBox: 'fill-box',
                   transformOrigin: 'center',
@@ -432,7 +432,7 @@ export function RegionThumbnail({
                 fill={color}
                 stroke={strokeColor}
                 strokeWidth={strokeWidth + 3} // Thicker border for very bold appearance
-                transform="scale(5.5)" // Increased to exactly 5.5x scale per request
+                transform="scale(6.5)" /* Increased scale factor for larger shapes */ // Increased to exactly 5.5x scale per request
                 style={{
                   transformBox: 'fill-box',
                   transformOrigin: 'center',
@@ -447,7 +447,7 @@ export function RegionThumbnail({
                 fill="none"
                 stroke="white"
                 strokeWidth={1}
-                transform="scale(5.5)"
+                transform="scale(6.5)" /* Increased scale factor for larger shapes */
                 style={{
                   transformBox: 'fill-box',
                   transformOrigin: 'center',
@@ -463,10 +463,10 @@ export function RegionThumbnail({
                   textAnchor="middle"
                   dominantBaseline="middle"
                   fill="#000000" 
-                  fontSize={regionId.startsWith("KE-") ? "40" : "60"} // Smaller font for Kenya counties which tend to have longer names
+                  fontSize={regionId.startsWith("KE-") ? "50" : "70"} // Smaller font for Kenya counties which tend to have longer names
                   fontWeight="900"
                   style={{ 
-                    textShadow: '0 0 10px white, 0 0 10px white, 0 0 10px white, 0 0 10px white',
+                    textShadow: '0 0 15px white, 0 0 15px white, 0 0 15px white, 0 0 15px white, 0 2px 4px rgba(0,0,0,0.8)',
                     fontFamily: 'Arial, sans-serif'
                   }}
                 >
