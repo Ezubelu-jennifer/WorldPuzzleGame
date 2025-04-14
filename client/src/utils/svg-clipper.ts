@@ -14,7 +14,7 @@ const KNOWN_CENTROIDS: Record<string, { x: number, y: number }> = {
   "NG-BY": { x: 266.9, y: 535.4 }, // Bayelsa
   "NG-CR": { x: 345.2, y: 501.6 }, // Cross River
   "NG-DE": { x: 264.5, y: 495.1 }, // Delta
-  "NG-EB": { x: 330.7, y: 473.9 }, // Ebonyi
+  "NG-EB": { x: 305.2, y: 510.4 }, // Ebonyi
   "NG-ED": { x: 274.8, y: 458.8 }, // Edo
   "NG-EK": { x: 263.9, y: 434.1 }, // Ekiti
   "NG-EN": { x: 310.5, y: 486.1 }, // Enugu
