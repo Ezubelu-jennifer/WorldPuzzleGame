@@ -122,6 +122,9 @@ export function CountrySvgMap({
     return colors[index % colors.length];
   };
   
+  // Configuration for the improved guidance system (read from parent component)
+  const showAllOutlines = true; // When enabled, all region outlines are visible
+  
   // Create a map to deduplicate regions with the same ID
   const uniqueRegions = regions.reduce((acc, region) => {
     // Only add if we haven't seen this ID before
@@ -242,12 +245,23 @@ export function CountrySvgMap({
           ))}
         </g>
           
-        {/* Interactive region paths */}
+        {/* Interactive region paths with improved guidance */}
         {uniqueRegions.map((region) => {
           const isHighlighted = region.id === highlightRegion;
           const fill = isHighlighted ? "#f87171" : "#e5e5e5"; // Light gray for unplaced regions
-          const stroke = isHighlighted ? "#b91c1c" : "transparent"; // No visible stroke for inner boundaries
-          const strokeWidth = isHighlighted ? "1.5" : "0";
+          
+          // Enhanced styling based on the showAllOutlines configuration
+          const stroke = isHighlighted 
+            ? "#b91c1c" // Highlighted region gets a red border
+            : showAllOutlines 
+              ? "rgba(102, 102, 102, 0.6)" // Show faint outlines for all regions when guidance is enabled
+              : "transparent"; // No visible stroke when guidance is disabled
+              
+          const strokeWidth = isHighlighted 
+            ? "1.5" 
+            : showAllOutlines ? "0.8" : "0";
+            
+          const strokeDasharray = !isHighlighted && showAllOutlines ? "3,1" : "none";
           
           return (
             <path
@@ -257,10 +271,14 @@ export function CountrySvgMap({
               fill={fill}
               stroke={stroke}
               strokeWidth={strokeWidth}
+              strokeDasharray={strokeDasharray}
               data-name={region.name}
               aria-label={region.name}
               className="transition-colors duration-200 hover:opacity-80"
-              style={{ cursor: "pointer" }}
+              style={{ 
+                cursor: "pointer",
+                filter: isHighlighted ? "drop-shadow(0px 0px 3px rgba(255,0,0,0.5))" : "none"
+              }}
               onClick={() => handleRegionClick(region.id, region.name)}
             />
           );

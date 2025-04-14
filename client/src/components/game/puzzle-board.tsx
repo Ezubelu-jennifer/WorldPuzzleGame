@@ -9,6 +9,12 @@ import { CountrySvgMap } from "@/components/maps/country-svg-map";
 import { useDragContext } from "@/context/drag-context";
 import { getPathCentroid } from "@/utils/svg-clipper";
 
+// Configuration for the improved guidance system
+const ENABLE_ALL_GUIDES = true; // When true, shows faint outlines for all states
+const HIGHLIGHT_TARGET_REGION = true; // When true, highlights the specific target region when dragging a piece
+const SHOW_CROSSHAIR_GUIDES = true; // When true, shows crosshair guides for precise placement
+const ENHANCED_DOTS = true; // When true, uses larger dots with white outlines
+
 interface PuzzleBoardProps {
   countryId: number;
   countryName: string;
