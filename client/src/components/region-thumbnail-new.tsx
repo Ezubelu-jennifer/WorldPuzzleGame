@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { optimizeSvgPath } from "@/utils/svg-clipper";
 import { getPathBounds } from "svg-path-bounds";
 import { Button } from "@/components/ui/button";
-import { useDrag } from "@/hooks/useDrag";
 
 interface RegionThumbnailProps {
   svgData: string;
@@ -20,6 +19,11 @@ interface RegionThumbnailProps {
   rotatable?: boolean;
   onDrop?: (id: number, x: number, y: number) => boolean;
   regionPieceId?: number;
+}
+
+interface Position {
+  x: number;
+  y: number;
 }
 
 export function RegionThumbnail({
@@ -40,106 +44,59 @@ export function RegionThumbnail({
   regionPieceId
 }: RegionThumbnailProps) {
   const [pathData, setPathData] = useState<string>("");
-  const [viewBox, setViewBox] = useState<string>("0 0 800 600");
+  const [viewBox, setViewBox] = useState<string>("0 0 100 100");
   const [rotation, setRotation] = useState<number>(0);
   const [scale, setScale] = useState<number>(1);
-  const thumbnailRef = useRef<SVGSVGElement>(null);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [position, setPosition] = useState<Position>({ x: 0, y: 0 });
   
-  // Set up drag functionality if draggable is enabled
-  const { isDragging, position, dragHandlers } = useDrag({
-    onDragStart: () => {
-      // Add any needed drag start behavior
-      document.body.style.cursor = "grabbing";
-    },
-    onDragEnd: (position, dropped) => {
-      // Reset cursor and handle any post-drag behavior
-      document.body.style.cursor = "auto";
-      
-      // If there's a custom click handler and we didn't actually drag (just clicked), 
-      // trigger the click handler
-      if (!isDragging && onClick) {
-        onClick();
-      }
-      
-      // If we have the onDrop handler and a piece ID, we can attempt to drop the piece
-      if (isDragging && dropped && onDrop && regionPieceId !== undefined) {
-        onDrop(regionPieceId, position.x, position.y);
-      }
-    }
-  });
+  // Create SVG element reference
+  const svgRef = useRef<SVGSVGElement>(null);
   
+  // Drag operation references
+  const dragStartPosRef = useRef<Position>({ x: 0, y: 0 });
+  const elementStartPosRef = useRef<Position>({ x: 0, y: 0 });
+  
+  // Extract path data for this region
   useEffect(() => {
     if (!svgData || !regionId) return;
     
     try {
-      // Extract viewBox
-      const viewBoxMatch = svgData.match(/viewBox="([^"]+)"/);
-      if (viewBoxMatch && viewBoxMatch[1]) {
-        setViewBox("0 0 100 100"); // Use a normalized viewBox for consistent positioning
-      }
+      // Extract viewBox and use a normalized one
+      setViewBox("0 0 100 100");
       
       // Extract the path for this specific region
       // First, try to find an exact ID match
       const pathRegex = new RegExp(`<path[^>]*id="${regionId}"[^>]*d="([^"]+)"`, 'i');
       let pathMatch = svgData.match(pathRegex);
       
-      // If no match and it's a custom ID (KE-CUSTOM-*, KE-MISSING-*, etc), try to extract by region name
+      // If no match and it's a custom ID, try to extract by region name
       if (!pathMatch && (regionId.includes('CUSTOM') || regionId.includes('MISSING') || regionId.includes('GEN'))) {
-        // Look for the path with the regionName in title attribute
         const nameRegex = new RegExp(`<path[^>]*title="${regionName}"[^>]*d="([^"]+)"`, 'i');
         pathMatch = svgData.match(nameRegex);
       }
       
       if (pathMatch && pathMatch[1]) {
         try {
-          // Get the original path
+          // Get and optimize the path
           const originalPath = pathMatch[1];
-          
-          // Get the bounds of the path to normalize it
-          const bounds = getPathBounds(originalPath);
-          const [minX, minY, maxX, maxY] = bounds;
-          
-          // Calculate the width and height
-          const width = maxX - minX;
-          const height = maxY - minY;
-          
-          // Calculate the center of the path
-          const centerX = minX + width / 2;
-          const centerY = minY + height / 2;
-          
-          // Center the path in the middle of the 100x100 viewBox
-          const scaleFactor = 55 / Math.max(width, height);
-          
-          // Create a simplified optimized path centered in the viewBox
-          // This is a simplified approach that modifies the path string directly
-          const normalizedPath = optimizeSvgPath(originalPath, 1.0); // First get optimized path
-          
-          // Set as the path data
-          setViewBox("0 0 100 100");
-          
-          // Now we will use SVG transformation to center and scale the path
-          // rather than modifying the path data directly
+          const normalizedPath = optimizeSvgPath(originalPath, 1.0);
           setPathData(normalizedPath);
         } catch (error) {
           console.warn(`Failed to optimize path for ${regionId}, using original`, error);
           setPathData(pathMatch[1]); 
         }
+      } else if (regionId.includes('CUSTOM') || regionId.includes('MISSING') || regionId.includes('GEN')) {
+        console.warn(`Creating fallback shape for ${regionId} (${regionName})`);
+        const fallbackPath = "M10,10 L90,10 Q100,10 100,20 L100,80 Q100,90 90,90 L10,90 Q0,90 0,80 L0,20 Q0,10 10,10 Z";
+        setPathData(fallbackPath);
       } else {
-        // For missing or custom paths, create a simple shape as fallback
-        if (regionId.includes('CUSTOM') || regionId.includes('MISSING') || regionId.includes('GEN')) {
-          console.warn(`Creating fallback shape for ${regionId} (${regionName})`);
-          
-          // Create a simple rounded rectangle shape as fallback
-          const fallbackPath = "M10,10 L90,10 Q100,10 100,20 L100,80 Q100,90 90,90 L10,90 Q0,90 0,80 L0,20 Q0,10 10,10 Z";
-          setPathData(fallbackPath);
-        } else {
-          console.warn(`Path for region ${regionId} not found`);
-        }
+        console.warn(`Path for region ${regionId} not found`);
       }
     } catch (error) {
       console.error("Error extracting region path:", error);
     }
-  }, [svgData, regionId]);
+  }, [svgData, regionId, regionName]);
 
   // Rotation functions
   const rotateLeft = (e: React.MouseEvent) => {
@@ -152,50 +109,124 @@ export function RegionThumbnail({
     setRotation(prev => prev + 15);
   };
 
-  // Scaling functions
-  const increaseSize = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setScale(prev => Math.min(prev + 0.1, 1.5));
-  };
-
-  const decreaseSize = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setScale(prev => Math.max(prev - 0.1, 0.5));
-  };
-
-  // Reset transformations
   const resetTransformations = (e: React.MouseEvent) => {
     e.stopPropagation();
     setRotation(0);
     setScale(1);
   };
 
+  // Click handler
   const handleClick = () => {
     if (onClick) {
       onClick();
     }
   };
   
-  const styles = {
-    width: typeof width === 'number' ? `${width}px` : width,
-    height: typeof height === 'number' ? `${height}px` : height,
-    cursor: onClick || (draggable || rotatable) ? 'pointer' : 'default',
-    position: 'relative' as const
+  // Mouse handlers for dragging
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!draggable) return;
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Record start positions
+    dragStartPosRef.current = { x: e.clientX, y: e.clientY };
+    elementStartPosRef.current = { ...position };
+    
+    setIsDragging(true);
+    document.body.style.cursor = "grabbing";
+    
+    // Add document event handlers
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
   };
   
-  // Directly return the SVG without any container divs
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isDragging) return;
+    
+    // Calculate new position
+    setPosition({
+      x: e.clientX - 40, // Half of width
+      y: e.clientY - 40, // Half of height
+    });
+  };
+  
+  const handleMouseUp = (e: MouseEvent) => {
+    if (!isDragging) return;
+    
+    // Remove document event handlers
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+    
+    setIsDragging(false);
+    document.body.style.cursor = "auto";
+    
+    // Handle drop event
+    if (onDrop && regionPieceId !== undefined) {
+      onDrop(regionPieceId, e.clientX, e.clientY);
+    }
+  };
+  
+  // Touch handlers for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!draggable || e.touches.length !== 1) return;
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const touch = e.touches[0];
+    
+    // Record start positions
+    dragStartPosRef.current = { x: touch.clientX, y: touch.clientY };
+    elementStartPosRef.current = { ...position };
+    
+    setIsDragging(true);
+    
+    // Add document event handlers
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+  };
+  
+  const handleTouchMove = (e: TouchEvent) => {
+    if (!isDragging || e.touches.length !== 1) return;
+    e.preventDefault();
+    
+    const touch = e.touches[0];
+    
+    // Calculate new position
+    setPosition({
+      x: touch.clientX - 40, // Half of width
+      y: touch.clientY - 40, // Half of height
+    });
+  };
+  
+  const handleTouchEnd = (e: TouchEvent) => {
+    if (!isDragging) return;
+    
+    // Remove document event handlers
+    document.removeEventListener('touchmove', handleTouchMove);
+    document.removeEventListener('touchend', handleTouchEnd);
+    
+    setIsDragging(false);
+    
+    // Handle drop event if we have position data
+    if (onDrop && regionPieceId !== undefined && e.changedTouches.length > 0) {
+      const touch = e.changedTouches[0];
+      onDrop(regionPieceId, touch.clientX, touch.clientY);
+    }
+  };
+  
+  // Directly return SVG without any container divs
   return (
     <>
       {pathData ? (
         <svg 
-          ref={thumbnailRef}
+          ref={svgRef}
           viewBox={viewBox} 
           width={typeof width === 'number' ? `${width}px` : width}
           height={typeof height === 'number' ? `${height}px` : height}
           preserveAspectRatio="xMidYMid meet"
           className={`${className} ${isDragging ? 'z-50' : ''}`}
           style={{
-            ...(draggable && isDragging ? {
+            ...(isDragging ? {
               position: 'fixed',
               left: `${position.x}px`,
               top: `${position.y}px`,
@@ -212,17 +243,9 @@ export function RegionThumbnail({
             background: 'transparent',
             overflow: 'visible'
           }}
-          {...(draggable ? {
-            ...dragHandlers,
-            onMouseDown: (e) => {
-              dragHandlers.onMouseDown(e);
-              e.stopPropagation();
-            },
-            onTouchStart: (e) => {
-              dragHandlers.onTouchStart(e);
-              e.stopPropagation();
-            }
-          } : { onClick: handleClick })}
+          onClick={onClick}
+          onMouseDown={draggable ? handleMouseDown : undefined}
+          onTouchStart={draggable ? handleTouchStart : undefined}
         >
           {/* Controls for rotation if needed */}
           {rotatable && !isDragging && (
