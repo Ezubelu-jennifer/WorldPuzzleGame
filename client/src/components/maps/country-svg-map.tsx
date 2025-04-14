@@ -123,7 +123,7 @@ export function CountrySvgMap({
   };
   
   // Configuration for the improved guidance system (read from parent component)
-  const showAllOutlines = true; // When enabled, all region outlines are visible
+  const showAllOutlines = false; // When enabled, all region outlines are visible - now disabled to show only red dots
   
   // Create a map to deduplicate regions with the same ID
   // Ensure special handling for Ebonyi and FCT to never filter them out
