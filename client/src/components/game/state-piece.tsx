@@ -41,6 +41,7 @@ export function StatePiece({
   });
   const [rotation, setRotation] = useState<number>(0);
   const [scale, setScale] = useState<number>(1);
+  const [isNearTarget, setIsNearTarget] = useState<boolean>(false); // Track if piece is near correct position
   
   // Country ID
   const countryId = region.countryId || 0;
@@ -138,23 +139,55 @@ export function StatePiece({
       x: e.clientX,
       y: e.clientY
     });
-  }, [isDragging]);
+    
+    // Check if we're near the target position during dragging
+    if (containerRef.current) {
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const relX = e.clientX - containerRect.left;
+      const relY = e.clientY - containerRect.top;
+      
+      // Calculate distance to correct position
+      const dx = relX - region.correctX;
+      const dy = relY - region.correctY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      // Update nearTarget state - tolerance of 50px
+      const isNear = distance <= 50;
+      if (isNear !== isNearTarget) {
+        setIsNearTarget(isNear);
+        
+        // Provide subtle user feedback when near target
+        if (isNear) {
+          setScale(1.2); // Slightly enlarge to show it's in a good spot
+        } else {
+          setScale(1.0);
+        }
+      }
+    }
+  }, [isDragging, containerRef, region.correctX, region.correctY, isNearTarget]);
   
   // Helper function to check if the position is close to the correct position
   const isCloseToCorrectPosition = useCallback((dropX: number, dropY: number): boolean => {
     // Define a tolerance radius for position matching
     const tolerance = 50; // Adjust this value as needed
     
+    // Log the region's correct position and current drop position
+    console.log(`Region ${region.name}: Trying to place at (${dropX.toFixed(0)}, ${dropY.toFixed(0)})`);
+    console.log(`Region ${region.name}: Correct position is (${region.correctX.toFixed(0)}, ${region.correctY.toFixed(0)})`);
+    
     // Calculate distance between drop position and correct position
     const dx = dropX - region.correctX;
     const dy = dropY - region.correctY;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
-    // Log the details for debugging
-    console.log(`Region ${region.name}: Position (${dropX.toFixed(1)}, ${dropY.toFixed(1)}), Correct: (${region.correctX.toFixed(1)}, ${region.correctY.toFixed(1)}), Distance: ${distance.toFixed(1)}`);
+    // Log the distance for debugging
+    console.log(`Region ${region.name}: Distance from correct position: ${distance.toFixed(0)}px (tolerance: ${tolerance}px)`);
     
     // Check if it's within tolerance
-    return distance <= tolerance;
+    const isCorrect = distance <= tolerance;
+    console.log(`Region ${region.name}: Is in correct position? ${isCorrect ? 'YES ✓' : 'NO ✗'}`);
+    
+    return isCorrect;
   }, [region.correctX, region.correctY, region.name]);
   
   // Mouse up/drop handler
