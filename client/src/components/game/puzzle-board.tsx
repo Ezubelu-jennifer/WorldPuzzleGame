@@ -169,13 +169,21 @@ export function PuzzleBoard({
               renderOverlay={
                 // Render the guidance dot as an overlay within the SVG map component
                 // This ensures it respects the same zoom and pan transformations
-                hasRegions && draggedPieceId ? (
+                hasRegions ? (
                   () => {
-                    const draggedRegion = gameState.regions.find(
-                      region => region.id === draggedPieceId && !region.isPlaced
-                    );
-                    
-                    if (draggedRegion) {
+                    // If we have an actively dragged piece, focus on that
+                    const draggedRegion = draggedPieceId 
+                      ? gameState.regions.find(region => region.id === draggedPieceId && !region.isPlaced)
+                      : null;
+                      
+                    // When SHOW_ALL_POSITION_DOTS is enabled, we'll show all unplaced regions
+                    // even when there's no active drag happening
+                    const unplacedRegions = SHOW_ALL_POSITION_DOTS 
+                      ? gameState.regions.filter(region => !region.isPlaced)
+                      : [];
+                      
+                    // If there's a dragged region or we're showing all position guides
+                    if (draggedRegion || (SHOW_ALL_POSITION_DOTS && unplacedRegions.length > 0)) {
                       // Find the exact matching region on the map for the dragged piece
                       const findMatchingMapRegion = () => {
                         // First try to find the region in the SVG data by ID
