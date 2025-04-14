@@ -149,15 +149,28 @@ export function CountrySvgMap({
             style={{ pointerEvents: "none" }}
           />
           
-          {/* Draw only the outer boundary line */}
+          {/* Shadow stroke for depth effect */}
           <rect
             x="0"
             y="0"
             width="100%"
             height="100%"
             fill="none"
-            stroke="#999999" // Darker gray for prominent border
-            strokeWidth="5" // Extra thick border for the outline
+            stroke="rgba(0,0,0,0.2)" // Shadow stroke
+            strokeWidth="15" // Wider shadow stroke
+            clipPath="url(#country-outline)"
+            style={{ pointerEvents: "none" }}
+          />
+          
+          {/* Draw the main outer boundary line */}
+          <rect
+            x="0"
+            y="0"
+            width="100%"
+            height="100%"
+            fill="none"
+            stroke="#666666" // Darker gray for prominent border
+            strokeWidth="10" // Extra thick border for the outline
             clipPath="url(#country-outline)"
             style={{ pointerEvents: "none" }}
           />
