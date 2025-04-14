@@ -411,10 +411,13 @@ export function PuzzleBoard({
                       
                       const centroid = calculateCentroid();
                       
-                      // We need a better positioning method but without using external functions
-                      // For now we'll use a simple offset-based approach
-                      const offsetX = -20; // Adjust based on testing
-                      const offsetY = -20; // Adjust based on testing
+                      // Position the guidance shape using the state's own path dimensions
+                      // We need a proper offset for each shape to center it on the target position
+                      const offsetX = -30; // Experimentally determined to center shapes better
+                      const offsetY = -30; // Experimentally determined to center shapes better
+                      
+                      // Calculate scaled dimensions based on the path
+                      const scaleValue = 0.65; // Slightly reduced scale for better visibility
                       
                       return (
                         <g key={`guidance-${draggedRegion.id}`} className="guidance-marker">
@@ -422,19 +425,33 @@ export function PuzzleBoard({
                           {draggedRegion.svgPath && (
                             <>
                               {/* Create an SVG that properly positions the shape at the target location */}
-                              <g style={{ transform: `translate(${draggedRegion.correctX + offsetX}px, ${draggedRegion.correctY + offsetY}px)` }}>
+                              <g style={{ transform: `translate(${draggedRegion.correctX + offsetX}px, ${draggedRegion.correctY + offsetY}px) scale(${scaleValue})` }}>
                                 {/* Glow effect behind the state shape */}
+                                {/* Blurred outer glow for visibility */}
                                 <path 
                                   d={draggedRegion.svgPath}
                                   fill="none"
-                                  stroke="rgba(255, 255, 255, 0.8)"
-                                  strokeWidth="4"
+                                  stroke="rgba(255, 255, 255, 0.9)"
+                                  strokeWidth="6"
                                   style={{
                                     filter: 'blur(8px)',
                                     animation: 'state-shape-guidance 3s infinite ease-in-out',
+                                    transformOrigin: 'center center',
                                   }}
                                 />
-                                {/* State shape highlight */}
+                                
+                                {/* White outline for better contrast */}
+                                <path 
+                                  d={draggedRegion.svgPath}
+                                  fill="none"
+                                  stroke="rgba(255, 255, 255, 0.9)"
+                                  strokeWidth="3"
+                                  style={{
+                                    filter: 'drop-shadow(0 0 5px white)',
+                                  }}
+                                />
+                                
+                                {/* State shape highlight with semi-transparent fill */}
                                 <path 
                                   d={draggedRegion.svgPath} 
                                   fill="rgba(255, 0, 0, 0.25)" 
@@ -443,6 +460,7 @@ export function PuzzleBoard({
                                   style={{
                                     filter: 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.9))',
                                     animation: 'state-shape-guidance 3s infinite ease-in-out',
+                                    transformOrigin: 'center center',
                                   }}
                                 />
                               </g>
