@@ -157,7 +157,7 @@ export function CountrySvgMap({
             height="100%"
             fill="none"
             stroke="#999999" // Darker gray for prominent border
-            strokeWidth="7.5" // Extra thick border for the outline
+            strokeWidth="12" // Significantly thicker border for the outline
             clipPath="url(#country-outline)"
             style={{ pointerEvents: "none" }}
           />
