@@ -43,7 +43,7 @@ export function RegionThumbnail({
   const [viewBox, setViewBox] = useState<string>("0 0 800 600");
   const [rotation, setRotation] = useState<number>(0);
   const [scale, setScale] = useState<number>(1);
-  const thumbnailRef = useRef<SVGSVGElement>(null);
+  const thumbnailRef = useRef<HTMLDivElement>(null);
   
   // Set up drag functionality if draggable is enabled
   const { isDragging, position, dragHandlers } = useDrag({
@@ -183,170 +183,172 @@ export function RegionThumbnail({
     position: 'relative' as const
   };
   
-  // Directly return the SVG without any container divs
   return (
-    <>
-      {pathData ? (
-        <svg 
-          ref={thumbnailRef}
-          viewBox={viewBox} 
-          width={typeof width === 'number' ? `${width}px` : width}
-          height={typeof height === 'number' ? `${height}px` : height}
-          preserveAspectRatio="xMidYMid meet"
-          className={`${className} ${isDragging ? 'z-50' : ''}`}
-          style={{
-            ...(draggable && isDragging ? {
-              position: 'fixed',
-              left: `${position.x}px`,
-              top: `${position.y}px`,
-              zIndex: 9999,
-              pointerEvents: 'none',
-              opacity: 0.8,
-            } : {
-              position: 'relative',
-              cursor: onClick || (draggable || rotatable) ? 'pointer' : 'default',
-            }),
-            transform: `rotate(${rotation}deg) scale(${scale})`,
-            transformOrigin: 'center center',
-            transition: isDragging ? 'none' : "transform 0.3s ease",
-            background: 'transparent',
-            overflow: 'visible'
-          }}
-          {...(draggable ? {
-            ...dragHandlers,
-            onMouseDown: (e) => {
-              dragHandlers.onMouseDown(e);
-              e.stopPropagation();
-            },
-            onTouchStart: (e) => {
-              dragHandlers.onTouchStart(e);
-              e.stopPropagation();
-            }
-          } : { onClick: handleClick })}
-        >
-          {/* Controls for rotation if needed */}
-          {rotatable && !isDragging && (
-            <g className="opacity-0 hover:opacity-100 transition-opacity" style={{ pointerEvents: 'all' }}>
-              <circle cx="90" cy="10" r="8" fill="white" opacity="0.8" />
-              <text x="90" y="10" textAnchor="middle" dominantBaseline="middle" 
-                fontSize="10" fill="black" onClick={rotateLeft} style={{ cursor: 'pointer' }}>↺</text>
-                
-              <circle cx="90" cy="30" r="8" fill="white" opacity="0.8" />
-              <text x="90" y="30" textAnchor="middle" dominantBaseline="middle" 
-                fontSize="10" fill="black" onClick={rotateRight} style={{ cursor: 'pointer' }}>↻</text>
-                
-              <circle cx="90" cy="50" r="8" fill="white" opacity="0.8" />
-              <text x="90" y="50" textAnchor="middle" dominantBaseline="middle" 
-                fontSize="10" fill="black" onClick={resetTransformations} style={{ cursor: 'pointer' }}>R</text>
-            </g>
-          )}
-          
-          {/* Create a fixed-size centered container just for the state shape */}
-          <g transform="translate(50, 50) scale(0.7)" style={{ transformOrigin: "center" }}>
-            {/* White outline for visibility */}
-            <path
-              d={pathData}
-              fill="white"
-              stroke="white"
-              strokeWidth={(strokeWidth + 3) + 4}
-              transform="scale(5.5)"
-              style={{
-                transformBox: 'fill-box',
-                transformOrigin: 'center',
-                opacity: 0.7,
-                pointerEvents: 'none'
-              }}
-            />
-            
-            {/* Shadow layer for depth */}
-            <path
-              d={pathData}
-              fill="#000000"
-              stroke="#000000"
-              strokeWidth={strokeWidth + 3}
-              transform="translate(2, 2) scale(5.5)"
-              style={{
-                transformBox: 'fill-box',
-                transformOrigin: 'center',
-                opacity: 0.3,
-                filter: 'blur(3px)',
-                pointerEvents: 'none'
-              }}
-            />
-            
-            {/* Main colored path - this is the interactive part */}
-            <path
-              d={pathData}
-              fill={color}
-              stroke={strokeColor}
-              strokeWidth={strokeWidth + 3}
-              transform="scale(5.5)"
-              style={{
-                transformBox: 'fill-box',
-                transformOrigin: 'center',
-                filter: 'drop-shadow(0px 4px 8px rgba(0,0,0,0.7))',
-                opacity: 1,
-                cursor: onClick || draggable ? 'pointer' : 'default',
-                pointerEvents: 'all'
-              }}
-            />
-            
-            {/* Highlight edge for better definition */}
-            <path
-              d={pathData}
-              fill="none"
-              stroke="white"
-              strokeWidth={1}
-              transform="scale(5.5)"
-              style={{
-                transformBox: 'fill-box',
-                transformOrigin: 'center',
-                opacity: 0.7,
-                pointerEvents: 'none'
-              }}
-            />
-            
-            {/* Add text label IN the shape */}
-            {showLabel && (
-              <text 
-                x="0" 
-                y="0" 
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fill="#000000" 
-                fontSize="16"
-                fontWeight="bold"
-                style={{ 
-                  textShadow: '0 0 4px white, 0 0 4px white, 0 0 4px white, 0 0 4px white',
-                  fontFamily: 'Arial, sans-serif',
-                  pointerEvents: 'none'
-                }}
-              >
-                {regionName}
-              </text>
-            )}
-          </g>
-        </svg>
-      ) : (
-        // Fallback when no path data is available
-        <svg 
-          width={typeof width === 'number' ? `${width}px` : width}
-          height={typeof height === 'number' ? `${height}px` : height}
-          className={className}
-          viewBox="0 0 100 100"
-        >
-          <text 
-            x="50" 
-            y="50" 
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fill="#888" 
-            fontSize="10"
+    <div 
+      ref={thumbnailRef}
+      className={`region-thumbnail ${className} overflow-visible group ${isDragging ? 'z-50' : ''}`}
+      style={{
+        ...styles,
+        background: 'transparent',
+        ...(draggable && isDragging ? {
+          position: 'fixed',
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+          zIndex: 9999,
+          pointerEvents: 'none',
+          opacity: 0.8,
+          transform: `rotate(${rotation}deg) scale(${scale})`,
+          transformOrigin: 'center center',
+          transition: 'none'
+        } : {})
+      }}
+      {...(draggable ? {
+        ...dragHandlers,
+        onMouseDown: (e) => {
+          dragHandlers.onMouseDown(e);
+          e.stopPropagation();
+        },
+        onTouchStart: (e) => {
+          dragHandlers.onTouchStart(e);
+          e.stopPropagation();
+        }
+      } : { onClick: handleClick })}
+    >
+      {/* Control buttons for rotation and scaling (only visible when hovering) */}
+      {rotatable && (
+        <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex space-x-1">
+          <Button 
+            size="icon" 
+            variant="secondary"
+            className="w-6 h-6 bg-white/80 hover:bg-white text-black" 
+            onClick={rotateLeft}
           >
-            {regionName || "Region"}
-          </text>
-        </svg>
+            ↺
+          </Button>
+          <Button 
+            size="icon" 
+            variant="secondary"
+            className="w-6 h-6 bg-white/80 hover:bg-white text-black" 
+            onClick={rotateRight}
+          >
+            ↻
+          </Button>
+          <Button 
+            size="icon" 
+            variant="secondary" 
+            className="w-6 h-6 bg-white/80 hover:bg-white text-black"
+            onClick={resetTransformations}
+          >
+            ↺↻
+          </Button>
+        </div>
       )}
-    </>
+      
+      {pathData ? (
+        <div className="w-full h-full relative" style={{ background: 'transparent' }}>
+          <svg 
+            viewBox={viewBox} 
+            width="100%" 
+            height="100%" 
+            preserveAspectRatio="xMidYMid meet"
+            style={{
+              transform: `rotate(${rotation}deg) scale(${scale})`,
+              transition: "transform 0.3s ease",
+              background: 'transparent'
+            }}
+          >
+            {/* No rectangular background */}
+            
+            {/* Create a fixed-size centered container just for the state shape */}
+            <g transform="translate(50, 50) scale(0.7)" style={{ transformOrigin: "center" }}>
+              {/* White outline for visibility */}
+              <path
+                d={pathData}
+                fill="white"
+                stroke="white"
+                strokeWidth={(strokeWidth + 3) + 4} // Extra thick white border for visibility
+                transform="scale(5.5)" // Increased to exactly 5.5x scale per request
+                style={{
+                  transformBox: 'fill-box',
+                  transformOrigin: 'center',
+                  opacity: 0.7
+                }}
+              />
+              
+              {/* Shadow layer for depth */}
+              <path
+                d={pathData}
+                fill="#000000"
+                stroke="#000000"
+                strokeWidth={strokeWidth + 3}
+                transform="translate(2, 2) scale(5.5)" // Offset shadow
+                style={{
+                  transformBox: 'fill-box',
+                  transformOrigin: 'center',
+                  opacity: 0.3,
+                  filter: 'blur(3px)'
+                }}
+              />
+              
+              {/* Main colored path with extra high contrast */}
+              <path
+                d={pathData}
+                fill={color}
+                stroke={strokeColor}
+                strokeWidth={strokeWidth + 3} // Thicker border for very bold appearance
+                transform="scale(5.5)" // Increased to exactly 5.5x scale per request
+                style={{
+                  transformBox: 'fill-box',
+                  transformOrigin: 'center',
+                  filter: 'drop-shadow(0px 4px 8px rgba(0,0,0,0.7))',
+                  opacity: 1
+                }}
+              />
+              
+              {/* Highlight edge for better definition */}
+              <path
+                d={pathData}
+                fill="none"
+                stroke="white"
+                strokeWidth={1}
+                transform="scale(5.5)"
+                style={{
+                  transformBox: 'fill-box',
+                  transformOrigin: 'center',
+                  opacity: 0.7
+                }}
+              />
+              
+              {/* Add text label IN the shape */}
+              {showLabel && (
+                <text 
+                  x="0" 
+                  y="0" 
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fill="#000000" 
+                  fontSize="16"
+                  fontWeight="bold"
+                  style={{ 
+                    textShadow: '0 0 4px white, 0 0 4px white, 0 0 4px white, 0 0 4px white',
+                    fontFamily: 'Arial, sans-serif'
+                  }}
+                >
+                  {regionName}
+                </text>
+              )}
+            </g>
+          </svg>
+          
+          {/* State name is now rendered directly in the SVG */}
+        </div>
+      ) : (
+        <div className="flex items-center justify-center w-full h-full">
+          <div className="text-xs text-gray-400">
+            {regionName || "Region"}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useGame } from "@/context/game-context";
 import { StatePiece } from "@/components/game/state-piece";
-import { RegionThumbnail } from "@/components/region-thumbnail-new";
+import { RegionThumbnail } from "@/components/region-thumbnail";
 import { getSvgDataById } from "@/data/svg-map-data";
 import { extractNigeriaRegions, extractKenyaRegions } from "@/data/svg-parser";
 
@@ -69,71 +69,74 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
         {gameState.placedPieces.length}/{gameState.regions.length} States
       </div>
       
-      <div ref={trayRef} className="flex gap-4 overflow-x-auto py-4 px-8 min-h-[120px] relative">
+      <div ref={trayRef} className="flex gap-2 overflow-x-auto py-4 px-8 min-h-[120px] whitespace-nowrap overflow-y-hidden">
         {allRegions.map((region, index) => {
-          // Assign color from our palette, cycling through if needed
-          const colorIndex = index % colors.length;
-          const fillColor = colors[colorIndex].fill;
-          const strokeColor = colors[colorIndex].stroke;
-          
-          // Find matching SVG region by name
-          const svgRegion = svgRegions.find(r => 
-            r.name.toLowerCase().includes(region.name.toLowerCase()) || 
-            region.name.toLowerCase().includes(r.name.toLowerCase())
-          );
-
-          const regionWithColor = {
-            ...region,
-            fillColor,
-            strokeColor,
-          };
-          
-          // Calculate position in the tray
-          const x = index * 90; // 80px width + 10px spacing
-          
-          return (
-            <div key={region.id} className="relative flex-shrink-0" style={{ width: '80px', height: '80px' }}>
-              {svgData && svgRegion ? (
-                <RegionThumbnail
-                  svgData={svgData}
-                  regionId={svgRegion.id}
-                  regionName={region.name}
-                  color={fillColor}
-                  strokeColor={strokeColor}
-                  strokeWidth={1}
-                  width={80}
-                  height={80}
-                  showLabel={true}
-                  draggable={!region.isPlaced}
-                  rotatable={!region.isPlaced}
-                  onDrop={onPieceDrop}
-                  regionPieceId={region.id}
-                  className={region.isPlaced ? 'opacity-60' : ''}
-                />
-              ) : (
-                <StatePiece
-                  region={regionWithColor}
-                  onDrop={onPieceDrop}
-                  containerRef={trayRef}
-                  isTrayPiece
-                />
-              )}
-              
-              {/* Status indicator */}
-              {region.isPlaced && (
-                <div className="absolute top-0 right-0 bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center shadow-md text-xs z-10">
-                  ✓
-                </div>
-              )}
-            </div>
-          );
-        })}
+        // Assign color from our palette, cycling through if needed
+        const colorIndex = index % colors.length;
+        const fillColor = colors[colorIndex].fill;
+        const strokeColor = colors[colorIndex].stroke;
         
-        {unplacedPieces.length === 0 && (
-          <div className="flex items-center justify-center w-full h-16 text-gray-500">
-            All pieces have been placed!
+        // Find matching SVG region by name
+        const svgRegion = svgRegions.find(r => 
+          r.name.toLowerCase().includes(region.name.toLowerCase()) || 
+          region.name.toLowerCase().includes(r.name.toLowerCase())
+        );
+
+        const regionWithColor = {
+          ...region,
+          fillColor,
+          strokeColor,
+        };
+        
+        return (
+          <div 
+            key={region.id}
+            className={`flex-shrink-0 relative w-20 h-20 rounded-md 
+              ${region.isPlaced ? 'opacity-60' : ''}`}
+            style={{ background: 'transparent', border: 'none' }}
+          >
+            {svgData && svgRegion ? (
+              // Use the SVG thumbnail for the region, with direct draggable and rotatable support
+              <RegionThumbnail
+                svgData={svgData}
+                regionId={svgRegion.id}
+                regionName={region.name}
+                color={fillColor}
+                strokeColor={strokeColor}
+                strokeWidth={1}
+                width="100%"
+                height="100%"
+                showLabel={true}
+                draggable={true}
+                rotatable={true}
+                onDrop={onPieceDrop}
+                regionPieceId={region.id}
+              />
+            ) : (
+              // Render directly - NO container div
+              <StatePiece
+                region={regionWithColor}
+                onDrop={onPieceDrop}
+                containerRef={trayRef}
+                isTrayPiece
+              />
+            )}
+            
+            {/* Status indicator */}
+            {region.isPlaced && (
+              <div className="absolute top-1 right-1 bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center shadow-md text-xs">
+                ✓
+              </div>
+            )}
           </div>
-        )}
+        );
+      })}
+      
+      {unplacedPieces.length === 0 && (
+        <div className="flex items-center justify-center w-full h-16 text-gray-500">
+          All pieces have been placed!
+        </div>
+      )}
       </div>
     </div>
   );

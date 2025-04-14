@@ -1,15 +1,14 @@
 import React from "react";
-import { useLocation } from "wouter";
+import { useParams } from "wouter";
 import { GameScreen } from "@/components/game/game-screen";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { GameProvider } from "@/context/game-context";
 
 export default function Game() {
-  // Get country ID from URL query parameter
-  const [location] = useLocation();
-  const searchParams = new URLSearchParams(location.split("?")[1]);
-  const countryId = searchParams.get("country") ? parseInt(searchParams.get("country") || "0") : 0;
+  // Get country ID from URL params
+  const params = useParams<{ id: string }>();
+  const countryId = params?.id ? parseInt(params.id) : 0;
   
   if (!countryId) {
     return (

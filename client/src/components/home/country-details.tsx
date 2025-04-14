@@ -7,7 +7,7 @@ import { RegionMap } from "./region-map";
 import { Button } from "@/components/ui/button";
 import { CountrySvgMap } from "@/components/maps/country-svg-map";
 import { getSvgDataById } from "@/data/svg-map-data";
-import { RegionThumbnail } from "@/components/region-thumbnail-new";
+import { RegionThumbnail } from "@/components/region-thumbnail";
 import { extractNigeriaRegions, extractKenyaRegions } from "@/data/svg-parser";
 
 interface CountryDetailsProps {
@@ -80,10 +80,10 @@ export function CountryDetails({ country, onBack, onPlay }: CountryDetailsProps)
           <ChevronLeft className="h-5 w-5 mr-1" />
           Back to Countries
         </Button>
-        <a href={`/game?country=${country.id}`} className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md flex items-center">
+        <Button onClick={onPlay} className="bg-primary hover:bg-primary/90 text-white flex items-center">
           <Map className="h-5 w-5 mr-2" />
           Play Now
-        </a>
+        </Button>
       </div>
       
       <div className="flex flex-col md:flex-row gap-6">
