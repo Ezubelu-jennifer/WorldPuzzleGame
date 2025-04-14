@@ -126,6 +126,7 @@ export function extractNigeriaRegions(svgData: string) {
       const matchingEntry = Object.entries(stateNames).find(([_, name]) => name === stateName);
       const stateId = matchingEntry ? matchingEntry[0] : '';
       if (stateId) {
+        // Always add Ebonyi and FCT with their hardcoded paths
         regions.push({
           id: stateId,
           name: stateName,
@@ -134,6 +135,28 @@ export function extractNigeriaRegions(svgData: string) {
         console.log(`Added missing state: ${stateName}`);
       }
     }
+  }
+  
+  // Ensure Ebonyi and FCT are always added
+  const ebonyiExists = regions.some(r => r.name === "Ebonyi");
+  const fctExists = regions.some(r => r.name === "Federal Capital Territory");
+  
+  if (!ebonyiExists) {
+    console.log("Ebonyi missing from Nigeria data - adding it manually");
+    regions.push({
+      id: "NG-EB",
+      name: "Ebonyi",
+      path: knownPaths["Ebonyi"]
+    });
+  }
+  
+  if (!fctExists) {
+    console.log("FCT missing from Nigeria data - adding it manually");
+    regions.push({
+      id: "NG-FC",
+      name: "Federal Capital Territory",
+      path: knownPaths["Federal Capital Territory"]
+    });
   }
   
   // Make sure we have the right count
