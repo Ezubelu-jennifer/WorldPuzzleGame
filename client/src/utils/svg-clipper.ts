@@ -52,12 +52,6 @@ const KNOWN_CENTROIDS: Record<string, { x: number, y: number }> = {
 // Calculate the centroid (center point) of an SVG path
 export function getPathCentroid(svgPath: string, regionId?: string): { x: number, y: number } | null {
   try {
-    // First try to use known centroids for problematic regions
-    if (regionId && KNOWN_CENTROIDS[regionId]) {
-      console.log(`Using known centroid for ${regionId}:`, KNOWN_CENTROIDS[regionId]);
-      return KNOWN_CENTROIDS[regionId];
-    }
-    
     // Check if path is empty or undefined
     if (!svgPath || svgPath.trim() === '') {
       console.log('SVG path is empty or undefined');
@@ -68,11 +62,8 @@ export function getPathCentroid(svgPath: string, regionId?: string): { x: number
     const idMatch = svgPath.match(/id="([^"]+)"/);
     const extractedId = idMatch ? idMatch[1] : null;
     
-    // Try to use known centroid based on extracted ID
-    if (extractedId && KNOWN_CENTROIDS[extractedId]) {
-      console.log(`Using known centroid for extracted ID ${extractedId}:`, KNOWN_CENTROIDS[extractedId]);
-      return KNOWN_CENTROIDS[extractedId];
-    }
+    // We'll compute centroids geometrically for better distribution
+    // and only use the KNOWN_CENTROIDS as a fallback for problematic regions
     
     console.log('Processing path:', svgPath.substring(0, 50) + '...');
     
@@ -99,15 +90,77 @@ export function getPathCentroid(svgPath: string, regionId?: string): { x: number
       return null;
     }
     
-    // Calculate the center point of the bounding box as an approximation of the centroid
-    // Note: This isn't a true geometric centroid, but a reasonable approximation
-    // that works well for visualization purposes
+    // For problematic regions, we'll use the hardcoded centroid as fallback
+    if (regionId && KNOWN_CENTROIDS[regionId] && 
+        (maxX - minX < 10 || maxY - minY < 10)) { // If the region is very small
+      console.log(`Using fallback centroid for small region ${regionId}:`, KNOWN_CENTROIDS[regionId]);
+      return KNOWN_CENTROIDS[regionId];
+    }
+    
+    // Attempt to parse SVG path to get a more accurate centroid
+    try {
+      // Extract all points from the SVG path 
+      // (This is a simplified approach that works for most path commands)
+      const points = [];
+      const commands = sanitizedPath.match(/[a-z][^a-z]*/gi) || [];
+      
+      let currentX = 0;
+      let currentY = 0;
+      
+      for (const cmd of commands) {
+        const type = cmd.charAt(0).toUpperCase();
+        const isRelative = cmd.charAt(0) !== type;
+        const parts = cmd.substring(1).trim().split(/[\s,]+/).map(parseFloat);
+        
+        if (type === 'M' || type === 'L') {
+          // Move to or line to command
+          for (let i = 0; i < parts.length; i += 2) {
+            if (i + 1 < parts.length) {
+              const x = isRelative ? currentX + parts[i] : parts[i];
+              const y = isRelative ? currentY + parts[i + 1] : parts[i + 1];
+              currentX = x;
+              currentY = y;
+              points.push({ x, y });
+            }
+          }
+        }
+        // Additional commands like C (curve), A (arc) would need more complex parsing
+      }
+      
+      // Calculate a weighted average of points for better centroid
+      if (points.length > 0) {
+        // Calculate weighted center - give more weight to corner points
+        let sumX = 0;
+        let sumY = 0;
+        
+        for (const point of points) {
+          sumX += point.x;
+          sumY += point.y;
+        }
+        
+        const centroid = {
+          x: sumX / points.length,
+          y: sumY / points.length
+        };
+        
+        // Make sure the centroid is within the bounds
+        if (centroid.x >= minX && centroid.x <= maxX && 
+            centroid.y >= minY && centroid.y <= maxY) {
+          console.log('Calculated geometric centroid:', centroid);
+          return centroid;
+        }
+      }
+    } catch (error) {
+      console.warn('Error calculating geometric centroid:', error);
+    }
+    
+    // Fallback: Calculate the center point of the bounding box
     const centroid = {
       x: (minX + maxX) / 2,
       y: (minY + maxY) / 2
     };
     
-    console.log('Calculated centroid:', centroid);
+    console.log('Calculated bounding box centroid:', centroid);
     return centroid;
   } catch (error) {
     console.warn('Failed to calculate path centroid:', error);
