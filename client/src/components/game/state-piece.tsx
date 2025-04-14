@@ -232,35 +232,73 @@ export function StatePiece({
       }}
     >
       <g transform="translate(50, 50) scale(0.7)">
-        {/* Shadow for depth - slightly offset */}
-        <path 
-          d={svgPathData || region.svgPath} 
-          fill="rgba(0,0,0,0.2)"
-          transform="translate(2, 2) scale(7.5)"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-          style={{ pointerEvents: 'none' }}
-        />
-        
-        {/* The actual interactive path */}
-        <path 
-          ref={pathRef}
-          d={svgPathData || region.svgPath} 
-          fill={region.isPlaced ? region.fillColor : "#ef4444"}
-          stroke={region.strokeColor}
-          strokeWidth="2"
-          transform="scale(7.5)"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-          style={{ 
-            transformOrigin: 'center center',
-            cursor: !region.isPlaced ? 'move' : 'default',
-            pointerEvents: region.isPlaced ? 'none' : 'auto', // Only enable pointer events when not placed
-            filter: 'drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.3))'
-          }}
-          onMouseDown={!region.isPlaced ? handleDragStart : undefined}
-          onTouchStart={!region.isPlaced ? handleTouchStart : undefined}
-        />
+        {/* Special handling for FCT and Nasarawa with perfect circles */}
+        {(region.name === "Federal Capital Territory" || region.name === "FCT" || region.name === "Nasarawa") ? (
+          <>
+            {/* Shadow circle for special regions */}
+            <circle 
+              cx="0" 
+              cy="0" 
+              r="150"
+              fill="rgba(0,0,0,0.2)"
+              transform="translate(2, 2)"
+              style={{ pointerEvents: 'none' }}
+            />
+            
+            {/* The actual interactive circle for special regions */}
+            <circle
+              ref={pathRef}
+              cx="0" 
+              cy="0"
+              r="150"
+              fill={region.isPlaced ? region.fillColor : "#ef4444"}
+              stroke={region.strokeColor}
+              strokeWidth="2"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              style={{ 
+                transformOrigin: 'center center',
+                cursor: !region.isPlaced ? 'move' : 'default',
+                pointerEvents: region.isPlaced ? 'none' : 'auto',
+                filter: 'drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.3))'
+              }}
+              onMouseDown={!region.isPlaced ? handleDragStart : undefined}
+              onTouchStart={!region.isPlaced ? handleTouchStart : undefined}
+            />
+          </>
+        ) : (
+          <>
+            {/* Shadow for depth - slightly offset - normal regions */}
+            <path 
+              d={svgPathData || region.svgPath} 
+              fill="rgba(0,0,0,0.2)"
+              transform="translate(2, 2) scale(7.5)"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              style={{ pointerEvents: 'none' }}
+            />
+            
+            {/* The actual interactive path - normal regions */}
+            <path 
+              ref={pathRef}
+              d={svgPathData || region.svgPath} 
+              fill={region.isPlaced ? region.fillColor : "#ef4444"}
+              stroke={region.strokeColor}
+              strokeWidth="2"
+              transform="scale(7.5)"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              style={{ 
+                transformOrigin: 'center center',
+                cursor: !region.isPlaced ? 'move' : 'default',
+                pointerEvents: region.isPlaced ? 'none' : 'auto', // Only enable pointer events when not placed
+                filter: 'drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.3))'
+              }}
+              onMouseDown={!region.isPlaced ? handleDragStart : undefined}
+              onTouchStart={!region.isPlaced ? handleTouchStart : undefined}
+            />
+          </>
+        )}
 
         {/* Region label */}
         <text 
