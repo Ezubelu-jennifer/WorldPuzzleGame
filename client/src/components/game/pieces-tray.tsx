@@ -164,11 +164,7 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
             )}
             
             {/* Status indicator */}
-            {region.isPlaced && (
-              <div className="absolute top-1 right-1 bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center shadow-md text-xs">
-                ✓
-              </div>
-            )}
+            {/* We don't need check marks since we're now filtering out placed pieces */}
           </div>
         );
       })}
