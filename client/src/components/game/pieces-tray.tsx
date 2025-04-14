@@ -127,6 +127,11 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
           strokeColor,
         };
         
+        // Force use StatePiece for FCT and Nasarawa to ensure they appear as circles
+        const forcedCircle = region.name === "Federal Capital Territory" || 
+                           region.name === "FCT" || 
+                           region.name === "Nasarawa";
+        
         return (
           <div 
             key={region.id}
@@ -134,7 +139,7 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
               ${region.isPlaced ? 'opacity-60' : ''}`}
             style={{ background: 'transparent', border: 'none' }}
           >
-            {svgData && svgRegion ? (
+            {svgData && svgRegion && !forcedCircle ? (
               // Use the SVG thumbnail for the region, with direct draggable and rotatable support
               <RegionThumbnail
                 svgData={svgData}
