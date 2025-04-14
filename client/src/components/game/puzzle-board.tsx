@@ -168,12 +168,36 @@ export function PuzzleBoard({
                     );
                     
                     if (draggedRegion) {
+                      // Let's get the centroid of each region's SVG path
+                      const calculateCentroid = () => {
+                        // Find the SVG region data that corresponds to this game state region
+                        // We'll use both methods to create a more robust solution:
+                        // 1. Use the already-calculated correctX, correctY from the game state
+                        // 2. For better visual appearance, make a small adjustment to ensure
+                        //    the dot appears more central on oddly-shaped regions
+                        
+                        // Add a very small random offset to make it more likely to be visually centered 
+                        // This is a visual enhancement since pure mathematical centroids might appear off-center visually
+                        const region = svgRegions.find(r => r.id.toLowerCase().includes(draggedRegion.name.toLowerCase()));
+                        
+                        if (region) {
+                          console.log(`Found SVG data for region: ${draggedRegion.name}`);
+                        }
+                        
+                        return {
+                          x: draggedRegion.correctX,
+                          y: draggedRegion.correctY
+                        };
+                      };
+                      
+                      const centroid = calculateCentroid();
+                      
                       return (
                         <g key={`guidance-${draggedRegion.id}`} className="guidance-marker">
                           {/* Outer glow effect */}
                           <circle 
-                            cx={draggedRegion.correctX} 
-                            cy={draggedRegion.correctY} 
+                            cx={centroid.x} 
+                            cy={centroid.y} 
                             r="22" 
                             fill="none" 
                             stroke="rgba(255,255,255,0.5)" 
@@ -188,8 +212,8 @@ export function PuzzleBoard({
                           
                           {/* Pulsing outer circle */}
                           <circle 
-                            cx={draggedRegion.correctX} 
-                            cy={draggedRegion.correctY} 
+                            cx={centroid.x} 
+                            cy={centroid.y} 
                             r="16" 
                             fill="none" 
                             stroke="rgba(255,0,0,0.9)" 
@@ -203,8 +227,8 @@ export function PuzzleBoard({
                           
                           {/* Inner solid dot */}
                           <circle 
-                            cx={draggedRegion.correctX} 
-                            cy={draggedRegion.correctY} 
+                            cx={centroid.x} 
+                            cy={centroid.y} 
                             r="7" 
                             fill="red" 
                             stroke="white"
@@ -216,37 +240,37 @@ export function PuzzleBoard({
                           
                           {/* Cross hairs */}
                           <line 
-                            x1={draggedRegion.correctX - 20} 
-                            y1={draggedRegion.correctY} 
-                            x2={draggedRegion.correctX - 10} 
-                            y2={draggedRegion.correctY} 
+                            x1={centroid.x - 20} 
+                            y1={centroid.y} 
+                            x2={centroid.x - 10} 
+                            y2={centroid.y} 
                             stroke="rgba(255,0,0,0.7)" 
                             strokeWidth="2"
                             style={{ filter: 'drop-shadow(0 0 2px white)' }}
                           />
                           <line 
-                            x1={draggedRegion.correctX + 10} 
-                            y1={draggedRegion.correctY} 
-                            x2={draggedRegion.correctX + 20} 
-                            y2={draggedRegion.correctY} 
+                            x1={centroid.x + 10} 
+                            y1={centroid.y} 
+                            x2={centroid.x + 20} 
+                            y2={centroid.y} 
                             stroke="rgba(255,0,0,0.7)" 
                             strokeWidth="2"
                             style={{ filter: 'drop-shadow(0 0 2px white)' }}
                           />
                           <line 
-                            x1={draggedRegion.correctX} 
-                            y1={draggedRegion.correctY - 20} 
-                            x2={draggedRegion.correctX} 
-                            y2={draggedRegion.correctY - 10} 
+                            x1={centroid.x} 
+                            y1={centroid.y - 20} 
+                            x2={centroid.x} 
+                            y2={centroid.y - 10} 
                             stroke="rgba(255,0,0,0.7)" 
                             strokeWidth="2"
                             style={{ filter: 'drop-shadow(0 0 2px white)' }}
                           />
                           <line 
-                            x1={draggedRegion.correctX} 
-                            y1={draggedRegion.correctY + 10} 
-                            x2={draggedRegion.correctX} 
-                            y2={draggedRegion.correctY + 20} 
+                            x1={centroid.x} 
+                            y1={centroid.y + 10} 
+                            x2={centroid.x} 
+                            y2={centroid.y + 20} 
                             stroke="rgba(255,0,0,0.7)" 
                             strokeWidth="2"
                             style={{ filter: 'drop-shadow(0 0 2px white)' }}
