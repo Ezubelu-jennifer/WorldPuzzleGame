@@ -7,6 +7,7 @@ import { getSvgDataById } from "@/data/svg-map-data";
 import { getViewBoxFromSVG, extractNigeriaRegions, extractKenyaRegions } from "@/data/svg-parser";
 import { CountrySvgMap } from "@/components/maps/country-svg-map";
 import { useDragContext } from "@/context/drag-context";
+import { calculatePathCentroid } from "../../utils/calculate-centroid";
 
 interface PuzzleBoardProps {
   countryId: number;
@@ -341,9 +342,35 @@ export function PuzzleBoard({
                         "wp": { x: 508, y: 330 }
                       };
                       
+                      // Now use the imported centroid calculation utility
+                      
                       // Let's get the centroid of each region's SVG path
                       const calculateCentroid = () => {
-                        // Check for manual position corrections first
+                        // Find the SVG region data that corresponds to this game state region
+                        const region = svgRegions.find(r => {
+                          const regionId = r.id.toLowerCase();
+                          const regionName = draggedRegion.name.toLowerCase();
+                          
+                          // Try different matching patterns for better matching
+                          return regionId.includes(regionName) || 
+                                 regionName.includes(regionId) || 
+                                 regionId.includes(regionName.substring(0, 3)) ||
+                                 regionName.includes(regionId.substring(0, 3));
+                        });
+                        
+                        if (region && region.path) {
+                          try {
+                            // Calculate the actual centroid based on the SVG path
+                            console.log(`Calculating centroid for ${draggedRegion.name} from SVG path`);
+                            const centroid = calculatePathCentroid(region.path);
+                            console.log(`Calculated centroid for ${draggedRegion.name}:`, centroid);
+                            return centroid;
+                          } catch (error) {
+                            console.error(`Error calculating centroid for ${draggedRegion.name}:`, error);
+                          }
+                        }
+                        
+                        // If SVG path calculation fails, fall back to manual corrections
                         const stateName = draggedRegion.name.toLowerCase();
                         
                         // Check if this state has a manual correction
@@ -369,27 +396,7 @@ export function PuzzleBoard({
                           }
                         }
                         
-                        // Find the SVG region data that corresponds to this game state region
-                        const region = svgRegions.find(r => {
-                          const regionId = r.id.toLowerCase();
-                          const regionName = draggedRegion.name.toLowerCase();
-                          
-                          // Try different matching patterns
-                          return regionId.includes(regionName) || 
-                                 regionName.includes(regionId) || 
-                                 regionId.includes(regionName.substring(0, 3)) ||
-                                 regionName.includes(regionId.substring(0, 3));
-                        });
-                        
-                        if (region) {
-                          console.log(`Found SVG data for region: ${draggedRegion.name}`);
-                          
-                          // TODO: In a future enhancement, we could calculate the actual
-                          // centroid of the SVG path for better accuracy. For now, we're
-                          // using predefined coordinates.
-                        }
-                        
-                        // Use the predefined coordinates from the game state as fallback
+                        // As a last resort, use the predefined coordinates from the game state
                         console.log(`Using default coordinates for ${draggedRegion.name}:`, {
                           x: draggedRegion.correctX,
                           y: draggedRegion.correctY
