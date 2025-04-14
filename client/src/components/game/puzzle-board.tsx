@@ -363,7 +363,6 @@ export function PuzzleBoard({
                       // Set dot styles - using only red dots as per user request
                       const dotColor = "rgba(255,0,0,1)"; // Pure red for all dots
                       const outlineColor = "white"; // White outline for better contrast
-                      const pulseSpeed = isPrimary ? "1.5s" : "2.5s"; // Faster pulse animation
                       const opacity = isPrimary ? 1 : 0; // Hide non-primary (secondary) dots
                       
                       return (

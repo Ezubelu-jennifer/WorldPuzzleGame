@@ -284,11 +284,25 @@ export function PuzzlePiece({
       const relativeX = pieceRect.left + pieceRect.width/2 - containerRect.left;
       const relativeY = pieceRect.top + pieceRect.height/2 - containerRect.top;
       
-      // Check if piece should be placed
-      const isPlaced = onDrop(region.id, relativeX, relativeY);
+      // Check if the piece is close to its correct position
+      const proximityThreshold = 50; // How close in pixels to snap (adjust as needed)
+      const distanceToCorrectPos = Math.sqrt(
+        Math.pow(relativeX - region.correctX, 2) + 
+        Math.pow(relativeY - region.correctY, 2)
+      );
       
-      if (isPlaced && snapToPosition) {
-        setPosition({ x: region.correctX, y: region.correctY });
+      // If the piece is close to its correct position, automatically place it there
+      if (distanceToCorrectPos < proximityThreshold) {
+        const isPlaced = onDrop(region.id, region.correctX, region.correctY);
+        if (isPlaced && snapToPosition) {
+          setPosition({ x: region.correctX, y: region.correctY });
+        }
+      } else {
+        // Otherwise, try to place it at the current position
+        const isPlaced = onDrop(region.id, relativeX, relativeY);
+        if (isPlaced && snapToPosition) {
+          setPosition({ x: region.correctX, y: region.correctY });
+        }
       }
     }
   }, [isDragging, region.id, containerRef, snapToPosition, region.correctX, region.correctY, onDrop]);
@@ -347,10 +361,25 @@ export function PuzzlePiece({
       const relativeX = pieceRect.left + pieceRect.width/2 - containerRect.left;
       const relativeY = pieceRect.top + pieceRect.height/2 - containerRect.top;
       
-      const isPlaced = onDrop(region.id, relativeX, relativeY);
+      // Check if the piece is close to its correct position
+      const proximityThreshold = 50; // How close in pixels to snap (adjust as needed)
+      const distanceToCorrectPos = Math.sqrt(
+        Math.pow(relativeX - region.correctX, 2) + 
+        Math.pow(relativeY - region.correctY, 2)
+      );
       
-      if (isPlaced && snapToPosition) {
-        setPosition({ x: region.correctX, y: region.correctY });
+      // If the piece is close to its correct position, automatically place it there
+      if (distanceToCorrectPos < proximityThreshold) {
+        const isPlaced = onDrop(region.id, region.correctX, region.correctY);
+        if (isPlaced && snapToPosition) {
+          setPosition({ x: region.correctX, y: region.correctY });
+        }
+      } else {
+        // Otherwise, try to place it at the current position
+        const isPlaced = onDrop(region.id, relativeX, relativeY);
+        if (isPlaced && snapToPosition) {
+          setPosition({ x: region.correctX, y: region.correctY });
+        }
       }
     }
   }, [isDragging, region.id, containerRef, snapToPosition, region.correctX, region.correctY, onDrop]);
@@ -508,7 +537,6 @@ export function PuzzlePiece({
               strokeWidth="4"
               style={{ 
                 filter: 'drop-shadow(0px 0px 8px rgba(255,0,0,0.7))',
-                animation: 'pulse 2s infinite',
                 transformOrigin: 'center'
               }}
             />
@@ -522,7 +550,6 @@ export function PuzzlePiece({
               strokeWidth="3"
               style={{ 
                 filter: 'drop-shadow(0px 0px 6px rgba(255,0,0,0.6))',
-                animation: 'pulse 1.5s infinite 0.2s',
                 transformOrigin: 'center'
               }}
             />
@@ -536,7 +563,6 @@ export function PuzzlePiece({
               strokeWidth="2"
               style={{ 
                 filter: 'drop-shadow(0px 0px 4px rgba(255,0,0,0.7))',
-                animation: 'pulse 1s infinite 0.4s',
                 transformOrigin: 'center'
               }}
             />
