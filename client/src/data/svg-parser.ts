@@ -29,12 +29,14 @@ export function extractNigeriaRegions(svgData: string) {
   
   // Hard-code paths for problematic Nigerian states that might not be in the SVG properly
   const knownPaths: Record<string, string> = {
-    // Updated Nasarawa path with geometrically centered centroid at (404, 340)
-    "Nasarawa": "M394.0,330.0L396.0,332.0L398.0,334.0L400.0,336.0L402.0,337.0L404.0,338.0L406.0,339.0L408.0,340.0L410.0,341.0L412.0,342.0L414.0,343.0L412.0,344.0L410.0,345.0L408.0,346.0L406.0,347.0L404.0,348.0L402.0,347.0L400.0,346.0L398.0,344.0L396.0,342.0L394.0,338.0L394.0,334.0L394.0,330.0z",
-    // Updated FCT path centered precisely at (380, 370)
-    "Federal Capital Territory": "M372.0,362.0L374.0,364.0L376.0,366.0L378.0,368.0L380.0,370.0L382.0,372.0L384.0,374.0L386.0,376.0L388.0,378.0L386.0,378.0L384.0,378.0L382.0,378.0L380.0,378.0L378.0,378.0L376.0,378.0L374.0,376.0L372.0,374.0L370.0,372.0L370.0,370.0L370.0,368.0L370.0,366.0L370.0,364.0L370.0,362.0L372.0,362.0z",
-    // Updated Ebonyi path with centroid at approximately (310, 515)
-    "Ebonyi": "M300.85,493.42L305.2,493.8L307.48,495.6L309.22,496.92L310.5,498.25L311.45,501.38L312.83,503.5L313.78,504.72L315.78,504.72L317.02,506.58L317.24,508.77L317.94,509.81L321.15,512.14L322.49,512.35L323.57,513.64L322.98,517.36L323.13,521.14L324.5,525.77L325.23,527.45L326.94,529.45L327.7,532L327.1,533.21L323.68,532.45L320.99,529.84L318.45,529L315.69,526.86L315.11,524.75L313.92,523.28L310.52,522.37L308.1,522.51L307.82,523.42L308.35,526.93L306.51,532.03L301.55,535.5L300.45,536.48L300.38,537.23L298.8,529.0L297.0,520.0L298.0,510.0L298.8,500.0L299.4,495.0L300.85,493.42z"
+    // Simplified circular Nasarawa path with exact center at (404, 340)
+    "Nasarawa": "M404,320 a20,20 0 1,1 0,40 a20,20 0 1,1 0,-40",
+    
+    // Simplified circular FCT path with exact center at (380, 370)
+    "Federal Capital Territory": "M380,350 a20,20 0 1,1 0,40 a20,20 0 1,1 0,-40",
+    
+    // Simplified diamond Ebonyi path with centroid at exactly (310, 515)
+    "Ebonyi": "M310,495 L330,515 L310,535 L290,515 Z"
   };
   
   // First try to extract all path elements with id and title attributes, where title follows id
