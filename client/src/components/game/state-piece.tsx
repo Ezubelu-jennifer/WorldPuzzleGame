@@ -195,10 +195,12 @@ export function StatePiece({
         top: position.y,
         left: position.x,
         opacity: region.isPlaced ? 0.9 : 1,
-        transform: `rotate(${rotation}deg) scale(${scale})`,
+        transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(${scale})`,
+        transformOrigin: 'center center',
         transition: isDragging ? 'none' : 'all 0.3s ease',
         pointerEvents: 'none', // The SVG itself has no pointer events
-        overflow: 'visible'
+        overflow: 'visible',
+        filter: isDragging ? 'drop-shadow(0 0 8px rgba(0,0,0,0.5))' : 'none'
       }}
     >
       <g transform="translate(50, 50) scale(0.7)">

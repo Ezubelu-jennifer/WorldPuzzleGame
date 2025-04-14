@@ -193,13 +193,14 @@ export function RegionThumbnail({
         preserveAspectRatio="xMidYMid meet"
         style={{
           position: 'fixed',
-          left: `${position.x}px`, // Direct under cursor with no offset
-          top: `${position.y}px`, // Direct under cursor with no offset
+          left: `${position.x}px`,
+          top: `${position.y}px`,
           zIndex: 9999,
           pointerEvents: 'none',
           opacity: 0.9,
-          transform: `rotate(${rotation}deg) scale(${scale})`,
+          transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(${scale})`,
           transformOrigin: 'center center',
+          filter: 'drop-shadow(0 0 12px rgba(0,0,0,0.5))',
           background: 'transparent',
           overflow: 'visible'
         }}
