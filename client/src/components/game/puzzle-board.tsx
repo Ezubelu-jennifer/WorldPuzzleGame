@@ -296,11 +296,27 @@ export function PuzzleBoard({
                       let centroid = null;
                       let pathToUse = svgRegion ? svgRegion.path : "";
                       
-                      // Try all region codes until we find a centroid
-                      for (const code of regionCodes) {
-                        if (pathToUse) {
-                          centroid = getPathCentroid(pathToUse, code);
-                          if (centroid) break;
+                      // Special case for Ebonyi
+                      if (regionName === "Ebonyi") {
+                        // Hardcoded centroid for Ebonyi
+                        centroid = { x: 305.2, y: 510.4 };
+                        console.log("Using hardcoded centroid for Ebonyi");
+                      }
+                      
+                      // Special case for Federal Capital Territory
+                      if (regionName === "Federal Capital Territory" || regionName === "FCT") {
+                        // Hardcoded centroid for FCT
+                        centroid = { x: 380.5, y: 370.5 };
+                        console.log("Using hardcoded centroid for FCT");
+                      }
+                      
+                      // If not one of the special cases, try all region codes until we find a centroid
+                      if (!centroid) {
+                        for (const code of regionCodes) {
+                          if (pathToUse) {
+                            centroid = getPathCentroid(pathToUse, code);
+                            if (centroid) break;
+                          }
                         }
                       }
                       
