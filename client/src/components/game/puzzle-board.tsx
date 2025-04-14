@@ -15,6 +15,8 @@ const SHOW_ALL_POSITION_DOTS = true;     // When true, shows target dots for all
 const HIGHLIGHT_TARGET_REGION = true;    // When true, highlights the specific target region when dragging
 const SHOW_CROSSHAIR_GUIDES = true;      // When true, shows crosshair guides for precise placement
 const ENHANCED_DOTS = true;              // When true, uses larger dots with white outlines
+const FORCE_GRID_DOTS = true;            // When true, uses grid-based dots for all regions (ensures every region has a dot)
+const DEBUG_DOTS = false;                // When true, shows debug info for dots (in console)
 
 interface PuzzleBoardProps {
   countryId: number;
@@ -304,27 +306,82 @@ export function PuzzleBoard({
                         }
                       }
                       
-                      // If we still don't have a centroid, create a fallback based on region ID
-                      if (!centroid) {
-                        // Fallback centroids based on country and region ID
-                        if (countryId === 1) { // Nigeria
-                          // Create a grid-like distribution based on region ID
-                          const id = gameRegion.id;
-                          const row = Math.floor(id / 6);
-                          const col = id % 6;
-                          const x = 200 + col * 50;
-                          const y = 200 + row * 50;
-                          centroid = { x, y };
-                        } else if (countryId === 2) { // Kenya
-                          // Create a grid-like distribution based on region ID
-                          const id = gameRegion.id;
-                          const row = Math.floor((id - 100) / 7);
-                          const col = (id - 100) % 7;
-                          const x = 150 + col * 60;
-                          const y = 300 + row * 60;
-                          centroid = { x, y };
-                        }
+                      // For debugging only
+                      if (DEBUG_DOTS) {
+                        console.log(`Finding centroid for ${regionName} (ID: ${gameRegion.id}):`, 
+                                   { regionCodes, foundCentroid: centroid });
                       }
+
+                      // Always create grid-based fallback centroids for reliability (if FORCE_GRID_DOTS is on)
+                      // or if we couldn't find a centroid through other methods
+                      let gridCentroid = null;
+                      
+                      if (countryId === 1) { // Nigeria
+                        // Create an evenly distributed grid of centroids
+                        const id = gameRegion.id;
+                        // Use predefined rows and columns for a more evenly distributed grid
+                        const totalCols = 6; // 6 columns in grid
+                        const row = Math.floor((id - 1) / totalCols);
+                        const col = (id - 1) % totalCols;
+                        
+                        // Calculate position with small random offset to prevent dots from
+                        // stacking exactly on top of each other
+                        const randOffset = id % 7; // Deterministic random-like offset
+                        const [, , width, height] = viewBox.split(' ').map(Number);
+                        
+                        // Distribute dots across the viewBox
+                        const marginX = width * 0.15;
+                        const marginY = height * 0.15;
+                        const gridWidth = width - (marginX * 2);
+                        const gridHeight = height - (marginY * 2);
+                        
+                        // Adjust to find better-spaced positions
+                        const x = marginX + ((col + 0.5) * (gridWidth / totalCols)) + (randOffset * 2);
+                        const y = marginY + ((row + 0.5) * (gridHeight / 6)) + (randOffset * 2);
+                        
+                        gridCentroid = { x, y };
+                      } else if (countryId === 2) { // Kenya
+                        // Create an evenly distributed grid of centroids for Kenya
+                        const id = gameRegion.id; 
+                        const idx = id - 101; // 0-based index (since Kenya starts at 101)
+                        
+                        // Kenya has 47 counties, so create a grid with appropriate columns
+                        const totalCols = 7; // 7 columns for Kenya
+                        const row = Math.floor(idx / totalCols);
+                        const col = idx % totalCols;
+                        
+                        // Similar deterministic randomization to avoid stacking
+                        const randOffset = id % 5; 
+                        const [, , width, height] = viewBox.split(' ').map(Number);
+                        
+                        // Distribute dots across the viewBox
+                        const marginX = width * 0.15;
+                        const marginY = height * 0.15;
+                        const gridWidth = width - (marginX * 2);
+                        const gridHeight = height - (marginY * 2);
+                        
+                        // Calculate position, distribute more counties in the central area
+                        const x = marginX + ((col + 0.5) * (gridWidth / totalCols)) + (randOffset * 3);
+                        const y = marginY + ((row + 0.5) * (gridHeight / 7)) + (randOffset * 3);
+                        
+                        gridCentroid = { x, y };
+                      }
+                      
+                      // Use the grid centroid if we're forcing grid dots or if no centroid was found
+                      if (FORCE_GRID_DOTS || !centroid) {
+                        centroid = gridCentroid;
+                      }
+                      
+                      // Ensure we always have a valid centroid at this point
+                      // Handle the TypeScript null check once here to simplify later code
+                      if (!centroid) {
+                        // Final fallback - just use the center of the viewBox
+                        const [, , width, height] = viewBox.split(' ').map(Number);
+                        centroid = { x: width / 2, y: height / 2 };
+                      }
+                      
+                      // At this point, centroid is guaranteed to be non-null
+                      const finalCentroid = centroid; // Create a non-nullable reference
                       
                       // Calculate appropriate dot size based on viewBox
                       const [, , width, height] = viewBox.split(' ').map(Number);
