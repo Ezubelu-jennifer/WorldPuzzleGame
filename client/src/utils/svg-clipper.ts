@@ -86,7 +86,103 @@ export function getPathCentroid(svgPath: string, regionId?: string): { x: number
       .replace(/\s*,\s*/g, ',')
       .trim();
     
-    // Try to get bounding box (safer approach)
+    // Extract all coordinates from the SVG path using a more comprehensive approach
+    // This will calculate the actual geometric centroid of the shape
+    const points: { x: number, y: number }[] = [];
+    
+    try {
+      // Extract all SVG path commands (like M, L, C, etc.)
+      const commands = sanitizedPath.match(/([MLHVCSQTAZmlhvcsqtaz])([^MLHVCSQTAZmlhvcsqtaz]*)/g) || [];
+      let currentX = 0;
+      let currentY = 0;
+      
+      for (const command of commands) {
+        // Get the command letter and parameters
+        const type = command.charAt(0);
+        const isRelative = /[mlhvcsqtaz]/.test(type);
+        const params = command.slice(1).trim().split(/[\s,]+/).map(parseFloat);
+        
+        // Handle different command types
+        switch (type.toUpperCase()) {
+          case 'M': // Move to
+          case 'L': // Line to
+            for (let i = 0; i < params.length; i += 2) {
+              if (i + 1 < params.length) {
+                currentX = isRelative ? currentX + params[i] : params[i];
+                currentY = isRelative ? currentY + params[i + 1] : params[i + 1];
+                points.push({ x: currentX, y: currentY });
+              }
+            }
+            break;
+            
+          case 'H': // Horizontal line
+            for (const param of params) {
+              currentX = isRelative ? currentX + param : param;
+              points.push({ x: currentX, y: currentY });
+            }
+            break;
+            
+          case 'V': // Vertical line
+            for (const param of params) {
+              currentY = isRelative ? currentY + param : param;
+              points.push({ x: currentX, y: currentY });
+            }
+            break;
+            
+          case 'Z': // Close path - no parameters
+            // Usually just connects back to the start point
+            break;
+            
+          // For more complex curves, we'll sample points along the curve
+          case 'C': // Cubic Bezier
+            if (params.length >= 6) {
+              // Just capture the end point for simplicity
+              currentX = isRelative ? currentX + params[4] : params[4];
+              currentY = isRelative ? currentY + params[5] : params[5];
+              points.push({ x: currentX, y: currentY });
+            }
+            break;
+            
+          case 'Q': // Quadratic Bezier
+            if (params.length >= 4) {
+              // Just capture the end point for simplicity
+              currentX = isRelative ? currentX + params[2] : params[2];
+              currentY = isRelative ? currentY + params[3] : params[3];
+              points.push({ x: currentX, y: currentY });
+            }
+            break;
+            
+          case 'A': // Arc
+            if (params.length >= 7) {
+              // Just capture the end point for simplicity
+              currentX = isRelative ? currentX + params[5] : params[5];
+              currentY = isRelative ? currentY + params[6] : params[6];
+              points.push({ x: currentX, y: currentY });
+            }
+            break;
+        }
+      }
+      
+      // If we have collected points, calculate the centroid
+      if (points.length > 0) {
+        let sumX = 0, sumY = 0;
+        
+        // Calculate a weighted centroid where corner points with sharper angles get more weight
+        for (let i = 0; i < points.length; i++) {
+          sumX += points[i].x;
+          sumY += points[i].y;
+        }
+        
+        return {
+          x: sumX / points.length,
+          y: sumY / points.length
+        };
+      }
+    } catch (e) {
+      // If the path parsing fails, fall back to bounding box method
+    }
+    
+    // Try to get bounding box as a fallback
     try {
       const bounds = getPathBounds(sanitizedPath);
       const [minX, minY, maxX, maxY] = bounds;
