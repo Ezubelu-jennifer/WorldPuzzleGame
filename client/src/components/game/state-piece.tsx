@@ -330,7 +330,20 @@ export function StatePiece({
       const isCorrect = isCloseToCorrectPosition(relX, relY);
       if (isCorrect) {
         console.log(`✅ Region ${region.name} placed in correct position!`);
-        // Add visual feedback or a vibration effect here for mobile devices if desired
+        
+        // Immediately set position to the exact correct position for a perfect fit
+        setPosition({
+          x: containerRect.left + region.correctX,
+          y: containerRect.top + region.correctY
+        });
+        
+        // Add a smooth animation for the final snap
+        setScale(1.2); // Initially scale up slightly
+        setTimeout(() => {
+          setScale(1.0); // Then scale back to normal
+        }, 150);
+        
+        // Provide tactile feedback for mobile devices
         if ('vibrate' in navigator) {
           try {
             // Vibrate for 100ms to provide tactile feedback on mobile
@@ -339,9 +352,13 @@ export function StatePiece({
             console.log('Vibration not supported or disabled');
           }
         }
+        
+        // Try to drop the piece at its exact correct position
+        onDrop(region.id, region.correctX, region.correctY);
+      } else {
+        // If not correct, drop at the current position
+        onDrop(region.id, relX, relY);
       }
-      
-      onDrop(region.id, relX, relY);
     }
   }, [isDragging, region.id, onDrop, containerRef, setDraggedPieceId, isCloseToCorrectPosition]);
 
@@ -361,7 +378,7 @@ export function StatePiece({
         opacity: region.isPlaced ? 0.9 : 1,
         transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(${scale})`,
         transformOrigin: 'center center',
-        transition: isDragging ? 'transform 0.3s ease' : 'all 0.3s ease',
+        transition: isDragging ? 'transform 0.3s ease' : 'all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
         pointerEvents: 'none', // The SVG itself has no pointer events
         overflow: 'visible',
         filter: isDragging ? 'drop-shadow(0 0 8px rgba(0,0,0,0.5))' : 'none'
