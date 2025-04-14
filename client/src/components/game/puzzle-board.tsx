@@ -346,152 +346,80 @@ export function PuzzleBoard({
                       // Now use the imported centroid calculation utility
                       
                       // Let's get the centroid of each region's SVG path
-                      const calculateCentroid = () => {
-                        // Find the SVG region data that corresponds to this game state region
-                        const region = svgRegions.find(r => {
-                          const regionId = r.id.toLowerCase();
-                          const regionName = draggedRegion.name.toLowerCase();
-                          
-                          // Try different matching patterns for better matching
-                          return regionId.includes(regionName) || 
-                                 regionName.includes(regionId) || 
-                                 regionId.includes(regionName.substring(0, 3)) ||
-                                 regionName.includes(regionId.substring(0, 3));
-                        });
+                      // Find the SVG region that matches this game state region
+                      const matchingRegion = svgRegions.find(r => {
+                        const regionId = r.id.toLowerCase();
+                        const regionName = draggedRegion.name.toLowerCase();
                         
-                        if (region && region.path) {
+                        // Try different matching patterns for better matching
+                        return regionId.includes(regionName) || 
+                               regionName.includes(regionId) || 
+                               regionId.includes(regionName.substring(0, 3)) ||
+                               regionName.includes(regionId.substring(0, 3));
+                      });
+                      
+                      // Highlight the region directly on the map by setting it as the highlighted region
+                      if (matchingRegion) {
+                        // This will directly highlight the region on the country map
+                        setHighlightedRegion(matchingRegion.id);
+                      }
+                      
+                      // Calculate centroid for the dot indicator
+                      const centroid = (() => {
+                        // If we have a matching region with a path, calculate its centroid
+                        if (matchingRegion && matchingRegion.path) {
                           try {
                             // Calculate the actual centroid based on the SVG path
-                            console.log(`Calculating centroid for ${draggedRegion.name} from SVG path`);
-                            const centroid = calculatePathCentroid(region.path);
-                            console.log(`Calculated centroid for ${draggedRegion.name}:`, centroid);
-                            return centroid;
+                            return calculatePathCentroid(matchingRegion.path);
                           } catch (error) {
                             console.error(`Error calculating centroid for ${draggedRegion.name}:`, error);
                           }
                         }
                         
-                        // If SVG path calculation fails, fall back to manual corrections
+                        // Use position corrections as fallback
                         const stateName = draggedRegion.name.toLowerCase();
                         
                         // Check if this state has a manual correction
                         if (statePositionCorrections[stateName]) {
-                          console.log(`Using manual position correction for ${draggedRegion.name}:`, statePositionCorrections[stateName]);
                           return statePositionCorrections[stateName];
                         }
                         
-                        // Try alternate name formats (this helps with state codes vs names)
+                        // Try alternate name formats
                         const alternateNames = [
-                          stateName,                                     // e.g., "lagos"
-                          stateName.replace(/\s+/g, ''),                 // e.g., "federalcapitalterritory"
-                          stateName.split(' ').map(p => p[0]).join(''),  // e.g., "fct" for "Federal Capital Territory"
-                          `ng-${stateName.substring(0, 2)}`,             // e.g., "ng-la" for Lagos
-                          `ke-${stateName.substring(0, 2)}`              // e.g., "ke-na" for Nairobi
+                          stateName,
+                          stateName.replace(/\s+/g, ''),
+                          stateName.split(' ').map(p => p[0]).join(''),
+                          stateName.substring(0, 2), // Just the first two letters
                         ];
                         
                         // Check all alternate names for matches in the corrections
                         for (const altName of alternateNames) {
                           if (statePositionCorrections[altName]) {
-                            console.log(`Using alternative name correction for ${draggedRegion.name} (${altName}):`, statePositionCorrections[altName]);
                             return statePositionCorrections[altName];
                           }
                         }
                         
                         // As a last resort, use the predefined coordinates from the game state
-                        console.log(`Using default coordinates for ${draggedRegion.name}:`, {
-                          x: draggedRegion.correctX,
-                          y: draggedRegion.correctY
-                        });
-                        
                         return {
                           x: draggedRegion.correctX,
                           y: draggedRegion.correctY
                         };
-                      };
-                      
-                      const centroid = calculateCentroid();
-                      
-                      // Position the guidance shape using the state's own path dimensions
-                      // We need a proper offset for each shape to center it on the target position
-                      const offsetX = -30; // Experimentally determined to center shapes better
-                      const offsetY = -30; // Experimentally determined to center shapes better
-                      
-                      // Calculate scaled dimensions based on the path
-                      const scaleValue = 0.65; // Slightly reduced scale for better visibility
+                      })();
                       
                       return (
                         <g key={`guidance-${draggedRegion.id}`} className="guidance-marker">
-                          {/* Semi-transparent state shape overlay showing the target position */}
-                          {draggedRegion.svgPath && (
-                            <>
-                              {/* Create an SVG that properly positions the shape at the target location */}
-                              <g style={{ transform: `translate(${draggedRegion.correctX + offsetX}px, ${draggedRegion.correctY + offsetY}px) scale(${scaleValue})` }}>
-                                {/* Glow effect behind the state shape */}
-                                {/* Blurred outer glow for visibility */}
-                                <path 
-                                  d={draggedRegion.svgPath}
-                                  fill="none"
-                                  stroke="rgba(255, 255, 255, 0.9)"
-                                  strokeWidth="6"
-                                  style={{
-                                    filter: 'blur(8px)',
-                                    animation: 'state-shape-guidance 3s infinite ease-in-out',
-                                    transformOrigin: 'center center',
-                                  }}
-                                />
-                                
-                                {/* White outline for better contrast */}
-                                <path 
-                                  d={draggedRegion.svgPath}
-                                  fill="none"
-                                  stroke="rgba(255, 255, 255, 0.9)"
-                                  strokeWidth="3"
-                                  style={{
-                                    filter: 'drop-shadow(0 0 5px white)',
-                                  }}
-                                />
-                                
-                                {/* State shape highlight with semi-transparent fill */}
-                                <path 
-                                  d={draggedRegion.svgPath} 
-                                  fill="rgba(255, 0, 0, 0.25)" 
-                                  stroke="rgba(255, 0, 0, 0.8)"
-                                  strokeWidth="2"
-                                  style={{
-                                    filter: 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.9))',
-                                    animation: 'state-shape-guidance 3s infinite ease-in-out',
-                                    transformOrigin: 'center center',
-                                  }}
-                                />
-                              </g>
-                            </>
-                          )}
-                          
-                          {/* Pulsing outer circle at centroid */}
+                          {/* Just show a simple dot at the centroid to assist with positioning */}
                           <circle 
                             cx={centroid.x} 
                             cy={centroid.y} 
-                            r="16" 
-                            fill="none" 
-                            stroke="rgba(255,0,0,0.9)" 
-                            strokeWidth="3"
+                            r="12" 
+                            fill="rgba(255,0,0,0.7)" 
+                            stroke="white"
+                            strokeWidth="2"
                             style={{ 
                               animation: 'pulse 1.5s infinite ease-in-out',
                               transformOrigin: 'center center',
                               filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.9))'
-                            }}
-                          />
-                          
-                          {/* Inner solid dot */}
-                          <circle 
-                            cx={centroid.x} 
-                            cy={centroid.y} 
-                            r="5" 
-                            fill="red" 
-                            stroke="white"
-                            strokeWidth="1.5"
-                            style={{
-                              filter: 'drop-shadow(0 0 6px white)'
                             }}
                           />
                         </g>
