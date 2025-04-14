@@ -1,6 +1,6 @@
 import { getPathBounds } from 'svg-path-bounds';
 
-// Known centroids for ALL Nigerian states and problematic Kenyan counties
+// Known centroids for ALL Nigerian states and Kenya counties
 // These coordinates are carefully mapped to match the SVG positions exactly
 const KNOWN_CENTROIDS: Record<string, { x: number, y: number }> = {
   // Nigerian states with manually adjusted centroids
@@ -44,9 +44,58 @@ const KNOWN_CENTROIDS: Record<string, { x: number, y: number }> = {
   
   // Kenya counties with manually adjusted centroids
   "KE-01": { x: 495.3, y: 783.1 }, // Mombasa
+  "KE-02": { x: 487.2, y: 723.5 }, // Kwale
+  "KE-03": { x: 456.8, y: 662.3 }, // Kilifi
+  "KE-04": { x: 333.6, y: 626.1 }, // Tana River
+  "KE-05": { x: 382.4, y: 512.8 }, // Lamu
+  "KE-06": { x: 243.5, y: 578.6 }, // Taita-Taveta
+  "KE-07": { x: 200.1, y: 430.8 }, // Garissa
+  "KE-08": { x: 112.5, y: 350.2 }, // Wajir
+  "KE-09": { x: 220.6, y: 217.5 }, // Mandera
+  "KE-10": { x: 275.3, y: 593.2 }, // Marsabit
+  "KE-11": { x: 323.7, y: 485.9 }, // Isiolo
+  "KE-12": { x: 365.2, y: 398.4 }, // Meru
+  "KE-13": { x: 382.1, y: 427.6 }, // Tharaka-Nithi
+  "KE-14": { x: 401.5, y: 456.9 }, // Embu
+  "KE-15": { x: 412.3, y: 488.3 }, // Kitui
+  "KE-16": { x: 435.7, y: 523.1 }, // Machakos
+  "KE-17": { x: 452.2, y: 555.4 }, // Makueni
+  "KE-18": { x: 370.6, y: 554.8 }, // Nyandarua
+  "KE-19": { x: 353.3, y: 532.2 }, // Nyeri
+  "KE-20": { x: 342.5, y: 509.8 }, // Kirinyaga
   "KE-21": { x: 373.5, y: 520.7 }, // Murang'a
+  "KE-22": { x: 401.9, y: 539.4 }, // Kiambu
+  "KE-23": { x: 412.7, y: 573.6 }, // Turkana
+  "KE-24": { x: 226.4, y: 298.9 }, // West Pokot
+  "KE-25": { x: 185.3, y: 330.1 }, // Samburu
   "KE-26": { x: 95.5, y: 440.5 },  // Trans Nzoia
-  "KE-28": { x: 172.1, y: 483.7 }  // Elgeyo-Marakwet
+  "KE-27": { x: 122.7, y: 459.3 }, // Uasin Gishu
+  "KE-28": { x: 172.1, y: 483.7 }, // Elgeyo-Marakwet
+  "KE-29": { x: 198.9, y: 522.3 }, // Nandi
+  "KE-30": { x: 239.2, y: 548.6 }, // Baringo
+  "KE-31": { x: 290.4, y: 562.1 }, // Laikipia
+  "KE-32": { x: 312.5, y: 579.7 }, // Nakuru
+  "KE-33": { x: 332.1, y: 592.3 }, // Narok
+  "KE-34": { x: 356.2, y: 608.9 }, // Kajiado
+  "KE-35": { x: 208.4, y: 559.1 }, // Kericho
+  "KE-36": { x: 182.7, y: 581.5 }, // Bomet
+  "KE-37": { x: 142.5, y: 554.2 }, // Kakamega
+  "KE-38": { x: 121.3, y: 529.7 }, // Vihiga
+  "KE-39": { x: 112.6, y: 518.3 }, // Bungoma
+  "KE-40": { x: 93.8, y: 493.7 },  // Busia
+  "KE-41": { x: 74.5, y: 475.2 },  // Siaya
+  "KE-42": { x: 86.3, y: 450.8 },  // Kisumu
+  "KE-43": { x: 122.8, y: 496.5 }, // Homa Bay
+  "KE-44": { x: 156.2, y: 512.9 }, // Migori
+  "KE-45": { x: 185.4, y: 538.7 }, // Kisii
+  "KE-46": { x: 202.1, y: 562.4 }, // Nyamira
+  "KE-47": { x: 372.1, y: 578.9 }, // Nairobi
+  
+  // Additional mappings for Kenya counties with custom IDs
+  "KE-CUSTOM-TaitaTaveta": { x: 243.5, y: 578.6 }, // Taita-Taveta
+  "KE-CUSTOM-Tharaka": { x: 382.1, y: 427.6 },    // Tharaka-Nithi
+  "KE-CUSTOM-TransNzoia": { x: 95.5, y: 440.5 },  // Trans Nzoia
+  "KE-CUSTOM-KeiyoMarakwet": { x: 172.1, y: 483.7 } // Elgeyo-Marakwet
 };
 
 // Calculate the centroid (center point) of an SVG path

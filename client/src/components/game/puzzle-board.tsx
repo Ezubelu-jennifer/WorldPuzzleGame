@@ -226,16 +226,105 @@ export function PuzzleBoard({
                     
                     // Function to render a guidance dot for a specific region
                     const renderGuidanceDot = (gameRegion: any, isPrimary: boolean = false) => {
+                      // First try to find a matching region in the SVG data
                       const svgRegion = findMatchingRegion(gameRegion);
-                      if (!svgRegion) return null;
                       
-                      // Use the mapped regionId format (e.g., "NG-AB" for Abia state)
-                      // This is essential for matching with the known centroids
-                      const regionCode = countryId === 1 ? `NG-${svgRegion.id}` : `KE-${svgRegion.id}`;
+                      // Generate possible region codes to try for centroid lookup
+                      let regionCodes: string[] = [];
+                      const regionName = gameRegion.name;
                       
-                      // Get the centroid from the path with the properly formatted region ID
-                      const centroid = getPathCentroid(svgRegion.path, regionCode);
-                      if (!centroid) return null;
+                      if (countryId === 1) { // Nigeria
+                        // Try standard format first (NG-XX)
+                        if (svgRegion && svgRegion.id) {
+                          regionCodes.push(`NG-${svgRegion.id}`);
+                        }
+                        
+                        // Try to match by first two letters of region name
+                        const stateCodes = {
+                          "Abia": "AB", "Adamawa": "AD", "Akwa Ibom": "AK", "Anambra": "AN",
+                          "Bauchi": "BA", "Bayelsa": "BY", "Benue": "BE", "Borno": "BO",
+                          "Cross River": "CR", "Delta": "DE", "Ebonyi": "EB", "Edo": "ED",
+                          "Ekiti": "EK", "Enugu": "EN", "Federal Capital Territory": "FC",
+                          "FCT": "FC", "Gombe": "GO", "Imo": "IM", "Jigawa": "JI",
+                          "Kaduna": "KD", "Kano": "KN", "Katsina": "KT", "Kebbi": "KE", 
+                          "Kogi": "KO", "Kwara": "KW", "Lagos": "LA", "Nasarawa": "NA",
+                          "Niger": "NI", "Ogun": "OG", "Ondo": "ON", "Osun": "OS",
+                          "Oyo": "OY", "Plateau": "PL", "Rivers": "RI", "Sokoto": "SO",
+                          "Taraba": "TA", "Yobe": "YO", "Zamfara": "ZA"
+                        };
+                        
+                        // Loop through all possible state names and try to find a match
+                        for (const [stateName, code] of Object.entries(stateCodes)) {
+                          if (regionName.includes(stateName) || stateName.includes(regionName)) {
+                            regionCodes.push(`NG-${code}`);
+                          }
+                        }
+                        
+                        // Add generic Nigeria code as fallback
+                        regionCodes.push("NG");
+                      } else if (countryId === 2) { // Kenya
+                        // Try standard format first (KE-XX)
+                        if (svgRegion && svgRegion.id) {
+                          regionCodes.push(`KE-${svgRegion.id}`);
+                        }
+                        
+                        // Try custom format for special counties
+                        if (regionName.includes("Taita") || regionName.includes("Taveta")) {
+                          regionCodes.push("KE-CUSTOM-TaitaTaveta");
+                        }
+                        if (regionName.includes("Tharaka") || regionName.includes("Nithi")) {
+                          regionCodes.push("KE-CUSTOM-Tharaka");
+                        }
+                        if (regionName.includes("Trans") || regionName.includes("Nzoia")) {
+                          regionCodes.push("KE-CUSTOM-TransNzoia");
+                        }
+                        if (regionName.includes("Elgeyo") || regionName.includes("Marakwet")) {
+                          regionCodes.push("KE-CUSTOM-KeiyoMarakwet");
+                        }
+                        
+                        // Try all numbered county codes (KE-01 through KE-47)
+                        for (let i = 1; i <= 47; i++) {
+                          const countyCode = `KE-${i.toString().padStart(2, '0')}`;
+                          regionCodes.push(countyCode);
+                        }
+                        
+                        // Add generic Kenya code as fallback
+                        regionCodes.push("KE");
+                      }
+                      
+                      // Try to get the centroid using the region's SVG path and region codes
+                      let centroid = null;
+                      let pathToUse = svgRegion ? svgRegion.path : "";
+                      
+                      // Try all region codes until we find a centroid
+                      for (const code of regionCodes) {
+                        if (pathToUse) {
+                          centroid = getPathCentroid(pathToUse, code);
+                          if (centroid) break;
+                        }
+                      }
+                      
+                      // If we still don't have a centroid, create a fallback based on region ID
+                      if (!centroid) {
+                        // Fallback centroids based on country and region ID
+                        if (countryId === 1) { // Nigeria
+                          // Create a grid-like distribution based on region ID
+                          const id = gameRegion.id;
+                          const row = Math.floor(id / 6);
+                          const col = id % 6;
+                          const x = 200 + col * 50;
+                          const y = 200 + row * 50;
+                          centroid = { x, y };
+                        } else if (countryId === 2) { // Kenya
+                          // Create a grid-like distribution based on region ID
+                          const id = gameRegion.id;
+                          const row = Math.floor((id - 100) / 7);
+                          const col = (id - 100) % 7;
+                          const x = 150 + col * 60;
+                          const y = 300 + row * 60;
+                          centroid = { x, y };
+                        }
+                      }
                       
                       // Calculate appropriate dot size based on viewBox
                       const [, , width, height] = viewBox.split(' ').map(Number);
