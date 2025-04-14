@@ -535,9 +535,9 @@ export class MemStorage implements IStorage {
     Object.entries(sampleRegions).forEach(([countryIdStr, regionsList]) => {
       const countryId = parseInt(countryIdStr, 10);
       const regionsArray = regionsList.map((region: RegionPiece) => {
-        // Make sure Nasarawa state is included for Nigeria (country ID 1)
-        if (countryId === 1 && region.name === "Nasarawa") {
-          console.log("Found Nasarawa state in Nigeria data");
+        // Check for Ebonyi state for Nigeria (country ID 1)
+        if (countryId === 1 && region.name === "Ebonyi") {
+          console.log("Found Ebonyi state in Nigeria data");
         }
         
         const regionObj: Region = {
