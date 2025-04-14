@@ -213,11 +213,25 @@ export function StatePiece({
       const isCorrect = isCloseToCorrectPosition(relX, relY);
       if (isCorrect) {
         console.log(`✅ Region ${region.name} placed in correct position!`);
-        // Add visual feedback or a snapping animation here if desired
+        
+        // Immediately set position to the exact correct position for a perfect fit
+        setPosition({
+          x: containerRect.left + region.correctX,
+          y: containerRect.top + region.correctY
+        });
+        
+        // Add a smooth animation for the final snap
+        setScale(1.2); // Initially scale up slightly
+        setTimeout(() => {
+          setScale(1.0); // Then scale back to normal
+        }, 150);
+        
+        // Try to drop the piece at its exact correct position
+        onDrop(region.id, region.correctX, region.correctY);
+      } else {
+        // If not correct, drop at the current position
+        onDrop(region.id, relX, relY);
       }
-      
-      // Try to drop the piece
-      onDrop(region.id, relX, relY);
     }
   }, [isDragging, region.id, onDrop, containerRef, setDraggedPieceId, isCloseToCorrectPosition]);
 
