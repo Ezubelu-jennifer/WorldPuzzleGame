@@ -44,13 +44,32 @@ export function GameProvider({ children }: { children: ReactNode }) {
         
         // Ensure all required properties are present
         regions = regions.map((region, index) => {
+          // Special handling for problematic regions with fixed positions
+          let specialCorrectX, specialCorrectY;
+          
+          if (region.name === "Federal Capital Territory" || region.name === "FCT") {
+            specialCorrectX = 380;
+            specialCorrectY = 370;
+            console.log("Setting special position for FCT:", specialCorrectX, specialCorrectY);
+          } 
+          else if (region.name === "Nasarawa") {
+            specialCorrectX = 404;
+            specialCorrectY = 340;
+            console.log("Setting special position for Nasarawa:", specialCorrectX, specialCorrectY);
+          }
+          else if (region.name === "Ebonyi") {
+            specialCorrectX = 310;
+            specialCorrectY = 515;
+            console.log("Setting special position for Ebonyi:", specialCorrectX, specialCorrectY);
+          }
+          
           // Make sure each region has required properties
           const processedRegion: RegionPiece = {
             id: region.id,
             name: region.name,
             svgPath: region.svgPath || "",
-            correctX: region.correctX || 100 + (index * 50),
-            correctY: region.correctY || 100 + (index * 30),
+            correctX: specialCorrectX || region.correctX || 100 + (index * 50),
+            correctY: specialCorrectY || region.correctY || 100 + (index * 30),
             isPlaced: false,
             fillColor: region.fillColor || "#" + Math.floor(Math.random()*16777215).toString(16),
             strokeColor: region.strokeColor || "#333333"

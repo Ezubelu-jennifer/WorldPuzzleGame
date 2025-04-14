@@ -46,7 +46,7 @@ export function StatePiece({
   const countryId = region.countryId || 0;
 
   // Path reference
-  const pathRef = useRef<SVGPathElement>(null);
+  const pathRef = useRef<SVGElement>(null); // Using more generic SVGElement to handle both path and circle
   const svgRef = useRef<SVGSVGElement>(null);
   
   // Size calculation (important for positioning)
@@ -91,7 +91,7 @@ export function StatePiece({
   }, [region, countryId]);
 
   // Drag handlers - using fixed position SVG
-  const handleDragStart = useCallback((e: React.MouseEvent<SVGPathElement>) => {
+  const handleDragStart = useCallback((e: React.MouseEvent<SVGElement>) => {
     if (region.isPlaced) return;
     e.stopPropagation();
     e.preventDefault();
@@ -157,7 +157,7 @@ export function StatePiece({
   }, [isDragging, region.id, onDrop, containerRef, setDraggedPieceId]);
 
   // Touch handlers
-  const handleTouchStart = useCallback((e: React.TouchEvent<SVGPathElement>) => {
+  const handleTouchStart = useCallback((e: React.TouchEvent<SVGElement>) => {
     if (region.isPlaced || e.touches.length !== 1) return;
     e.stopPropagation();
     e.preventDefault();
@@ -247,7 +247,6 @@ export function StatePiece({
             
             {/* The actual interactive circle for special regions */}
             <circle
-              ref={pathRef}
               cx="0" 
               cy="0"
               r="150"
