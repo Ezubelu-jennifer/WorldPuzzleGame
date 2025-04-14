@@ -1,12 +1,54 @@
 import { getPathBounds } from 'svg-path-bounds';
 
+// Known centroids for problematic regions with special target point locations
+const KNOWN_CENTROIDS: Record<string, { x: number, y: number }> = {
+  // Nigerian states with manually adjusted centroids
+  "NG-IM": { x: 293.5, y: 523.2 }, // Imo
+  "NG-LA": { x: 241.3, y: 468.5 }, // Lagos
+  "NG-KW": { x: 283.8, y: 399.7 }, // Kwara
+  "NG-KO": { x: 341.6, y: 375.9 }, // Kogi
+  "NG-NI": { x: 339.8, y: 337.5 }, // Niger
+  "NG-OG": { x: 248.5, y: 456.1 }, // Ogun
+  "NG-ON": { x: 282.0, y: 468.3 }, // Ondo
+  "NG-OS": { x: 256.2, y: 431.9 }, // Osun
+  "NG-OY": { x: 247.0, y: 416.3 }, // Oyo
+  "NG-EN": { x: 310.5, y: 486.1 }, // Enugu
+  "NG-NA": { x: 378.5, y: 347.4 }, // Nasarawa
+  "NG-PL": { x: 409.8, y: 345.2 }, // Plateau
+  "NG-KD": { x: 361.5, y: 297.8 }, // Kaduna
+  "NG-KN": { x: 386.2, y: 252.4 }, // Kano
+  "NG-KT": { x: 361.3, y: 223.2 }, // Katsina
+  
+  // Kenya counties with manually adjusted centroids
+  "KE-01": { x: 495.3, y: 783.1 }, // Mombasa
+  "KE-21": { x: 373.5, y: 520.7 }, // Murang'a
+  "KE-26": { x: 95.5, y: 440.5 },  // Trans Nzoia
+  "KE-28": { x: 172.1, y: 483.7 }  // Elgeyo-Marakwet
+};
+
 // Calculate the centroid (center point) of an SVG path
-export function getPathCentroid(svgPath: string): { x: number, y: number } | null {
+export function getPathCentroid(svgPath: string, regionId?: string): { x: number, y: number } | null {
   try {
+    // First try to use known centroids for problematic regions
+    if (regionId && KNOWN_CENTROIDS[regionId]) {
+      console.log(`Using known centroid for ${regionId}:`, KNOWN_CENTROIDS[regionId]);
+      return KNOWN_CENTROIDS[regionId];
+    }
+    
     // Check if path is empty or undefined
     if (!svgPath || svgPath.trim() === '') {
       console.log('SVG path is empty or undefined');
       return null;
+    }
+    
+    // Look for an ID in the region path (might be embedded in data)
+    const idMatch = svgPath.match(/id="([^"]+)"/);
+    const extractedId = idMatch ? idMatch[1] : null;
+    
+    // Try to use known centroid based on extracted ID
+    if (extractedId && KNOWN_CENTROIDS[extractedId]) {
+      console.log(`Using known centroid for extracted ID ${extractedId}:`, KNOWN_CENTROIDS[extractedId]);
+      return KNOWN_CENTROIDS[extractedId];
     }
     
     console.log('Processing path:', svgPath.substring(0, 50) + '...');

@@ -433,8 +433,8 @@ export function PuzzleBoard({
                         if (matchingRegion) {
                           console.log(`Found matching SVG region for ${draggedRegion.name}`);
                           
-                          // Calculate the actual centroid of the SVG path
-                          const centroid = getPathCentroid(matchingRegion.path);
+                          // Calculate the actual centroid of the SVG path, passing region ID if available
+                          const centroid = getPathCentroid(matchingRegion.path, matchingRegion.id);
                           
                           if (centroid) {
                             console.log(`Using calculated centroid for ${draggedRegion.name}: (${centroid.x}, ${centroid.y})`);
