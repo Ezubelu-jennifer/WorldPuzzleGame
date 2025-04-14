@@ -84,6 +84,11 @@ export function PuzzleBoard({
   // Check if regions are available
   const hasRegions = gameState && gameState.regions && gameState.regions.length > 0;
   
+  // Debug logging for drag context
+  useEffect(() => {
+    console.log("Current draggedPieceId:", draggedPieceId);
+  }, [draggedPieceId]);
+  
   // Handle region click
   const handleRegionClick = (regionId: string, regionName: string) => {
     console.log(`Clicked region: ${regionId} - ${regionName}`);
@@ -170,7 +175,7 @@ export function PuzzleBoard({
         </div>
         
         {/* Target position marker - red dot for the currently dragged piece only */}
-        {gameStarted && hasRegions && draggedPieceId && gameState.regions
+        {hasRegions && draggedPieceId && gameState.regions
           .filter(region => region.id === draggedPieceId && !region.isPlaced)
           .map(region => (
             <svg 
