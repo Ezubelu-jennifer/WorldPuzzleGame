@@ -168,22 +168,36 @@ export function PuzzleBoard({
                     );
                     
                     if (draggedRegion) {
+                      // Define manual position corrections for problematic states
+                      const statePositionCorrections: Record<string, {x: number, y: number}> = {
+                        // The keys are lowercase state names for case-insensitive matching
+                        "enugu": { x: 290, y: 483 },
+                        "lagos": { x: 248, y: 542 },
+                        "zamfara": { x: 218, y: 262 },
+                        "taraba": { x: 355, y: 368 }
+                      };
+                      
                       // Let's get the centroid of each region's SVG path
                       const calculateCentroid = () => {
-                        // Find the SVG region data that corresponds to this game state region
-                        // We'll use both methods to create a more robust solution:
-                        // 1. Use the already-calculated correctX, correctY from the game state
-                        // 2. For better visual appearance, make a small adjustment to ensure
-                        //    the dot appears more central on oddly-shaped regions
+                        // Check for manual position corrections first
+                        const stateName = draggedRegion.name.toLowerCase();
+                        if (statePositionCorrections[stateName]) {
+                          console.log(`Using manual position correction for ${draggedRegion.name}`);
+                          return statePositionCorrections[stateName];
+                        }
                         
-                        // Add a very small random offset to make it more likely to be visually centered 
-                        // This is a visual enhancement since pure mathematical centroids might appear off-center visually
-                        const region = svgRegions.find(r => r.id.toLowerCase().includes(draggedRegion.name.toLowerCase()));
+                        // Find the SVG region data that corresponds to this game state region
+                        const region = svgRegions.find(r => {
+                          const regionId = r.id.toLowerCase();
+                          const regionName = draggedRegion.name.toLowerCase();
+                          return regionId.includes(regionName) || regionName.includes(regionId);
+                        });
                         
                         if (region) {
                           console.log(`Found SVG data for region: ${draggedRegion.name}`);
                         }
                         
+                        // Use the predefined coordinates from the game state
                         return {
                           x: draggedRegion.correctX,
                           y: draggedRegion.correctY
