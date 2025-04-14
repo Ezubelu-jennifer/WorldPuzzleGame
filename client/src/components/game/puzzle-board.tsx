@@ -7,7 +7,7 @@ import { getSvgDataById } from "@/data/svg-map-data";
 import { getViewBoxFromSVG, extractNigeriaRegions, extractKenyaRegions } from "@/data/svg-parser";
 import { CountrySvgMap } from "@/components/maps/country-svg-map";
 import { useDragContext } from "@/context/drag-context";
-import { calculatePathCentroid } from "../../utils/calculate-centroid";
+import { calculatePathCentroid } from "@/utils/calculate-centroid";
 
 interface PuzzleBoardProps {
   countryId: number;
@@ -236,7 +236,7 @@ export function PuzzleBoard({
                         "gombe": { x: 327, y: 295 },
                         "go": { x: 327, y: 295 },
                         "kebbi": { x: 182, y: 303 },
-                        "ke": { x: 182, y: 303 },
+                        "kebbi-state": { x: 182, y: 303 },
                         "kogi": { x: 269, y: 435 },
                         "ko": { x: 269, y: 435 },
                         "niger": { x: 232, y: 368 },
@@ -251,7 +251,7 @@ export function PuzzleBoard({
                         
                         // Kenya Counties with proper coordinates
                         "nairobi": { x: 571, y: 412 },
-                        "na": { x: 571, y: 412 },
+                        "nairobi-county": { x: 571, y: 412 },
                         "mombasa": { x: 644, y: 502 },
                         "mo": { x: 644, y: 502 },
                         "kisumu": { x: 502, y: 407 },
@@ -281,7 +281,7 @@ export function PuzzleBoard({
                         "elgeyo marakwet": { x: 528, y: 335 },
                         "em": { x: 528, y: 335 },
                         "embu": { x: 574, y: 372 },
-                        "eb": { x: 574, y: 372 },
+                        "embu-county": { x: 574, y: 372 },
                         "garissa": { x: 622, y: 400 },
                         "ga": { x: 622, y: 400 },
                         "homa bay": { x: 488, y: 420 },
@@ -291,13 +291,13 @@ export function PuzzleBoard({
                         "kakamega": { x: 505, y: 377 },
                         "kk": { x: 505, y: 377 },
                         "kericho": { x: 524, y: 380 },
-                        "ke": { x: 524, y: 380 },
+                        "kericho-county": { x: 524, y: 380 },
                         "kirinyaga": { x: 562, y: 374 },
                         "kr": { x: 562, y: 374 },
                         "kwale": { x: 622, y: 515 },
-                        "kw": { x: 622, y: 515 },
+                        "kwale-county": { x: 622, y: 515 },
                         "laikipia": { x: 551, y: 350 },
-                        "la": { x: 551, y: 350 },
+                        "laikipia-county": { x: 551, y: 350 },
                         "lamu": { x: 662, y: 444 },
                         "lm": { x: 662, y: 444 },
                         "mandera": { x: 664, y: 256 },
