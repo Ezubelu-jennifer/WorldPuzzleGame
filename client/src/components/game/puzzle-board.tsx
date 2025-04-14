@@ -229,8 +229,12 @@ export function PuzzleBoard({
                       const svgRegion = findMatchingRegion(gameRegion);
                       if (!svgRegion) return null;
                       
-                      // Get the centroid from the path
-                      const centroid = getPathCentroid(svgRegion.path, svgRegion.id);
+                      // Use the mapped regionId format (e.g., "NG-AB" for Abia state)
+                      // This is essential for matching with the known centroids
+                      const regionCode = countryId === 1 ? `NG-${svgRegion.id}` : `KE-${svgRegion.id}`;
+                      
+                      // Get the centroid from the path with the properly formatted region ID
+                      const centroid = getPathCentroid(svgRegion.path, regionCode);
                       if (!centroid) return null;
                       
                       // Calculate appropriate dot size based on viewBox

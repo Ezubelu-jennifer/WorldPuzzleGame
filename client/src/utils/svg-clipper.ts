@@ -90,10 +90,10 @@ export function getPathCentroid(svgPath: string, regionId?: string): { x: number
       return null;
     }
     
-    // For problematic regions, we'll use the hardcoded centroid as fallback
-    if (regionId && KNOWN_CENTROIDS[regionId] && 
-        (maxX - minX < 10 || maxY - minY < 10)) { // If the region is very small
-      console.log(`Using fallback centroid for small region ${regionId}:`, KNOWN_CENTROIDS[regionId]);
+    // Always use hardcoded centroids if available for now
+    // This will ensure dots appear while we debug the calculation
+    if (regionId && KNOWN_CENTROIDS[regionId]) {
+      console.log(`Using known centroid for ${regionId}:`, KNOWN_CENTROIDS[regionId]);
       return KNOWN_CENTROIDS[regionId];
     }
     
