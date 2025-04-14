@@ -10,10 +10,11 @@ import { useDragContext } from "@/context/drag-context";
 import { getPathCentroid } from "@/utils/svg-clipper";
 
 // Configuration for the improved guidance system
-const ENABLE_ALL_GUIDES = true; // When true, shows faint outlines for all states
-const HIGHLIGHT_TARGET_REGION = true; // When true, highlights the specific target region when dragging a piece
-const SHOW_CROSSHAIR_GUIDES = true; // When true, shows crosshair guides for precise placement
-const ENHANCED_DOTS = true; // When true, uses larger dots with white outlines
+const ENABLE_ALL_GUIDES = true;          // When true, shows faint outlines for all states
+const SHOW_ALL_POSITION_DOTS = true;     // When true, shows target dots for all unplaced regions
+const HIGHLIGHT_TARGET_REGION = true;    // When true, highlights the specific target region when dragging
+const SHOW_CROSSHAIR_GUIDES = true;      // When true, shows crosshair guides for precise placement
+const ENHANCED_DOTS = true;              // When true, uses larger dots with white outlines
 
 interface PuzzleBoardProps {
   countryId: number;
@@ -616,12 +617,12 @@ export function PuzzleBoard({
                           <circle 
                             cx={matchedRegion.x} 
                             cy={matchedRegion.y} 
-                            r="8" 
+                            r="12" 
                             fill="#ff3333" 
                             stroke="white"
-                            strokeWidth="2"
+                            strokeWidth="3"
                             style={{
-                              filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.9))',
+                              filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.9))',
                               pointerEvents: "none",
                               zIndex: 9999 // Ensure it's on top (SVG doesn't use z-index but adding for emphasis)
                             }}
@@ -631,12 +632,27 @@ export function PuzzleBoard({
                           <circle
                             cx={matchedRegion.x}
                             cy={matchedRegion.y}
-                            r="10"
+                            r="15"
                             fill="none"
-                            stroke="rgba(255,255,255,0.8)"
+                            stroke="rgba(255,255,255,0.9)"
+                            strokeWidth="3"
+                            style={{
+                              filter: 'drop-shadow(0 0 6px rgba(0,0,0,0.7))',
+                              pointerEvents: "none"
+                            }}
+                          />
+                          
+                          {/* Pulsing effect for extra visibility */}
+                          <circle
+                            cx={matchedRegion.x}
+                            cy={matchedRegion.y}
+                            r="20"
+                            fill="none"
+                            stroke="rgba(255,0,0,0.4)"
                             strokeWidth="2"
                             style={{
-                              filter: 'drop-shadow(0 0 4px rgba(0,0,0,0.5))',
+                              animation: 'pulse 1.2s infinite ease-in-out',
+                              transformOrigin: 'center center',
                               pointerEvents: "none"
                             }}
                           />
