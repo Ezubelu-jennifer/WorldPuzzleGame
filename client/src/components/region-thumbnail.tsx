@@ -228,10 +228,10 @@ export function RegionThumbnail({
               textAnchor="middle"
               dominantBaseline="middle"
               fill="#000000" 
-              fontSize="46"
-              fontWeight="bold"
+              fontSize="80"
+              fontWeight="900"
               style={{ 
-                textShadow: '0 0 8px white, 0 0 8px white, 0 0 8px white, 0 0 8px white',
+                textShadow: '0 0 10px white, 0 0 10px white, 0 0 10px white, 0 0 10px white',
                 fontFamily: 'Arial, sans-serif'
               }}
             >
@@ -377,10 +377,10 @@ export function RegionThumbnail({
                   textAnchor="middle"
                   dominantBaseline="middle"
                   fill="#000000" 
-                  fontSize="46"
-                  fontWeight="bold"
+                  fontSize="80"
+                  fontWeight="900"
                   style={{ 
-                    textShadow: '0 0 8px white, 0 0 8px white, 0 0 8px white, 0 0 8px white',
+                    textShadow: '0 0 10px white, 0 0 10px white, 0 0 10px white, 0 0 10px white',
                     fontFamily: 'Arial, sans-serif'
                   }}
                 >
