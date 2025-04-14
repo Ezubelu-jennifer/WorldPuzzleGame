@@ -218,7 +218,80 @@ export function PuzzleBoard({
                         
                         let matchingRegion;
                         
-                        if (countryId === 1) { // Nigeria
+                        // Log available SVG regions
+                        console.log(`Trying to match region '${draggedRegion.name}' (ID: ${draggedRegion.id})`);
+                        
+                        // Track all Nigeria state names and Kenya county names for debugging
+                        const nigeriaStateNames = [
+                          'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno',
+                          'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'Federal Capital Territory', 'FCT',
+                          'Gombe', 'Imo', 'Jigawa', 'Kaduna', 'Kano', 'Katsina', 'Kebbi', 'Kogi',
+                          'Kwara', 'Lagos', 'Nasarawa', 'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo',
+                          'Plateau', 'Rivers', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara'
+                        ];
+                          
+                        // If this is one of our problem states, log all available SVG regions for debugging
+                        if (nigeriaStateNames.includes(draggedRegion.name)) {
+                          console.log(`Debugging SVG regions to match with '${draggedRegion.name}':`);
+                          svgRegions.forEach(r => {
+                            if (r.name.toLowerCase().includes(draggedRegion.name.toLowerCase()) || 
+                                draggedRegion.name.toLowerCase().includes(r.name.toLowerCase())) {
+                              console.log(`- Potential match: ID="${r.id}", name="${r.name}"`);
+                            }
+                          });
+                        }
+                        
+                        // First, try to find a direct name match for ANY country
+                        // This is the most reliable way to match regions
+                        matchingRegion = svgRegions.find(r => {
+                          // Try EXACT name matching first (case insensitive)
+                          return r.name.toLowerCase() === draggedRegion.name.toLowerCase();
+                        });
+                        
+                        if (matchingRegion) {
+                          console.log(`Found direct name match for ${draggedRegion.name} with SVG name: ${matchingRegion.name}`);
+                        }
+                        
+                        // Special handling for problematic Nigerian states
+                        if (!matchingRegion && countryId === 1) {
+                          const stateNameMappings: Record<string, string> = {
+                            'Imo': 'Imo State',
+                            'Lagos': 'Lagos State',
+                            'Kwara': 'Kwara State',
+                            'Kogi': 'Kogi State',
+                            'Niger': 'Niger State',
+                            'Ogun': 'Ogun State',
+                            'Ondo': 'Ondo State',
+                            'Osun': 'Osun State',
+                            'Oyo': 'Oyo State',
+                            'Plateau': 'Plateau State',
+                            'Rivers': 'Rivers State',
+                            'Gombe': 'Gombe State',
+                            'Kebbi': 'Kebbi State',
+                            'Kaduna': 'Kaduna State',
+                            'Kano': 'Kano State',
+                            'Katsina': 'Katsina State',
+                            'Enugu': 'Enugu State',
+                            'Sokoto': 'Sokoto State',
+                            'Taraba': 'Taraba State',
+                            'Yobe': 'Yobe State',
+                            'Zamfara': 'Zamfara State'
+                          };
+                          
+                          const alternativeName = stateNameMappings[draggedRegion.name];
+                          if (alternativeName) {
+                            matchingRegion = svgRegions.find(r => 
+                              r.name.toLowerCase() === alternativeName.toLowerCase()
+                            );
+                            
+                            if (matchingRegion) {
+                              console.log(`Found match for ${draggedRegion.name} using alternate name: ${alternativeName}`);
+                            }
+                          }
+                        }
+                          
+                        // If no direct match by name, try country-specific ID matching
+                        if (!matchingRegion && countryId === 1) { // Nigeria
                           const stateCode = getNigeriaStateCode(draggedRegion.name);
                           if (stateCode) {
                             // Try to find the region with ID of "NG-XX" format
@@ -230,7 +303,7 @@ export function PuzzleBoard({
                               console.log(`Found exact match for ${draggedRegion.name} with ID: ${regionId}`);
                             }
                           }
-                        } else if (countryId === 2) { // Kenya
+                        } else if (!matchingRegion && countryId === 2) { // Kenya
                           // Define a map of Kenya county names to their ID numbers
                           const kenyaCountyMap: Record<string, string> = {
                             'Mombasa': '01', 'Kwale': '02', 'Kilifi': '03', 'Tana River': '04',
@@ -279,16 +352,6 @@ export function PuzzleBoard({
                             if (matchingRegion) {
                               console.log(`Found exact match for ${draggedRegion.name} with Kenya ID: ${regionId}`);
                             }
-                          }
-                          
-                          // If we still couldn't find a match, try name-based matching as a fallback
-                          if (!matchingRegion) {
-                            matchingRegion = svgRegions.find(r => 
-                              r.name.toLowerCase() === draggedRegion.name.toLowerCase() ||
-                              r.name.toLowerCase().includes(draggedRegion.name.toLowerCase()) ||
-                              draggedRegion.name.toLowerCase().includes(r.name.toLowerCase()) ||
-                              r.id.toLowerCase().includes(draggedRegion.name.toLowerCase().replace(/\s+/g, '-'))
-                            );
                           }
                         }
                         
