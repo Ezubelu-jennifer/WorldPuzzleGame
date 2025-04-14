@@ -12,6 +12,7 @@ interface CountrySvgMapProps {
   showLabels?: boolean;
   height?: number | string;
   width?: number | string;
+  renderOverlay?: () => React.ReactNode; // Function to render additional overlay elements
 }
 
 interface RegionData {
@@ -29,7 +30,8 @@ export function CountrySvgMap({
   onRegionClick,
   showLabels = false,
   height = "100%",
-  width = "100%"
+  width = "100%",
+  renderOverlay
 }: CountrySvgMapProps) {
   const [regions, setRegions] = useState<RegionData[]>([]);
   const [viewBox, setViewBox] = useState<string>("0 0 800 600");
@@ -284,6 +286,9 @@ export function CountrySvgMap({
             </text>
           );
         })}
+        
+        {/* Render the overlay elements (like guidance dots) */}
+        {renderOverlay && renderOverlay()}
       </svg>
       
       {/* Zoom controls */}

@@ -158,6 +158,107 @@ export function PuzzleBoard({
               highlightRegion={highlightedRegion}
               onRegionClick={handleRegionClick}
               className="w-full h-full"
+              renderOverlay={
+                // Render the guidance dot as an overlay within the SVG map component
+                // This ensures it respects the same zoom and pan transformations
+                hasRegions && draggedPieceId ? (
+                  () => {
+                    const draggedRegion = gameState.regions.find(
+                      region => region.id === draggedPieceId && !region.isPlaced
+                    );
+                    
+                    if (draggedRegion) {
+                      return (
+                        <g key={`guidance-${draggedRegion.id}`} className="guidance-marker">
+                          {/* Outer glow effect */}
+                          <circle 
+                            cx={draggedRegion.correctX} 
+                            cy={draggedRegion.correctY} 
+                            r="22" 
+                            fill="none" 
+                            stroke="rgba(255,255,255,0.5)" 
+                            strokeWidth="2"
+                            style={{ 
+                              animation: 'pulse 2s infinite ease-in-out',
+                              animationDelay: "0.3s",
+                              transformOrigin: 'center center',
+                              filter: 'blur(2px)'
+                            }}
+                          />
+                          
+                          {/* Pulsing outer circle */}
+                          <circle 
+                            cx={draggedRegion.correctX} 
+                            cy={draggedRegion.correctY} 
+                            r="16" 
+                            fill="none" 
+                            stroke="rgba(255,0,0,0.9)" 
+                            strokeWidth="4"
+                            style={{ 
+                              animation: 'pulse 1.5s infinite ease-in-out',
+                              transformOrigin: 'center center',
+                              filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.9))'
+                            }}
+                          />
+                          
+                          {/* Inner solid dot */}
+                          <circle 
+                            cx={draggedRegion.correctX} 
+                            cy={draggedRegion.correctY} 
+                            r="7" 
+                            fill="red" 
+                            stroke="white"
+                            strokeWidth="1.5"
+                            style={{
+                              filter: 'drop-shadow(0 0 6px white)'
+                            }}
+                          />
+                          
+                          {/* Cross hairs */}
+                          <line 
+                            x1={draggedRegion.correctX - 20} 
+                            y1={draggedRegion.correctY} 
+                            x2={draggedRegion.correctX - 10} 
+                            y2={draggedRegion.correctY} 
+                            stroke="rgba(255,0,0,0.7)" 
+                            strokeWidth="2"
+                            style={{ filter: 'drop-shadow(0 0 2px white)' }}
+                          />
+                          <line 
+                            x1={draggedRegion.correctX + 10} 
+                            y1={draggedRegion.correctY} 
+                            x2={draggedRegion.correctX + 20} 
+                            y2={draggedRegion.correctY} 
+                            stroke="rgba(255,0,0,0.7)" 
+                            strokeWidth="2"
+                            style={{ filter: 'drop-shadow(0 0 2px white)' }}
+                          />
+                          <line 
+                            x1={draggedRegion.correctX} 
+                            y1={draggedRegion.correctY - 20} 
+                            x2={draggedRegion.correctX} 
+                            y2={draggedRegion.correctY - 10} 
+                            stroke="rgba(255,0,0,0.7)" 
+                            strokeWidth="2"
+                            style={{ filter: 'drop-shadow(0 0 2px white)' }}
+                          />
+                          <line 
+                            x1={draggedRegion.correctX} 
+                            y1={draggedRegion.correctY + 10} 
+                            x2={draggedRegion.correctX} 
+                            y2={draggedRegion.correctY + 20} 
+                            stroke="rgba(255,0,0,0.7)" 
+                            strokeWidth="2"
+                            style={{ filter: 'drop-shadow(0 0 2px white)' }}
+                          />
+                        </g>
+                      );
+                    }
+                    
+                    return null;
+                  }
+                ) : undefined
+              }
             />
           ) : (
             <svg className="w-full h-full" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet">
@@ -173,111 +274,6 @@ export function PuzzleBoard({
             </svg>
           )}
         </div>
-        
-        {/* Target position marker - red dot for the currently dragged piece only */}
-        {hasRegions && draggedPieceId && gameState.regions
-          .filter(region => region.id === draggedPieceId && !region.isPlaced)
-          .map(region => (
-            <svg 
-              key={`target-${region.id}`}
-              className="absolute"
-              style={{
-                left: 0,
-                top: 0,
-                width: '100%',
-                height: '100%',
-                pointerEvents: 'none',
-                zIndex: 10
-              }}
-              viewBox={viewBox}
-              preserveAspectRatio="xMidYMid meet"
-            >
-              {/* Enhanced guidance system with multiple elements */}
-              
-              {/* Outer glow effect */}
-              <circle 
-                cx={region.correctX} 
-                cy={region.correctY} 
-                r="22" 
-                fill="none" 
-                stroke="rgba(255,255,255,0.5)" 
-                strokeWidth="2"
-                style={{ 
-                  animation: 'pulse 2s infinite ease-in-out',
-                  animationDelay: "0.3s",
-                  transformOrigin: 'center center',
-                  filter: 'blur(2px)'
-                }}
-              />
-              
-              {/* Pulsing outer circle */}
-              <circle 
-                cx={region.correctX} 
-                cy={region.correctY} 
-                r="16" 
-                fill="none" 
-                stroke="rgba(255,0,0,0.9)" 
-                strokeWidth="4"
-                style={{ 
-                  animation: 'pulse 1.5s infinite ease-in-out',
-                  transformOrigin: 'center center',
-                  filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.9))'
-                }}
-              />
-              
-              {/* Inner solid dot */}
-              <circle 
-                cx={region.correctX} 
-                cy={region.correctY} 
-                r="7" 
-                fill="red" 
-                stroke="white"
-                strokeWidth="1.5"
-                style={{
-                  filter: 'drop-shadow(0 0 6px white)'
-                }}
-              />
-              
-              {/* Cross hairs */}
-              <line 
-                x1={region.correctX - 20} 
-                y1={region.correctY} 
-                x2={region.correctX - 10} 
-                y2={region.correctY} 
-                stroke="rgba(255,0,0,0.7)" 
-                strokeWidth="2"
-                style={{ filter: 'drop-shadow(0 0 2px white)' }}
-              />
-              <line 
-                x1={region.correctX + 10} 
-                y1={region.correctY} 
-                x2={region.correctX + 20} 
-                y2={region.correctY} 
-                stroke="rgba(255,0,0,0.7)" 
-                strokeWidth="2"
-                style={{ filter: 'drop-shadow(0 0 2px white)' }}
-              />
-              <line 
-                x1={region.correctX} 
-                y1={region.correctY - 20} 
-                x2={region.correctX} 
-                y2={region.correctY - 10} 
-                stroke="rgba(255,0,0,0.7)" 
-                strokeWidth="2"
-                style={{ filter: 'drop-shadow(0 0 2px white)' }}
-              />
-              <line 
-                x1={region.correctX} 
-                y1={region.correctY + 10} 
-                x2={region.correctX} 
-                y2={region.correctY + 20} 
-                stroke="rgba(255,0,0,0.7)" 
-                strokeWidth="2"
-                style={{ filter: 'drop-shadow(0 0 2px white)' }}
-              />
-            </svg>
-          ))
-        }
   
         {/* Puzzle Pieces that have been placed on the board */}
         {hasRegions && gameState.regions.map(region => 
