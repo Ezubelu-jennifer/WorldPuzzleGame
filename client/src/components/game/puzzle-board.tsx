@@ -168,36 +168,93 @@ export function PuzzleBoard({
                     );
                     
                     if (draggedRegion) {
-                      // Let's get the centroid of each region's SVG path
-                      const calculateCentroid = () => {
-                        // Find the SVG region data that corresponds to this game state region
-                        // We'll use both methods to create a more robust solution:
-                        // 1. Use the already-calculated correctX, correctY from the game state
-                        // 2. For better visual appearance, make a small adjustment to ensure
-                        //    the dot appears more central on oddly-shaped regions
+                      // Find the exact matching region on the map for the dragged piece
+                      const findMatchingMapRegion = () => {
+                        // First try to find the region in the SVG data by ID
+                        // We'll try different matching patterns based on the region name
+
+                        // For Nigeria, try to match by the NG- prefix + state code
+                        // For Kenya, try to match by the KE- prefix + county name
                         
-                        // Add a very small random offset to make it more likely to be visually centered 
-                        // This is a visual enhancement since pure mathematical centroids might appear off-center visually
-                        const region = svgRegions.find(r => r.id.toLowerCase().includes(draggedRegion.name.toLowerCase()));
+                        const getNigeriaStateCode = (stateName: string) => {
+                          // Map of Nigerian state names to ISO codes
+                          const stateCodeMap: Record<string, string> = {
+                            'Abia': 'AB', 'Adamawa': 'AD', 'Akwa Ibom': 'AK', 'Anambra': 'AN',
+                            'Bauchi': 'BA', 'Bayelsa': 'BY', 'Benue': 'BE', 'Borno': 'BO',
+                            'Cross River': 'CR', 'Delta': 'DE', 'Ebonyi': 'EB', 'Edo': 'ED',
+                            'Ekiti': 'EK', 'Enugu': 'EN', 'Federal Capital Territory': 'FC',
+                            'Gombe': 'GO', 'Imo': 'IM', 'Jigawa': 'JI', 'Kaduna': 'KD',
+                            'Kano': 'KN', 'Katsina': 'KT', 'Kebbi': 'KE', 'Kogi': 'KO',
+                            'Kwara': 'KW', 'Lagos': 'LA', 'Nasarawa': 'NA', 'Niger': 'NI',
+                            'Ogun': 'OG', 'Ondo': 'ON', 'Osun': 'OS', 'Oyo': 'OY',
+                            'Plateau': 'PL', 'Rivers': 'RI', 'Sokoto': 'SO', 'Taraba': 'TA',
+                            'Yobe': 'YO', 'Zamfara': 'ZA'
+                          };
+                          
+                          return stateCodeMap[stateName] || '';
+                        };
                         
-                        if (region) {
-                          console.log(`Found SVG data for region: ${draggedRegion.name}`);
+                        let matchingRegion;
+                        
+                        if (countryId === 1) { // Nigeria
+                          const stateCode = getNigeriaStateCode(draggedRegion.name);
+                          if (stateCode) {
+                            // Try to find the region with ID of "NG-XX" format
+                            const regionId = `NG-${stateCode}`;
+                            matchingRegion = svgRegions.find(r => r.id === regionId);
+                            
+                            // Log if we find a match
+                            if (matchingRegion) {
+                              console.log(`Found exact match for ${draggedRegion.name} with ID: ${regionId}`);
+                            }
+                          }
+                        } else if (countryId === 2) { // Kenya
+                          // Try to find a region matching the name
+                          matchingRegion = svgRegions.find(r => 
+                            r.name.toLowerCase() === draggedRegion.name.toLowerCase() ||
+                            r.id.toLowerCase().includes(draggedRegion.name.toLowerCase().replace(/\s+/g, '-'))
+                          );
                         }
                         
+                        // If we couldn't find a match by ID, try matching by name
+                        if (!matchingRegion) {
+                          matchingRegion = svgRegions.find(r => 
+                            r.name.toLowerCase() === draggedRegion.name.toLowerCase() ||
+                            r.name.toLowerCase().includes(draggedRegion.name.toLowerCase())
+                          );
+                        }
+                        
+                        // If we found a matching region in the SVG, extract path and calculate a better centroid
+                        if (matchingRegion) {
+                          console.log(`Found matching SVG region for ${draggedRegion.name}`);
+                          
+                          // For now, we'll stick with the pre-calculated correctX and correctY
+                          // But we use the knowledge that we found a matching region
+                          return {
+                            x: draggedRegion.correctX,
+                            y: draggedRegion.correctY,
+                            id: matchingRegion.id,
+                            name: matchingRegion.name,
+                            found: true
+                          };
+                        }
+                        
+                        // Fallback to using the coordinates from game state
                         return {
                           x: draggedRegion.correctX,
-                          y: draggedRegion.correctY
+                          y: draggedRegion.correctY,
+                          found: false
                         };
                       };
                       
-                      const centroid = calculateCentroid();
+                      const matchedRegion = findMatchingMapRegion();
                       
                       return (
                         <g key={`guidance-${draggedRegion.id}`} className="guidance-marker">
                           {/* Outer glow effect */}
                           <circle 
-                            cx={centroid.x} 
-                            cy={centroid.y} 
+                            cx={matchedRegion.x} 
+                            cy={matchedRegion.y} 
                             r="22" 
                             fill="none" 
                             stroke="rgba(255,255,255,0.5)" 
@@ -212,8 +269,8 @@ export function PuzzleBoard({
                           
                           {/* Pulsing outer circle */}
                           <circle 
-                            cx={centroid.x} 
-                            cy={centroid.y} 
+                            cx={matchedRegion.x} 
+                            cy={matchedRegion.y} 
                             r="16" 
                             fill="none" 
                             stroke="rgba(255,0,0,0.9)" 
@@ -227,8 +284,8 @@ export function PuzzleBoard({
                           
                           {/* Inner solid dot */}
                           <circle 
-                            cx={centroid.x} 
-                            cy={centroid.y} 
+                            cx={matchedRegion.x} 
+                            cy={matchedRegion.y} 
                             r="7" 
                             fill="red" 
                             stroke="white"
@@ -240,41 +297,52 @@ export function PuzzleBoard({
                           
                           {/* Cross hairs */}
                           <line 
-                            x1={centroid.x - 20} 
-                            y1={centroid.y} 
-                            x2={centroid.x - 10} 
-                            y2={centroid.y} 
+                            x1={matchedRegion.x - 20} 
+                            y1={matchedRegion.y} 
+                            x2={matchedRegion.x - 10} 
+                            y2={matchedRegion.y} 
                             stroke="rgba(255,0,0,0.7)" 
                             strokeWidth="2"
                             style={{ filter: 'drop-shadow(0 0 2px white)' }}
                           />
                           <line 
-                            x1={centroid.x + 10} 
-                            y1={centroid.y} 
-                            x2={centroid.x + 20} 
-                            y2={centroid.y} 
+                            x1={matchedRegion.x + 10} 
+                            y1={matchedRegion.y} 
+                            x2={matchedRegion.x + 20} 
+                            y2={matchedRegion.y} 
                             stroke="rgba(255,0,0,0.7)" 
                             strokeWidth="2"
                             style={{ filter: 'drop-shadow(0 0 2px white)' }}
                           />
                           <line 
-                            x1={centroid.x} 
-                            y1={centroid.y - 20} 
-                            x2={centroid.x} 
-                            y2={centroid.y - 10} 
+                            x1={matchedRegion.x} 
+                            y1={matchedRegion.y - 20} 
+                            x2={matchedRegion.x} 
+                            y2={matchedRegion.y - 10} 
                             stroke="rgba(255,0,0,0.7)" 
                             strokeWidth="2"
                             style={{ filter: 'drop-shadow(0 0 2px white)' }}
                           />
                           <line 
-                            x1={centroid.x} 
-                            y1={centroid.y + 10} 
-                            x2={centroid.x} 
-                            y2={centroid.y + 20} 
+                            x1={matchedRegion.x} 
+                            y1={matchedRegion.y + 10} 
+                            x2={matchedRegion.x} 
+                            y2={matchedRegion.y + 20} 
                             stroke="rgba(255,0,0,0.7)" 
                             strokeWidth="2"
                             style={{ filter: 'drop-shadow(0 0 2px white)' }}
                           />
+                          
+                          {/* Highlight the actual matching region on the SVG map if we found a match */}
+                          {matchedRegion.found && matchedRegion.id && (
+                            <use 
+                              href={`#${matchedRegion.id}`} 
+                              fill="rgba(255,0,0,0.15)" 
+                              stroke="rgba(255,0,0,0.3)"
+                              strokeWidth="1.5"
+                              className="pointer-events-none"
+                            />
+                          )}
                         </g>
                       );
                     }
