@@ -167,6 +167,51 @@ export function PuzzleBoard({
           )}
         </div>
         
+        {/* Target position markers - red dots for each region */}
+        {gameStarted && hasRegions && gameState.regions.map(region => 
+          !region.isPlaced && (
+            <svg 
+              key={`target-${region.id}`}
+              className="absolute"
+              style={{
+                left: 0,
+                top: 0,
+                width: '100%',
+                height: '100%',
+                pointerEvents: 'none',
+                zIndex: 10
+              }}
+              viewBox={viewBox}
+              preserveAspectRatio="xMidYMid meet"
+            >
+              {/* Pulsing outer circle */}
+              <circle 
+                cx={region.correctX} 
+                cy={region.correctY} 
+                r="16" 
+                fill="none" 
+                stroke="rgba(255,0,0,0.9)" 
+                strokeWidth="4"
+                style={{ 
+                  animation: 'pulse 1.5s infinite ease-in-out',
+                  transformOrigin: 'center center',
+                  filter: 'drop-shadow(0 0 5px rgba(255,255,255,0.9))'
+                }}
+              />
+              {/* Inner solid dot */}
+              <circle 
+                cx={region.correctX} 
+                cy={region.correctY} 
+                r="7" 
+                fill="red" 
+                style={{
+                  filter: 'drop-shadow(0 0 5px white)'
+                }}
+              />
+            </svg>
+          )
+        )}
+  
         {/* Puzzle Pieces that have been placed on the board */}
         {hasRegions && gameState.regions.map(region => 
           region.isPlaced && (

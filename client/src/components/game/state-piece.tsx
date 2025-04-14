@@ -5,6 +5,7 @@ import { getSvgDataById } from "@/data/svg-map-data";
 import { getViewBoxFromSVG } from "@/data/svg-parser";
 import { optimizeSvgPath } from "@/utils/svg-clipper";
 import { Button } from "@/components/ui/button";
+import { useDragContext } from "@/context/drag-context";
 
 interface StatePieceProps {
   region: RegionPiece;
