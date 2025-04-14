@@ -406,7 +406,6 @@ export function PuzzleBoard({
                                 strokeWidth={dotSize * 0.4}
                                 strokeDasharray="3,3"
                                 style={{ 
-                                  animation: `pulse 1.5s infinite ease-in-out`,
                                   opacity: opacity * 0.8
                                 }}
                               />
