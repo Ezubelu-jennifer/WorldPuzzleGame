@@ -131,7 +131,7 @@ export function CountrySvgMap({
             d={region.path}
             fill="none"
             stroke="#666666"
-            strokeWidth="20"
+            strokeWidth="12"
             style={{ 
               pointerEvents: "none",
               filter: "drop-shadow(0px 2px 4px rgba(0,0,0,0.3))"
@@ -148,6 +148,22 @@ export function CountrySvgMap({
             stroke="#e5e5e5"
             strokeWidth="2"
             style={{ pointerEvents: "none" }}
+          />
+        ))}
+        
+        {/* Draw region outlines inside the map */}
+        {uniqueRegions.map((region) => (
+          <path
+            key={`outline-${region.id}`}
+            d={region.path}
+            fill="none"
+            stroke="#cccccc"
+            strokeWidth="1.5"
+            strokeDasharray="2,2"
+            data-region-id={region.id}
+            style={{ 
+              pointerEvents: "none"
+            }}
           />
         ))}
           

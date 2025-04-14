@@ -555,7 +555,7 @@ export function PuzzleBoard({
                 d={outlinePath} 
                 fill="none" 
                 stroke="#666666"
-                strokeWidth="20"
+                strokeWidth="12"
                 style={{
                   filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.3))'
                 }}
@@ -566,6 +566,14 @@ export function PuzzleBoard({
                 fill="#e5e5e5" 
                 stroke="#e5e5e5"
                 strokeWidth="2"
+              />
+              {/* Draw region guidelines (dashed) */}
+              <path 
+                d={outlinePath} 
+                fill="none" 
+                stroke="#cccccc"
+                strokeWidth="1.5"
+                strokeDasharray="2,2"
               />
             </svg>
           )}

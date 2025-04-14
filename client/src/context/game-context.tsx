@@ -174,12 +174,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (!gameState) return false;
     
     // Find the piece
-    const pieceIndex = gameState.regions.findIndex(r => r.id === pieceId);
+    const pieceIndex = gameState.regions.findIndex(r => r.id === pieceId && !r.isPlaced);
     if (pieceIndex === -1) return false;
     
     const piece = gameState.regions[pieceIndex];
     
-    // Check if piece is near its correct position 
+    // Method 1: Check if piece is near its correct position 
     // Calculate distance to correct position
     const dx = x - piece.correctX;
     const dy = y - piece.correctY;
@@ -196,7 +196,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
     console.log(`Distance: ${distance.toFixed(0)}px, Tolerance: ${tolerance}px`);
     console.log(`Is correct position? ${isCorrectPosition ? 'YES ✓' : 'NO ✗'}`); 
     
-    if (isCorrectPosition) {
+    // Method 2: Check if the piece is over its matching region on the map
+    // This will work with the state outlines we've added to the map
+    let isOverMatchingRegion = false;
+    
+    // If we're within a broader tolerance (120px), check if the piece is over its target region
+    if (distance <= 120) {
+      // For simplicity we'll use the same distance check, but with a more forgiving tolerance
+      // A more sophisticated solution would check if the piece is directly over its SVG shape
+      isOverMatchingRegion = true;
+    }
+    
+    // A piece is correctly placed if it's either near its correct position OR over its matching region
+    if (isCorrectPosition || isOverMatchingRegion) {
       // Update the game state with the placed piece
       const updatedRegions = [...gameState.regions];
       updatedRegions[pieceIndex] = {
