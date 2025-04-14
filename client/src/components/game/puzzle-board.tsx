@@ -14,7 +14,7 @@ const ENABLE_ALL_GUIDES = false;         // When true, shows faint outlines for 
 const SHOW_ALL_POSITION_DOTS = true;     // When true, shows target dots for all unplaced regions
 const HIGHLIGHT_TARGET_REGION = false;   // When true, highlights the specific target region when dragging
 const SHOW_CROSSHAIR_GUIDES = false;     // When true, shows crosshair guides for precise placement
-const ENHANCED_DOTS = true;              // When true, uses larger dots with white outlines
+const ENHANCED_DOTS = false;             // Disabled - only show simple red dots
 const DOTS_ONLY_MODE = true;             // When true, only shows dots with no other visual elements
 
 interface PuzzleBoardProps {
