@@ -88,16 +88,12 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
           
           // Handle special case for Ebonyi (Nigeria)
           if (region.name === "Ebonyi" && (r.id === "NG-EB" || r.name.includes("Ebon"))) {
-            console.log("Found Ebonyi match in SVG regions");
             return true;
           }
           
           // Handle other special cases for Nigeria
           if (gameState.countryId === 1) {
-            if ((region.name === "Federal Capital Territory" || region.name === "FCT") && r.id === "NG-FC") {
-              console.log("Found FCT match in SVG regions");
-              return true;
-            }
+            if (region.name === "Federal Capital Territory" && r.id === "NG-FC") return true;
             if (region.name === "Cross River" && r.id === "NG-CR") return true;
           }
           
@@ -155,60 +151,6 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
                 onDrop={onPieceDrop}
                 regionPieceId={region.id}
               />
-            ) : region.name === "Ebonyi" ? (
-              // Special case for Ebonyi when SVG region is not found
-              <div className="relative" style={{ width: "100%", height: "100%" }}>
-                <svg width="100%" height="100%" viewBox="0 0 100 100" style={{ position: "absolute", top: 0, left: 0 }}>
-                  <path 
-                    d="M30.085,49.342L30.52,49.38L30.748,49.56L30.922,49.692L31.05,49.825L31.145,50.138L31.283,50.35L31.378,50.472L31.578,50.472L31.702,50.658L31.724,50.877L31.794,50.981L31.569,52.686L31.511,52.475L31.392,52.328L31.052,52.237L30.81,52.251L30.782,52.342L30.835,52.693L30.651,53.203L30.155,53.55L30.045,53.648L30.038,53.723L30.145,53.917L30.024,54.498L29.88,49.208L30.085,49.342z" 
-                    fill={fillColor}
-                    stroke={strokeColor}
-                    strokeWidth="0.5"
-                  />
-                </svg>
-                <RegionThumbnail
-                  svgData={svgData}
-                  regionId="NG-EB"
-                  regionName="Ebonyi"
-                  color={fillColor}
-                  strokeColor={strokeColor}
-                  strokeWidth={1}
-                  width="100%"
-                  height="100%"
-                  showLabel={true}
-                  draggable={true}
-                  rotatable={true}
-                  onDrop={onPieceDrop}
-                  regionPieceId={region.id}
-                />
-              </div>
-            ) : (region.name === "Federal Capital Territory" || region.name === "FCT") ? (
-              // Special case for FCT when SVG region is not found
-              <div className="relative" style={{ width: "100%", height: "100%" }}>
-                <svg width="100%" height="100%" viewBox="0 0 100 100" style={{ position: "absolute", top: 0, left: 0 }}>
-                  <path 
-                    d="M37.902,36.563L37.989,36.708L37.996,36.827L38.117,36.898L38.272,36.989L38.37,37.175L38.379,37.368L38.255,37.521L38.088,37.598L38.092,37.414L38.039,37.265L37.902,37.137L37.788,36.873L37.826,36.757L37.902,36.563z" 
-                    fill={fillColor}
-                    stroke={strokeColor}
-                    strokeWidth="0.5"
-                  />
-                </svg>
-                <RegionThumbnail
-                  svgData={svgData}
-                  regionId="NG-FC"
-                  regionName={region.name}
-                  color={fillColor}
-                  strokeColor={strokeColor}
-                  strokeWidth={1}
-                  width="100%"
-                  height="100%"
-                  showLabel={true}
-                  draggable={true}
-                  rotatable={true}
-                  onDrop={onPieceDrop}
-                  regionPieceId={region.id}
-                />
-              </div>
             ) : (
               // Render directly - NO container div
               <StatePiece
