@@ -235,14 +235,14 @@ export function PuzzleBoard({
                       
                       // Calculate appropriate dot size based on viewBox
                       const [, , width, height] = viewBox.split(' ').map(Number);
-                      const baseDotSize = Math.min(width, height) * 0.015;
-                      const dotSize = isPrimary ? baseDotSize * 1.2 : baseDotSize * 0.8;
+                      const baseDotSize = Math.min(width, height) * 0.018; // Increased size for better visibility
+                      const dotSize = isPrimary ? baseDotSize * 1.3 : baseDotSize;
                       
                       // Set dot styles based on whether this is the primary (dragged) piece
-                      const dotColor = isPrimary ? "rgba(255,0,0,0.9)" : "rgba(255,220,0,0.8)";
-                      const outlineColor = isPrimary ? "white" : "rgba(255,255,255,0.7)";
-                      const pulseSpeed = isPrimary ? "1.5s" : "3s";
-                      const opacity = isPrimary ? 1 : 0.8;
+                      const dotColor = isPrimary ? "rgba(255,50,50,0.95)" : "rgba(255,230,50,0.9)";
+                      const outlineColor = isPrimary ? "white" : "rgba(255,255,255,0.8)";
+                      const pulseSpeed = isPrimary ? "1.5s" : "2.5s";
+                      const opacity = isPrimary ? 1 : 0.9;
                       
                       return (
                         <g key={`dot-${gameRegion.id}`} className={isPrimary ? "primary-dot" : "secondary-dot"}>
