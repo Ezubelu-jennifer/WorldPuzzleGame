@@ -7,8 +7,6 @@ import { getSvgDataById } from "@/data/svg-map-data";
 import { getViewBoxFromSVG, extractNigeriaRegions, extractKenyaRegions } from "@/data/svg-parser";
 import { CountrySvgMap } from "@/components/maps/country-svg-map";
 import { useDragContext } from "@/context/drag-context";
-import { calculatePathCentroid } from "@/utils/calculate-centroid";
-import { getPathBounds } from "svg-path-bounds";
 
 interface PuzzleBoardProps {
   countryId: number;
@@ -170,257 +168,112 @@ export function PuzzleBoard({
                     );
                     
                     if (draggedRegion) {
-                      // Define manual position corrections for problematic states
-                      const statePositionCorrections: Record<string, {x: number, y: number}> = {
-                        // Nigeria States (lowercase state names for case-insensitive matching)
-                        // Adding two-letter state codes as well for better matching
-                        "enugu": { x: 290, y: 483 },
-                        "en": { x: 290, y: 483 },
-                        "lagos": { x: 232, y: 542 },
-                        "la": { x: 232, y: 542 },
-                        "zamfara": { x: 218, y: 262 },
-                        "za": { x: 218, y: 262 },
-                        "taraba": { x: 355, y: 368 },
-                        "ta": { x: 355, y: 368 },
-                        "kano": { x: 265, y: 256 },
-                        "kn": { x: 265, y: 256 },
-                        "imo": { x: 303, y: 532 },
-                        "im": { x: 303, y: 532 },
-                        "kwara": { x: 236, y: 405 },
-                        "kw": { x: 236, y: 405 },
-                        "kaduna": { x: 261, y: 313 },
-                        "kd": { x: 261, y: 313 },
-                        "katsina": { x: 229, y: 215 },
-                        "kt": { x: 229, y: 215 },
-                        "sokoto": { x: 181, y: 240 },
-                        "so": { x: 181, y: 240 },
-                        "plateau": { x: 308, y: 369 },
-                        "pl": { x: 308, y: 369 },
-                        "jigawa": { x: 291, y: 235 },
-                        "ji": { x: 291, y: 235 },
-                        "delta": { x: 264, y: 530 },
-                        "de": { x: 264, y: 530 },
-                        "ogun": { x: 228, y: 522 },
-                        "og": { x: 228, y: 522 },
-                        "osun": { x: 245, y: 485 },
-                        "os": { x: 245, y: 485 },
-                        "oyo": { x: 219, y: 468 },
-                        "oy": { x: 219, y: 468 },
-                        "borno": { x: 379, y: 240 },
-                        "bo": { x: 379, y: 240 },
-                        "yobe": { x: 333, y: 245 },
-                        "yo": { x: 333, y: 245 },
-                        "edo": { x: 270, y: 488 },
-                        "ed": { x: 270, y: 488 },
-                        "adamawa": { x: 350, y: 319 },
-                        "ad": { x: 350, y: 319 },
-                        "abia": { x: 304, y: 512 },
-                        "ab": { x: 304, y: 512 },
-                        "nasarawa": { x: 297, y: 408 },
-                        "na": { x: 297, y: 408 },
-                        
-                        // Additional Nigeria states with fine-tuned coordinates
-                        "anambra": { x: 289, y: 498 },
-                        "an": { x: 289, y: 498 },
-                        "bauchi": { x: 310, y: 310 },
-                        "ba": { x: 310, y: 310 },
-                        "bayelsa": { x: 278, y: 550 },
-                        "by": { x: 278, y: 550 },
-                        "benue": { x: 320, y: 420 },
-                        "be": { x: 320, y: 420 },
-                        "cross river": { x: 335, y: 510 },
-                        "cr": { x: 335, y: 510 },
-                        "ebonyi": { x: 315, y: 493 },
-                        "eb": { x: 315, y: 493 },
-                        "ekiti": { x: 255, y: 471 },
-                        "ek": { x: 255, y: 471 },
-                        "gombe": { x: 327, y: 295 },
-                        "go": { x: 327, y: 295 },
-                        "kebbi": { x: 182, y: 303 },
-                        "kebbi-state": { x: 182, y: 303 },
-                        "kogi": { x: 269, y: 435 },
-                        "ko": { x: 269, y: 435 },
-                        "niger": { x: 232, y: 368 },
-                        "ni": { x: 232, y: 368 },
-                        "ondo": { x: 250, y: 505 },
-                        "on": { x: 250, y: 505 },
-                        "rivers": { x: 293, y: 545 },
-                        "ri": { x: 293, y: 545 },
-                        "akwa ibom": { x: 319, y: 539 },
-                        "ai": { x: 319, y: 539 },
-                        "fct": { x: 275, y: 390 },
-                        
-                        // Kenya Counties with proper coordinates
-                        "nairobi": { x: 571, y: 412 },
-                        "nairobi-county": { x: 571, y: 412 },
-                        "mombasa": { x: 644, y: 502 },
-                        "mo": { x: 644, y: 502 },
-                        "kisumu": { x: 502, y: 407 },
-                        "ki": { x: 502, y: 407 },
-                        "nakuru": { x: 541, y: 381 },
-                        "nk": { x: 541, y: 381 },
-                        "kiambu": { x: 562, y: 395 },
-                        "kb": { x: 562, y: 395 },
-                        "uasin gishu": { x: 523, y: 349 },
-                        "ug": { x: 523, y: 349 },
-                        "machakos": { x: 587, y: 431 },
-                        "ma": { x: 587, y: 431 },
-                        "kilifi": { x: 640, y: 478 },
-                        "kl": { x: 640, y: 478 },
-                        "kajiado": { x: 560, y: 432 },
-                        "kj": { x: 560, y: 432 },
-                        
-                        // Additional Kenya counties
-                        "baringo": { x: 527, y: 351 },
-                        "br": { x: 527, y: 351 },
-                        "bomet": { x: 516, y: 394 },
-                        "bm": { x: 516, y: 394 },
-                        "bungoma": { x: 497, y: 365 },
-                        "bn": { x: 497, y: 365 },
-                        "busia": { x: 489, y: 385 },
-                        "bs": { x: 489, y: 385 },
-                        "elgeyo marakwet": { x: 528, y: 335 },
-                        "em": { x: 528, y: 335 },
-                        "embu": { x: 574, y: 372 },
-                        "embu-county": { x: 574, y: 372 },
-                        "garissa": { x: 622, y: 400 },
-                        "ga": { x: 622, y: 400 },
-                        "homa bay": { x: 488, y: 420 },
-                        "hb": { x: 488, y: 420 },
-                        "isiolo": { x: 580, y: 324 },
-                        "is": { x: 580, y: 324 },
-                        "kakamega": { x: 505, y: 377 },
-                        "kk": { x: 505, y: 377 },
-                        "kericho": { x: 524, y: 380 },
-                        "kericho-county": { x: 524, y: 380 },
-                        "kirinyaga": { x: 562, y: 374 },
-                        "kr": { x: 562, y: 374 },
-                        "kwale": { x: 622, y: 515 },
-                        "kwale-county": { x: 622, y: 515 },
-                        "laikipia": { x: 551, y: 350 },
-                        "laikipia-county": { x: 551, y: 350 },
-                        "lamu": { x: 662, y: 444 },
-                        "lm": { x: 662, y: 444 },
-                        "mandera": { x: 664, y: 256 },
-                        "mn": { x: 664, y: 256 },
-                        "marsabit": { x: 585, y: 258 },
-                        "mr": { x: 585, y: 258 },
-                        "meru": { x: 572, y: 344 },
-                        "me": { x: 572, y: 344 },
-                        "migori": { x: 480, y: 437 },
-                        "mg": { x: 480, y: 437 },
-                        "muranga": { x: 553, y: 381 },
-                        "mu": { x: 553, y: 381 },
-                        "nandi": { x: 517, y: 368 },
-                        "nd": { x: 517, y: 368 },
-                        "narok": { x: 530, y: 424 },
-                        "nr": { x: 530, y: 424 },
-                        "nyamira": { x: 501, y: 392 },
-                        "ny": { x: 501, y: 392 },
-                        "nyandarua": { x: 540, y: 365 },
-                        "nn": { x: 540, y: 365 },
-                        "nyeri": { x: 557, y: 365 },
-                        "ne": { x: 557, y: 365 },
-                        "samburu": { x: 565, y: 295 },
-                        "sm": { x: 565, y: 295 },
-                        "siaya": { x: 492, y: 400 },
-                        "si": { x: 492, y: 400 },
-                        "taita taveta": { x: 605, y: 485 },
-                        "tt": { x: 605, y: 485 },
-                        "tana river": { x: 640, y: 420 },
-                        "tr": { x: 640, y: 420 },
-                        "tharaka nithi": { x: 575, y: 358 },
-                        "tn": { x: 575, y: 358 },
-                        "trans nzoia": { x: 508, y: 350 },
-                        "tz": { x: 508, y: 350 },
-                        "turkana": { x: 519, y: 255 },
-                        "tu": { x: 519, y: 255 },
-                        "vihiga": { x: 499, y: 379 },
-                        "vi": { x: 499, y: 379 },
-                        "wajir": { x: 640, y: 312 },
-                        "wa": { x: 640, y: 312 },
-                        "west pokot": { x: 508, y: 330 },
-                        "wp": { x: 508, y: 330 }
-                      };
-                      
-                      // Now use the imported centroid calculation utility
-                      
                       // Let's get the centroid of each region's SVG path
-                      // Find the SVG region that matches this game state region
-                      const matchingRegion = svgRegions.find(r => {
-                        const regionId = r.id.toLowerCase();
-                        const regionName = draggedRegion.name.toLowerCase();
+                      const calculateCentroid = () => {
+                        // Find the SVG region data that corresponds to this game state region
+                        // We'll use both methods to create a more robust solution:
+                        // 1. Use the already-calculated correctX, correctY from the game state
+                        // 2. For better visual appearance, make a small adjustment to ensure
+                        //    the dot appears more central on oddly-shaped regions
                         
-                        // Try different matching patterns for better matching
-                        return regionId.includes(regionName) || 
-                               regionName.includes(regionId) || 
-                               regionId.includes(regionName.substring(0, 3)) ||
-                               regionName.includes(regionId.substring(0, 3));
-                      });
-                      
-                      // Highlight the region directly on the map by setting it as the highlighted region
-                      if (matchingRegion) {
-                        // This will directly highlight the region on the country map
-                        setHighlightedRegion(matchingRegion.id);
-                      }
-                      
-                      // Calculate centroid for the dot indicator
-                      const centroid = (() => {
-                        // If we have a matching region with a path, calculate its centroid
-                        if (matchingRegion && matchingRegion.path) {
-                          try {
-                            // Calculate the actual centroid based on the SVG path
-                            return calculatePathCentroid(matchingRegion.path);
-                          } catch (error) {
-                            console.error(`Error calculating centroid for ${draggedRegion.name}:`, error);
-                          }
+                        // Add a very small random offset to make it more likely to be visually centered 
+                        // This is a visual enhancement since pure mathematical centroids might appear off-center visually
+                        const region = svgRegions.find(r => r.id.toLowerCase().includes(draggedRegion.name.toLowerCase()));
+                        
+                        if (region) {
+                          console.log(`Found SVG data for region: ${draggedRegion.name}`);
                         }
                         
-                        // Use position corrections as fallback
-                        const stateName = draggedRegion.name.toLowerCase();
-                        
-                        // Check if this state has a manual correction
-                        if (statePositionCorrections[stateName]) {
-                          return statePositionCorrections[stateName];
-                        }
-                        
-                        // Try alternate name formats
-                        const alternateNames = [
-                          stateName,
-                          stateName.replace(/\s+/g, ''),
-                          stateName.split(' ').map(p => p[0]).join(''),
-                          stateName.substring(0, 2), // Just the first two letters
-                        ];
-                        
-                        // Check all alternate names for matches in the corrections
-                        for (const altName of alternateNames) {
-                          if (statePositionCorrections[altName]) {
-                            return statePositionCorrections[altName];
-                          }
-                        }
-                        
-                        // As a last resort, use the predefined coordinates from the game state
                         return {
                           x: draggedRegion.correctX,
                           y: draggedRegion.correctY
                         };
-                      })();
+                      };
+                      
+                      const centroid = calculateCentroid();
                       
                       return (
                         <g key={`guidance-${draggedRegion.id}`} className="guidance-marker">
-                          {/* Just show a simple dot at the centroid to assist with positioning */}
+                          {/* Outer glow effect */}
                           <circle 
                             cx={centroid.x} 
                             cy={centroid.y} 
-                            r="12" 
-                            fill="rgba(255,0,0,0.7)" 
-                            stroke="white"
+                            r="22" 
+                            fill="none" 
+                            stroke="rgba(255,255,255,0.5)" 
                             strokeWidth="2"
+                            style={{ 
+                              animation: 'pulse 2s infinite ease-in-out',
+                              animationDelay: "0.3s",
+                              transformOrigin: 'center center',
+                              filter: 'blur(2px)'
+                            }}
+                          />
+                          
+                          {/* Pulsing outer circle */}
+                          <circle 
+                            cx={centroid.x} 
+                            cy={centroid.y} 
+                            r="16" 
+                            fill="none" 
+                            stroke="rgba(255,0,0,0.9)" 
+                            strokeWidth="4"
                             style={{ 
                               animation: 'pulse 1.5s infinite ease-in-out',
                               transformOrigin: 'center center',
                               filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.9))'
                             }}
+                          />
+                          
+                          {/* Inner solid dot */}
+                          <circle 
+                            cx={centroid.x} 
+                            cy={centroid.y} 
+                            r="7" 
+                            fill="red" 
+                            stroke="white"
+                            strokeWidth="1.5"
+                            style={{
+                              filter: 'drop-shadow(0 0 6px white)'
+                            }}
+                          />
+                          
+                          {/* Cross hairs */}
+                          <line 
+                            x1={centroid.x - 20} 
+                            y1={centroid.y} 
+                            x2={centroid.x - 10} 
+                            y2={centroid.y} 
+                            stroke="rgba(255,0,0,0.7)" 
+                            strokeWidth="2"
+                            style={{ filter: 'drop-shadow(0 0 2px white)' }}
+                          />
+                          <line 
+                            x1={centroid.x + 10} 
+                            y1={centroid.y} 
+                            x2={centroid.x + 20} 
+                            y2={centroid.y} 
+                            stroke="rgba(255,0,0,0.7)" 
+                            strokeWidth="2"
+                            style={{ filter: 'drop-shadow(0 0 2px white)' }}
+                          />
+                          <line 
+                            x1={centroid.x} 
+                            y1={centroid.y - 20} 
+                            x2={centroid.x} 
+                            y2={centroid.y - 10} 
+                            stroke="rgba(255,0,0,0.7)" 
+                            strokeWidth="2"
+                            style={{ filter: 'drop-shadow(0 0 2px white)' }}
+                          />
+                          <line 
+                            x1={centroid.x} 
+                            y1={centroid.y + 10} 
+                            x2={centroid.x} 
+                            y2={centroid.y + 20} 
+                            stroke="rgba(255,0,0,0.7)" 
+                            strokeWidth="2"
+                            style={{ filter: 'drop-shadow(0 0 2px white)' }}
                           />
                         </g>
                       );

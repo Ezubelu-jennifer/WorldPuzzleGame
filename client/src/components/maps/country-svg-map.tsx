@@ -259,12 +259,8 @@ export function CountrySvgMap({
               strokeWidth={strokeWidth}
               data-name={region.name}
               aria-label={region.name}
-              className={`transition-colors duration-200 hover:opacity-80 ${isHighlighted ? 'highlighted-region' : ''}`}
-              style={{ 
-                cursor: "pointer",
-                animation: isHighlighted ? 'state-shape-guidance 2s infinite ease-in-out' : 'none',
-                filter: isHighlighted ? 'drop-shadow(0 0 5px rgba(255, 255, 255, 0.8))' : 'none'
-              }}
+              className="transition-colors duration-200 hover:opacity-80"
+              style={{ cursor: "pointer" }}
               onClick={() => handleRegionClick(region.id, region.name)}
             />
           );
