@@ -183,24 +183,73 @@ export function RegionThumbnail({
     position: 'relative' as const
   };
   
-  return (
-    <div 
-      ref={thumbnailRef}
-      className={`region-thumbnail ${className} overflow-visible group ${isDragging ? 'z-50' : ''}`}
-      style={{
-        ...styles,
-        background: 'transparent',
-        ...(draggable && isDragging ? {
+  // Don't render a div container when dragging to avoid the box
+  if (draggable && isDragging) {
+    return (
+      <svg 
+        width={typeof width === 'number' ? width : 100}
+        height={typeof height === 'number' ? height : 80}
+        viewBox={viewBox}
+        preserveAspectRatio="xMidYMid meet"
+        style={{
           position: 'fixed',
           left: `${position.x}px`,
           top: `${position.y}px`,
           zIndex: 9999,
           pointerEvents: 'none',
-          opacity: 0.8,
+          opacity: 0.9,
           transform: `rotate(${rotation}deg) scale(${scale})`,
           transformOrigin: 'center center',
-          transition: 'none'
-        } : {})
+          background: 'transparent',
+          overflow: 'visible'
+        }}
+      >
+        <g transform="translate(50, 50) scale(0.7)" style={{ transformOrigin: "center" }}>
+          {/* Main colored path */}
+          <path
+            d={pathData}
+            fill={color}
+            stroke={strokeColor}
+            strokeWidth={strokeWidth + 3}
+            transform="scale(5.5)"
+            style={{
+              transformBox: 'fill-box',
+              transformOrigin: 'center',
+              filter: 'drop-shadow(0px 4px 8px rgba(0,0,0,0.7))'
+            }}
+          />
+          
+          {/* Text label */}
+          {showLabel && (
+            <text 
+              x="0" 
+              y="0" 
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fill="#000000" 
+              fontSize="16"
+              fontWeight="bold"
+              style={{ 
+                textShadow: '0 0 4px white, 0 0 4px white, 0 0 4px white, 0 0 4px white',
+                fontFamily: 'Arial, sans-serif'
+              }}
+            >
+              {regionName}
+            </text>
+          )}
+        </g>
+      </svg>
+    );
+  }
+
+  // Regular non-dragging view
+  return (
+    <div 
+      ref={thumbnailRef}
+      className={`region-thumbnail ${className} overflow-visible group`}
+      style={{
+        ...styles,
+        background: 'transparent'
       }}
       {...(draggable ? {
         ...dragHandlers,
