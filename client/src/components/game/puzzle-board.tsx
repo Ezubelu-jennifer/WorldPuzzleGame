@@ -187,6 +187,24 @@ export function PuzzleBoard({
               viewBox={viewBox}
               preserveAspectRatio="xMidYMid meet"
             >
+              {/* Enhanced guidance system with multiple elements */}
+              
+              {/* Outer glow effect */}
+              <circle 
+                cx={region.correctX} 
+                cy={region.correctY} 
+                r="22" 
+                fill="none" 
+                stroke="rgba(255,255,255,0.5)" 
+                strokeWidth="2"
+                style={{ 
+                  animation: 'pulse 2s infinite ease-in-out',
+                  animationDelay: "0.3s",
+                  transformOrigin: 'center center',
+                  filter: 'blur(2px)'
+                }}
+              />
+              
               {/* Pulsing outer circle */}
               <circle 
                 cx={region.correctX} 
@@ -198,18 +216,59 @@ export function PuzzleBoard({
                 style={{ 
                   animation: 'pulse 1.5s infinite ease-in-out',
                   transformOrigin: 'center center',
-                  filter: 'drop-shadow(0 0 5px rgba(255,255,255,0.9))'
+                  filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.9))'
                 }}
               />
+              
               {/* Inner solid dot */}
               <circle 
                 cx={region.correctX} 
                 cy={region.correctY} 
                 r="7" 
                 fill="red" 
+                stroke="white"
+                strokeWidth="1.5"
                 style={{
-                  filter: 'drop-shadow(0 0 5px white)'
+                  filter: 'drop-shadow(0 0 6px white)'
                 }}
+              />
+              
+              {/* Cross hairs */}
+              <line 
+                x1={region.correctX - 20} 
+                y1={region.correctY} 
+                x2={region.correctX - 10} 
+                y2={region.correctY} 
+                stroke="rgba(255,0,0,0.7)" 
+                strokeWidth="2"
+                style={{ filter: 'drop-shadow(0 0 2px white)' }}
+              />
+              <line 
+                x1={region.correctX + 10} 
+                y1={region.correctY} 
+                x2={region.correctX + 20} 
+                y2={region.correctY} 
+                stroke="rgba(255,0,0,0.7)" 
+                strokeWidth="2"
+                style={{ filter: 'drop-shadow(0 0 2px white)' }}
+              />
+              <line 
+                x1={region.correctX} 
+                y1={region.correctY - 20} 
+                x2={region.correctX} 
+                y2={region.correctY - 10} 
+                stroke="rgba(255,0,0,0.7)" 
+                strokeWidth="2"
+                style={{ filter: 'drop-shadow(0 0 2px white)' }}
+              />
+              <line 
+                x1={region.correctX} 
+                y1={region.correctY + 10} 
+                x2={region.correctX} 
+                y2={region.correctY + 20} 
+                stroke="rgba(255,0,0,0.7)" 
+                strokeWidth="2"
+                style={{ filter: 'drop-shadow(0 0 2px white)' }}
               />
             </svg>
           ))

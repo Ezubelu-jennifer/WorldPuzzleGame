@@ -276,36 +276,8 @@ export function StatePiece({
         </g>
       )}
       
-      {/* Target position indicator - Only shown when THIS piece is being dragged */}
-      {isDragging && region.correctX && region.correctY && (
-        <g>
-          <circle 
-            cx={region.correctX} 
-            cy={region.correctY} 
-            r="15" 
-            fill="none" 
-            stroke="rgba(255,0,0,0.7)" 
-            strokeWidth="3"
-            style={{ 
-              animation: 'pulse 1.5s infinite', 
-              pointerEvents: 'none',
-              filter: 'drop-shadow(0 0 5px white)' 
-            }} 
-          />
-          <circle 
-            cx={region.correctX} 
-            cy={region.correctY} 
-            r="6" 
-            fill="red" 
-            stroke="white" 
-            strokeWidth="1.5"
-            style={{ 
-              pointerEvents: 'none',
-              filter: 'drop-shadow(0 0 3px white)' 
-            }} 
-          />
-        </g>
-      )}
+      {/* Target position indicators have been moved to the PuzzleBoard component
+          to ensure only one dot is shown at a time based on the global drag context */}
     </svg>
   );
 }
