@@ -251,6 +251,18 @@ export function PuzzleBoard({
                       
                       return (
                         <g key={`guidance-${draggedRegion.id}`} className="guidance-marker">
+                          {/* Highlight the actual matching region on the SVG map if we found a match */}
+                          {/* This appears first (at the bottom of the stack) */}
+                          {matchedRegion.found && matchedRegion.id && (
+                            <use 
+                              href={`#${matchedRegion.id}`} 
+                              fill="rgba(255,0,0,0.15)" 
+                              stroke="rgba(255,0,0,0.3)"
+                              strokeWidth="1.5"
+                              className="pointer-events-none"
+                            />
+                          )}
+                          
                           {/* Outer glow effect */}
                           <circle 
                             cx={matchedRegion.x} 
@@ -263,7 +275,8 @@ export function PuzzleBoard({
                               animation: 'pulse 2s infinite ease-in-out',
                               animationDelay: "0.3s",
                               transformOrigin: 'center center',
-                              filter: 'blur(2px)'
+                              filter: 'blur(2px)',
+                              pointerEvents: "none"
                             }}
                           />
                           
@@ -278,20 +291,8 @@ export function PuzzleBoard({
                             style={{ 
                               animation: 'pulse 1.5s infinite ease-in-out',
                               transformOrigin: 'center center',
-                              filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.9))'
-                            }}
-                          />
-                          
-                          {/* Inner solid dot */}
-                          <circle 
-                            cx={matchedRegion.x} 
-                            cy={matchedRegion.y} 
-                            r="7" 
-                            fill="red" 
-                            stroke="white"
-                            strokeWidth="1.5"
-                            style={{
-                              filter: 'drop-shadow(0 0 6px white)'
+                              filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.9))',
+                              pointerEvents: "none"
                             }}
                           />
                           
@@ -303,7 +304,10 @@ export function PuzzleBoard({
                             y2={matchedRegion.y} 
                             stroke="rgba(255,0,0,0.7)" 
                             strokeWidth="2"
-                            style={{ filter: 'drop-shadow(0 0 2px white)' }}
+                            style={{ 
+                              filter: 'drop-shadow(0 0 2px white)',
+                              pointerEvents: "none"
+                            }}
                           />
                           <line 
                             x1={matchedRegion.x + 10} 
@@ -312,7 +316,10 @@ export function PuzzleBoard({
                             y2={matchedRegion.y} 
                             stroke="rgba(255,0,0,0.7)" 
                             strokeWidth="2"
-                            style={{ filter: 'drop-shadow(0 0 2px white)' }}
+                            style={{ 
+                              filter: 'drop-shadow(0 0 2px white)',
+                              pointerEvents: "none"
+                            }}
                           />
                           <line 
                             x1={matchedRegion.x} 
@@ -321,7 +328,10 @@ export function PuzzleBoard({
                             y2={matchedRegion.y - 10} 
                             stroke="rgba(255,0,0,0.7)" 
                             strokeWidth="2"
-                            style={{ filter: 'drop-shadow(0 0 2px white)' }}
+                            style={{ 
+                              filter: 'drop-shadow(0 0 2px white)',
+                              pointerEvents: "none"
+                            }}
                           />
                           <line 
                             x1={matchedRegion.x} 
@@ -330,19 +340,40 @@ export function PuzzleBoard({
                             y2={matchedRegion.y + 20} 
                             stroke="rgba(255,0,0,0.7)" 
                             strokeWidth="2"
-                            style={{ filter: 'drop-shadow(0 0 2px white)' }}
+                            style={{ 
+                              filter: 'drop-shadow(0 0 2px white)',
+                              pointerEvents: "none"
+                            }}
                           />
                           
-                          {/* Highlight the actual matching region on the SVG map if we found a match */}
-                          {matchedRegion.found && matchedRegion.id && (
-                            <use 
-                              href={`#${matchedRegion.id}`} 
-                              fill="rgba(255,0,0,0.15)" 
-                              stroke="rgba(255,0,0,0.3)"
-                              strokeWidth="1.5"
-                              className="pointer-events-none"
-                            />
-                          )}
+                          {/* Inner solid dot - This is drawn LAST so it's always on top */}
+                          <circle 
+                            cx={matchedRegion.x} 
+                            cy={matchedRegion.y} 
+                            r="8" 
+                            fill="#ff3333" 
+                            stroke="white"
+                            strokeWidth="2"
+                            style={{
+                              filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.9))',
+                              pointerEvents: "none",
+                              zIndex: 9999 // Ensure it's on top (SVG doesn't use z-index but adding for emphasis)
+                            }}
+                          />
+                          
+                          {/* Additional dot outline to make it even more visible */}
+                          <circle
+                            cx={matchedRegion.x}
+                            cy={matchedRegion.y}
+                            r="10"
+                            fill="none"
+                            stroke="rgba(255,255,255,0.8)"
+                            strokeWidth="2"
+                            style={{
+                              filter: 'drop-shadow(0 0 4px rgba(0,0,0,0.5))',
+                              pointerEvents: "none"
+                            }}
+                          />
                         </g>
                       );
                     }
