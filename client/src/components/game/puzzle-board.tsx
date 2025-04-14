@@ -459,7 +459,47 @@ export function PuzzleBoard({
                           };
                         }
                         
-                        // Fallback to using the coordinates from game state
+                        // For Nigerian states, use hardcoded coordinates as a reliable fallback
+                        if (countryId === 1) { // Nigeria
+                          // Map state names to their IDs for hardcoded positions
+                          const stateIdMap: Record<string, string> = {
+                            'Abia': 'NG-AB', 'Adamawa': 'NG-AD', 'Akwa Ibom': 'NG-AK', 'Anambra': 'NG-AN',
+                            'Bauchi': 'NG-BA', 'Bayelsa': 'NG-BY', 'Benue': 'NG-BE', 'Borno': 'NG-BO',
+                            'Cross River': 'NG-CR', 'Delta': 'NG-DE', 'Ebonyi': 'NG-EB', 'Edo': 'NG-ED',
+                            'Ekiti': 'NG-EK', 'Enugu': 'NG-EN', 'Federal Capital Territory': 'NG-FC', 
+                            'FCT': 'NG-FC', 'Gombe': 'NG-GO', 'Imo': 'NG-IM', 'Jigawa': 'NG-JI', 
+                            'Kaduna': 'NG-KD', 'Kano': 'NG-KN', 'Katsina': 'NG-KT', 'Kebbi': 'NG-KE', 
+                            'Kogi': 'NG-KO', 'Kwara': 'NG-KW', 'Lagos': 'NG-LA', 'Nasarawa': 'NG-NA', 
+                            'Niger': 'NG-NI', 'Ogun': 'NG-OG', 'Ondo': 'NG-ON', 'Osun': 'NG-OS', 
+                            'Oyo': 'NG-OY', 'Plateau': 'NG-PL', 'Rivers': 'NG-RI', 'Sokoto': 'NG-SO', 
+                            'Taraba': 'NG-TA', 'Yobe': 'NG-YO', 'Zamfara': 'NG-ZA'
+                          };
+                          
+                          // Get the state ID for hardcoded positioning
+                          const stateId = stateIdMap[draggedRegion.name];
+                          
+                          if (stateId) {
+                            // Use hardcoded centroids directly for Nigerian states
+                            console.log(`Using hardcoded position for ${draggedRegion.name} (${stateId})`);
+                            
+                            // Get the hardcoded centroid from our utility function
+                            const centroid = getPathCentroid("", stateId);
+                            
+                            if (centroid) {
+                              console.log(`Reliable hardcoded position found for ${draggedRegion.name}: (${centroid.x}, ${centroid.y})`);
+                              return {
+                                x: centroid.x,
+                                y: centroid.y,
+                                id: stateId,
+                                name: draggedRegion.name,
+                                found: true
+                              };
+                            }
+                          }
+                        }
+                        
+                        // Last resort fallback to using the coordinates from game state
+                        console.log(`Using fallback coordinates for ${draggedRegion.name}`);
                         return {
                           x: draggedRegion.correctX,
                           y: draggedRegion.correctY,
