@@ -4,6 +4,7 @@ import { StatePiece } from "@/components/game/state-piece";
 import { RegionThumbnail } from "@/components/region-thumbnail";
 import { getSvgDataById } from "@/data/svg-map-data";
 import { extractNigeriaRegions, extractKenyaRegions } from "@/data/svg-parser";
+import { RegionPiece } from "@shared/schema";
 
 interface PiecesTrayProps {
   onPieceDrop: (id: number, x: number, y: number) => boolean;
@@ -41,10 +42,8 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
     );
   }
 
-  // Make sure we display ALL regions
-  const allRegions = [...gameState.regions];
-  // Filter for unplaced pieces that can be moved
-  const unplacedPieces = allRegions.filter(region => !region.isPlaced);
+  // Only display unplaced regions in the tray
+  const unplacedPieces = gameState.regions.filter(region => !region.isPlaced);
   
   // Vibrant colors for regions - using a diverse color palette
   const colors = [
@@ -70,7 +69,7 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
       </div>
       
       <div ref={trayRef} className="flex gap-2 overflow-x-auto py-4 px-8 min-h-[120px] whitespace-nowrap overflow-y-hidden">
-        {allRegions.map((region, index) => {
+        {unplacedPieces.map((region: RegionPiece, index: number) => {
         // Assign color from our palette, cycling through if needed
         const colorIndex = index % colors.length;
         const fillColor = colors[colorIndex].fill;
