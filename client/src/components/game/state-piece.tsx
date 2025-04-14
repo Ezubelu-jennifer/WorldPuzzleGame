@@ -28,6 +28,9 @@ export function StatePiece({
   snapToPosition = false,
   isTrayPiece = false
 }: StatePieceProps) {
+  // Access drag context
+  const { draggedPieceId, setDraggedPieceId } = useDragContext();
+  
   // State
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [svgPathData, setSvgPathData] = useState<string | null>(null);
@@ -78,6 +81,8 @@ export function StatePiece({
     e.preventDefault();
     
     setIsDragging(true);
+    // Set the global dragged piece ID
+    setDraggedPieceId(region.id);
     
     // Get path element's center
     const pathElement = e.currentTarget;
@@ -98,7 +103,7 @@ export function StatePiece({
     // Add document event listeners
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  }, [region.isPlaced, size]);
+  }, [region.isPlaced, size, setDraggedPieceId, region.id]);
   
   // Mouse move handler
   const handleMouseMove = useCallback((e: MouseEvent) => {
@@ -121,6 +126,8 @@ export function StatePiece({
     
     // Reset dragging state
     setIsDragging(false);
+    // Clear the global dragged piece ID
+    setDraggedPieceId(null);
     
     // Handle drop if we have a container
     if (containerRef.current) {
@@ -131,7 +138,7 @@ export function StatePiece({
       // Try to drop the piece
       onDrop(region.id, relX, relY);
     }
-  }, [isDragging, region.id, onDrop, containerRef]);
+  }, [isDragging, region.id, onDrop, containerRef, setDraggedPieceId]);
 
   // Touch handlers
   const handleTouchStart = useCallback((e: React.TouchEvent<SVGPathElement>) => {
@@ -140,6 +147,8 @@ export function StatePiece({
     e.preventDefault();
     
     setIsDragging(true);
+    // Set the global dragged piece ID
+    setDraggedPieceId(region.id);
     
     const touch = e.touches[0];
     setPosition({
@@ -149,7 +158,7 @@ export function StatePiece({
     
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleTouchEnd);
-  }, [region.isPlaced, size]);
+  }, [region.isPlaced, size, setDraggedPieceId, region.id]);
   
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!isDragging || e.touches.length !== 1) return;
@@ -170,6 +179,8 @@ export function StatePiece({
     document.removeEventListener('touchend', handleTouchEnd);
     
     setIsDragging(false);
+    // Clear the global dragged piece ID
+    setDraggedPieceId(null);
     
     if (containerRef.current && e.changedTouches.length === 1) {
       const touch = e.changedTouches[0];
@@ -180,7 +191,7 @@ export function StatePiece({
       
       onDrop(region.id, relX, relY);
     }
-  }, [isDragging, region.id, onDrop, containerRef]);
+  }, [isDragging, region.id, onDrop, containerRef, setDraggedPieceId]);
 
   // Build the SVG element directly
   return (

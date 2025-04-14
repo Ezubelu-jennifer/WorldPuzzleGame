@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { getSvgDataById } from "@/data/svg-map-data";
 import { getViewBoxFromSVG, extractNigeriaRegions, extractKenyaRegions } from "@/data/svg-parser";
 import { CountrySvgMap } from "@/components/maps/country-svg-map";
+import { useDragContext } from "@/context/drag-context";
 
 interface PuzzleBoardProps {
   countryId: number;
@@ -21,6 +22,7 @@ export function PuzzleBoard({
   onStart
 }: PuzzleBoardProps) {
   const { gameState, placePiece, useHint } = useGame();
+  const { draggedPieceId } = useDragContext();
   const [gameStarted, setGameStarted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [svgData, setSvgData] = useState<string>("");
@@ -167,9 +169,10 @@ export function PuzzleBoard({
           )}
         </div>
         
-        {/* Target position markers - red dots for each region */}
-        {gameStarted && hasRegions && gameState.regions.map(region => 
-          !region.isPlaced && (
+        {/* Target position marker - red dot for the currently dragged piece only */}
+        {gameStarted && hasRegions && draggedPieceId && gameState.regions
+          .filter(region => region.id === draggedPieceId && !region.isPlaced)
+          .map(region => (
             <svg 
               key={`target-${region.id}`}
               className="absolute"
@@ -209,8 +212,8 @@ export function PuzzleBoard({
                 }}
               />
             </svg>
-          )
-        )}
+          ))
+        }
   
         {/* Puzzle Pieces that have been placed on the board */}
         {hasRegions && gameState.regions.map(region => 
