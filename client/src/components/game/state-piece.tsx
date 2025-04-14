@@ -101,6 +101,13 @@ export function StatePiece({
     // Set the global dragged piece ID
     setDraggedPieceId(region.id);
     
+    // Apply zoom effect when starting drag
+    setScale(2.0); // Start with a larger scale for the zoom effect
+    setTimeout(() => {
+      // After 300ms, gradually reduce back to normal size
+      setScale(1.0);
+    }, 300);
+    
     // Get path element's center
     const pathElement = e.currentTarget;
     const rect = pathElement.getBoundingClientRect();
@@ -167,6 +174,13 @@ export function StatePiece({
     // Set the global dragged piece ID
     setDraggedPieceId(region.id);
     
+    // Apply zoom effect when starting touch drag
+    setScale(2.0); // Start with a larger scale for the zoom effect
+    setTimeout(() => {
+      // After 300ms, gradually reduce back to normal size
+      setScale(1.0);
+    }, 300);
+    
     const touch = e.touches[0];
     setPosition({
       x: touch.clientX,
@@ -226,7 +240,7 @@ export function StatePiece({
         opacity: region.isPlaced ? 0.9 : 1,
         transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(${scale})`,
         transformOrigin: 'center center',
-        transition: isDragging ? 'none' : 'all 0.3s ease',
+        transition: isDragging ? 'transform 0.3s ease' : 'all 0.3s ease',
         pointerEvents: 'none', // The SVG itself has no pointer events
         overflow: 'visible',
         filter: isDragging ? 'drop-shadow(0 0 8px rgba(0,0,0,0.5))' : 'none'
