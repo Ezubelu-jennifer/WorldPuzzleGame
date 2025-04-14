@@ -92,10 +92,10 @@ export function PuzzleBoard({
   // Check if regions are available
   const hasRegions = gameState && gameState.regions && gameState.regions.length > 0;
   
-  // Debug logging for drag context
-  useEffect(() => {
-    console.log("Current draggedPieceId:", draggedPieceId);
-  }, [draggedPieceId]);
+  // Debug logging for drag context (disabled to reduce console noise)
+  // useEffect(() => {
+  //   console.log("Current draggedPieceId:", draggedPieceId);
+  // }, [draggedPieceId]);
   
   // Handle region click
   const handleRegionClick = (regionId: string, regionName: string) => {

@@ -52,9 +52,14 @@ const KNOWN_CENTROIDS: Record<string, { x: number, y: number }> = {
 // Calculate the centroid (center point) of an SVG path
 export function getPathCentroid(svgPath: string, regionId?: string): { x: number, y: number } | null {
   try {
+    // First check if we have a known centroid for this region ID
+    // This is the most reliable method and should be used whenever possible
+    if (regionId && KNOWN_CENTROIDS[regionId]) {
+      return KNOWN_CENTROIDS[regionId];
+    }
+    
     // Check if path is empty or undefined
     if (!svgPath || svgPath.trim() === '') {
-      console.log('SVG path is empty or undefined');
       return null;
     }
     
@@ -62,109 +67,86 @@ export function getPathCentroid(svgPath: string, regionId?: string): { x: number
     const idMatch = svgPath.match(/id="([^"]+)"/);
     const extractedId = idMatch ? idMatch[1] : null;
     
-    // We'll compute centroids geometrically for better distribution
-    // and only use the KNOWN_CENTROIDS as a fallback for problematic regions
+    // If we extracted an ID and have a known centroid for it, use that
+    if (extractedId && KNOWN_CENTROIDS[extractedId]) {
+      return KNOWN_CENTROIDS[extractedId];
+    }
     
-    console.log('Processing path:', svgPath.substring(0, 50) + '...');
+    // If extractedId is in format like "AB" for Nigeria, try "NG-AB"
+    if (extractedId && extractedId.length === 2 && /^[A-Z]{2}$/.test(extractedId)) {
+      const ngId = `NG-${extractedId}`;
+      if (KNOWN_CENTROIDS[ngId]) {
+        return KNOWN_CENTROIDS[ngId];
+      }
+    }
     
-    // Sanitize the path to ensure it's processable
+    // Sanitize the path for processing
     const sanitizedPath = svgPath
       .replace(/\s+/g, ' ')
       .replace(/\s*,\s*/g, ',')
       .trim();
     
-    // Get the bounding box of the path
-    let bounds;
+    // Try to get bounding box (safer approach)
     try {
-      bounds = getPathBounds(sanitizedPath);
-      console.log('Path bounds:', bounds);
-    } catch (e) {
-      console.warn('Error getting path bounds:', e);
-      return null;
-    }
-    
-    // Check if bounds calculation was successful
-    const [minX, minY, maxX, maxY] = bounds;
-    if (isNaN(minX) || isNaN(minY) || isNaN(maxX) || isNaN(maxY)) {
-      console.warn('Invalid path bounds, cannot calculate centroid');
-      return null;
-    }
-    
-    // Always use hardcoded centroids if available for now
-    // This will ensure dots appear while we debug the calculation
-    if (regionId && KNOWN_CENTROIDS[regionId]) {
-      console.log(`Using known centroid for ${regionId}:`, KNOWN_CENTROIDS[regionId]);
-      return KNOWN_CENTROIDS[regionId];
-    }
-    
-    // Attempt to parse SVG path to get a more accurate centroid
-    try {
-      // Extract all points from the SVG path 
-      // (This is a simplified approach that works for most path commands)
-      const points = [];
-      const commands = sanitizedPath.match(/[a-z][^a-z]*/gi) || [];
+      const bounds = getPathBounds(sanitizedPath);
+      const [minX, minY, maxX, maxY] = bounds;
       
-      let currentX = 0;
-      let currentY = 0;
-      
-      for (const cmd of commands) {
-        const type = cmd.charAt(0).toUpperCase();
-        const isRelative = cmd.charAt(0) !== type;
-        const parts = cmd.substring(1).trim().split(/[\s,]+/).map(parseFloat);
-        
-        if (type === 'M' || type === 'L') {
-          // Move to or line to command
-          for (let i = 0; i < parts.length; i += 2) {
-            if (i + 1 < parts.length) {
-              const x = isRelative ? currentX + parts[i] : parts[i];
-              const y = isRelative ? currentY + parts[i + 1] : parts[i + 1];
-              currentX = x;
-              currentY = y;
-              points.push({ x, y });
-            }
-          }
-        }
-        // Additional commands like C (curve), A (arc) would need more complex parsing
-      }
-      
-      // Calculate a weighted average of points for better centroid
-      if (points.length > 0) {
-        // Calculate weighted center - give more weight to corner points
-        let sumX = 0;
-        let sumY = 0;
-        
-        for (const point of points) {
-          sumX += point.x;
-          sumY += point.y;
-        }
-        
-        const centroid = {
-          x: sumX / points.length,
-          y: sumY / points.length
+      // Simple sanity check for the bounds
+      if (!isNaN(minX) && !isNaN(minY) && !isNaN(maxX) && !isNaN(maxY) && 
+          minX < maxX && minY < maxY) {
+        // Return the center of the bounding box
+        return {
+          x: (minX + maxX) / 2,
+          y: (minY + maxY) / 2
         };
-        
-        // Make sure the centroid is within the bounds
-        if (centroid.x >= minX && centroid.x <= maxX && 
-            centroid.y >= minY && centroid.y <= maxY) {
-          console.log('Calculated geometric centroid:', centroid);
-          return centroid;
-        }
       }
-    } catch (error) {
-      console.warn('Error calculating geometric centroid:', error);
+    } catch (e) {
+      // Silently fail and continue to fallback methods
     }
     
-    // Fallback: Calculate the center point of the bounding box
-    const centroid = {
-      x: (minX + maxX) / 2,
-      y: (minY + maxY) / 2
-    };
+    // Fallback: Try to extract numerical coordinates and average them
+    try {
+      const numericMatches = sanitizedPath.match(/[-+]?[0-9]*\.?[0-9]+/g);
+      if (numericMatches && numericMatches.length >= 4) {
+        const values = numericMatches.map(parseFloat).filter(val => !isNaN(val));
+        
+        // Calculate the average of all even-indexed values (X coordinates)
+        // and all odd-indexed values (Y coordinates)
+        let sumX = 0, sumY = 0, count = 0;
+        for (let i = 0; i < values.length - 1; i += 2) {
+          sumX += values[i];
+          sumY += values[i + 1];
+          count++;
+        }
+        
+        if (count > 0) {
+          return { 
+            x: sumX / count, 
+            y: sumY / count 
+          };
+        }
+      }
+    } catch (e) {
+      // Silently fail and continue to next fallback
+    }
     
-    console.log('Calculated bounding box centroid:', centroid);
-    return centroid;
+    // Last resort fallback: return a default position based on country
+    if (regionId) {
+      // For Nigerian states
+      if (regionId.startsWith('NG-')) {
+        return { x: 350, y: 350 };
+      }
+      // For Kenyan counties
+      if (regionId.startsWith('KE-')) {
+        return { x: 400, y: 400 };
+      }
+    }
+    
+    // Return the center of the SVG as an absolute last resort
+    return { x: 400, y: 400 };
   } catch (error) {
-    console.warn('Failed to calculate path centroid:', error);
-    return null;
+    // Fail silently and return a default position
+    return { x: 400, y: 400 };
   }
 }
 
