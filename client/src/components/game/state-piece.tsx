@@ -240,7 +240,7 @@ export function StatePiece({
             <circle 
               cx="0" 
               cy="0" 
-              r="150"
+              r="50"
               fill="rgba(0,0,0,0.2)"
               transform="translate(2, 2)"
               style={{ pointerEvents: 'none' }}
@@ -251,7 +251,7 @@ export function StatePiece({
               ref={circleRef}
               cx="0" 
               cy="0"
-              r="150"
+              r="50"
               fill={region.isPlaced ? region.fillColor : "#ef4444"}
               stroke={region.strokeColor}
               strokeWidth="2"
@@ -273,7 +273,7 @@ export function StatePiece({
             <path 
               d={svgPathData || region.svgPath} 
               fill="rgba(0,0,0,0.2)"
-              transform="translate(2, 2) scale(7.5)"
+              transform="translate(2, 2) scale(1.0)"
               strokeLinejoin="round"
               strokeLinecap="round"
               style={{ pointerEvents: 'none' }}
@@ -286,7 +286,7 @@ export function StatePiece({
               fill={region.isPlaced ? region.fillColor : "#ef4444"}
               stroke={region.strokeColor}
               strokeWidth="2"
-              transform="scale(7.5)"
+              transform="scale(1.0)"
               strokeLinejoin="round"
               strokeLinecap="round"
               style={{ 
@@ -308,10 +308,10 @@ export function StatePiece({
           textAnchor="middle"
           dominantBaseline="middle"
           fill="#000000" 
-          fontSize="100"
+          fontSize="30"
           fontWeight="900"
           style={{ 
-            textShadow: '0 0 10px white, 0 0 10px white, 0 0 10px white, 0 0 10px white',
+            textShadow: '0 0 5px white, 0 0 5px white, 0 0 5px white, 0 0 5px white',
             fontFamily: 'Arial, sans-serif',
             pointerEvents: 'none'
           }}
