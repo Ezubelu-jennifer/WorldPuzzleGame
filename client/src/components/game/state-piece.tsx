@@ -103,7 +103,7 @@ export function StatePiece({
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
     
-    // Update position directly at the cursor
+    // Update position to keep the shape directly under the cursor
     setPosition({
       x: e.clientX - size/2,
       y: e.clientY - size/2
@@ -154,6 +154,7 @@ export function StatePiece({
     if (!isDragging || e.touches.length !== 1) return;
     e.preventDefault();
     
+    // Keep the shape centered under the finger
     const touch = e.touches[0];
     setPosition({
       x: touch.clientX - size/2,
