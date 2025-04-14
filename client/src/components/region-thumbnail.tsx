@@ -130,12 +130,18 @@ export function RegionThumbnail({
         }
       }
       
-      // Special case for Federal Capital Territory
+      // Special case for FCT (Federal Capital Territory)
       if (!pathMatch && (regionId === "NG-FC" || regionName.includes("Federal Capital Territory") || regionName.includes("FCT"))) {
         console.log("Special handling for FCT");
         // Try to find FCT by name in any attribute
-        const fctPattern = new RegExp(`<path[^>]*(?:id|title|name)=['"](?:.*Federal.*Capital.*|FCT)['"][^>]*d=['"]([^'"]+)['"]`, 'i');
+        const fctPattern = new RegExp(`<path[^>]*(?:id|title|name)=['"](?:.*Federal Capital Territory.*|.*FCT.*|FC)['"][^>]*d=['"]([^'"]+)['"]`, 'i');
         pathMatch = svgData.match(fctPattern);
+        
+        // If still not found, try with a simple pattern
+        if (!pathMatch) {
+          const simplePattern = new RegExp(`<path[^>]*d=['"]([^'"]+)['"][^>]*(?:id|title|name)=['"](?:.*Federal Capital Territory.*|.*FCT.*|FC)['"]`, 'i');
+          pathMatch = svgData.match(simplePattern);
+        }
         
         // If still not found, use hardcoded path
         if (!pathMatch) {
@@ -225,7 +231,7 @@ export function RegionThumbnail({
     } catch (error) {
       console.error("Error extracting region path:", error);
     }
-  }, [svgData, regionId]);
+  }, [svgData, regionId, regionName]);
 
   // Rotation functions
   const rotateLeft = (e: React.MouseEvent) => {
