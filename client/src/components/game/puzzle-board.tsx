@@ -303,18 +303,18 @@ export function PuzzleBoard({
                         console.log("Using hardcoded centroid for Ebonyi");
                       }
                       
-                      // Special case for Federal Capital Territory
+                      // Special case for Federal Capital Territory - USING PERFECT CIRCLE
                       if (regionName === "Federal Capital Territory" || regionName === "FCT") {
-                        // Hardcoded centroid for FCT - precisely at the center of the shape
+                        // Hardcoded centroid for FCT - precisely at the center of circle
                         centroid = { x: 380.0, y: 370.0 };
-                        console.log("Using hardcoded centroid for FCT");
+                        console.log("Using hardcoded centroid for FCT:", centroid.x, centroid.y);
                       }
                       
-                      // Special case for Nasarawa
+                      // Special case for Nasarawa - USING PERFECT CIRCLE
                       if (regionName === "Nasarawa") {
-                        // Hardcoded centroid for Nasarawa - precisely at the center of the shape
+                        // Hardcoded centroid for Nasarawa - precisely at the center of circle
                         centroid = { x: 404.0, y: 340.0 };
-                        console.log("Using hardcoded centroid for Nasarawa");
+                        console.log("Using hardcoded centroid for Nasarawa:", centroid.x, centroid.y);
                       }
                       
                       // If not one of the special cases, try all region codes until we find a centroid
@@ -392,7 +392,77 @@ export function PuzzleBoard({
                           )}
                           
                           {/* Draw the dot */}
-                          {ENHANCED_DOTS ? (
+                          {/* Special rendering for FCT and Nasarawa */}
+                          {(regionName === "Federal Capital Territory" || regionName === "FCT" || regionName === "Nasarawa") ? (
+                            <>
+                              {/* Special outer ring indicator for circular regions */}
+                              <circle 
+                                cx={centroid.x} 
+                                cy={centroid.y} 
+                                r={dotSize * 3.5} 
+                                fill="none" 
+                                stroke="#00FF00" 
+                                strokeWidth={dotSize * 0.4}
+                                strokeDasharray="3,3"
+                                style={{ 
+                                  animation: `pulse 1.5s infinite ease-in-out`,
+                                  opacity: 0.8
+                                }}
+                              />
+                              
+                              {/* Larger halo for special regions */}
+                              <circle 
+                                cx={centroid.x} 
+                                cy={centroid.y} 
+                                r={dotSize * 2.5} 
+                                fill="none" 
+                                stroke={outlineColor} 
+                                strokeWidth={dotSize * 0.5}
+                                style={{ 
+                                  animation: `pulse ${pulseSpeed} infinite ease-in-out`,
+                                  opacity: opacity * 0.7
+                                }}
+                              />
+                              
+                              {/* Larger white outline */}
+                              <circle 
+                                cx={centroid.x} 
+                                cy={centroid.y} 
+                                r={dotSize * 1.6} 
+                                fill={outlineColor} 
+                                style={{ 
+                                  opacity: opacity * 0.9
+                                }}
+                              />
+                              
+                              {/* Colored center */}
+                              <circle 
+                                cx={centroid.x} 
+                                cy={centroid.y} 
+                                r={dotSize * 1.2} 
+                                fill={isPrimary ? "#FF3366" : "#33FF66"} 
+                                style={{ 
+                                  filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.9))',
+                                  opacity: 0.9
+                                }}
+                              />
+                              
+                              {/* Label for special regions */}
+                              <text
+                                x={centroid.x}
+                                y={centroid.y + (regionName === "Nasarawa" ? -dotSize * 3 : dotSize * 3)}
+                                textAnchor="middle"
+                                fill="#000000"
+                                stroke="#FFFFFF"
+                                strokeWidth="0.5"
+                                fontSize={dotSize * 1.2}
+                                fontWeight="bold"
+                              >
+                                {regionName === "Federal Capital Territory" ? "FCT" : regionName}
+                              </text>
+                            </>
+                          ) : ENHANCED_DOTS ? (
+                            // Standard enhanced dots for regular regions
                             <>
                               {/* Outer halo effect */}
                               <circle 
