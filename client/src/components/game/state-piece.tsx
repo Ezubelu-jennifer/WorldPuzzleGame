@@ -406,7 +406,7 @@ export function StatePiece({
               r="50"
               fill={region.isPlaced ? region.fillColor : "#ef4444"}
               stroke={region.strokeColor}
-              strokeWidth="2"
+              strokeWidth="3.5"
               strokeLinejoin="round"
               strokeLinecap="round"
               style={{ 
@@ -439,7 +439,7 @@ export function StatePiece({
               d={svgPathData || region.svgPath} 
               fill={region.isPlaced ? region.fillColor : "#ef4444"}
               stroke={region.strokeColor}
-              strokeWidth="2"
+              strokeWidth="3.5"
               transform="scale(1.0)"
               strokeLinejoin="round"
               strokeLinecap="round"
