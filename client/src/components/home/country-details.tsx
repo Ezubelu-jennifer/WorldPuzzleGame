@@ -7,7 +7,7 @@ import { RegionMap } from "./region-map";
 import { Button } from "@/components/ui/button";
 import { CountrySvgMap } from "@/components/maps/country-svg-map";
 import { getSvgDataById } from "@/data/svg-map-data";
-import { RegionThumbnail } from "@/components/region-thumbnail";
+import { RegionThumbnail } from "@/components/region-thumbnail-new";
 import { extractNigeriaRegions, extractKenyaRegions } from "@/data/svg-parser";
 
 interface CountryDetailsProps {
