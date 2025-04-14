@@ -110,39 +110,21 @@ export function RegionThumbnail({
       }
       
       // Special case for Ebonyi
-      if (!pathMatch && (regionId === "NG-EB" || regionName.includes("Ebonyi"))) {
-        console.log("Special handling for Ebonyi state");
-        // Try to find Ebonyi by name in any attribute
-        const ebonyiPattern = new RegExp(`<path[^>]*(?:id|title|name)=['"](?:.*Ebonyi.*|EB)['"][^>]*d=['"]([^'"]+)['"]`, 'i');
-        pathMatch = svgData.match(ebonyiPattern);
-        
-        // If still not found, try with a simple pattern
-        if (!pathMatch) {
-          const simplePattern = new RegExp(`<path[^>]*d=['"]([^'"]+)['"][^>]*(?:id|title|name)=['"](?:.*Ebonyi.*|EB)['"]`, 'i');
-          pathMatch = svgData.match(simplePattern);
-        }
-        
-        // If still not found, use hardcoded path
-        if (!pathMatch) {
-          console.log("Using hardcoded path for Ebonyi");
-          const hardcodedEbonyi = "M300.85,493.42L305.2,493.8L307.48,495.6L309.22,496.92L310.5,498.25L311.45,501.38L312.83,503.5L313.78,504.72L315.78,504.72L317.02,506.58L317.24,508.77L317.94,509.81L315.69,526.86L315.11,524.75L313.92,523.28L310.52,522.37L308.1,522.51L307.82,523.42L308.35,526.93L306.51,532.03L301.55,535.5L300.45,536.48L300.38,537.23L301.45,539.17L300.24,544.98L298.8,492.08L300.85,493.42z";
-          pathMatch = ["", hardcodedEbonyi];
-        }
+      if (regionId === "NG-EB" || regionName.includes("Ebonyi")) {
+        console.log("Region thumbnail: Setting Ebonyi path directly");
+        // Use hardcoded path directly
+        const hardcodedEbonyi = "M300.85,493.42L305.2,493.8L307.48,495.6L309.22,496.92L310.5,498.25L311.45,501.38L312.83,503.5L313.78,504.72L315.78,504.72L317.02,506.58L317.24,508.77L317.94,509.81L315.69,526.86L315.11,524.75L313.92,523.28L310.52,522.37L308.1,522.51L307.82,523.42L308.35,526.93L306.51,532.03L301.55,535.5L300.45,536.48L300.38,537.23L301.45,539.17L300.24,544.98L298.8,492.08L300.85,493.42z";
+        pathMatch = ["", hardcodedEbonyi];
+        console.log("Ebonyi path set to:", hardcodedEbonyi);
       }
       
       // Special case for Federal Capital Territory
-      if (!pathMatch && (regionId === "NG-FC" || regionName.includes("Federal Capital Territory") || regionName.includes("FCT"))) {
-        console.log("Special handling for FCT");
-        // Try to find FCT by name in any attribute
-        const fctPattern = new RegExp(`<path[^>]*(?:id|title|name)=['"](?:.*Federal.*Capital.*|FCT)['"][^>]*d=['"]([^'"]+)['"]`, 'i');
-        pathMatch = svgData.match(fctPattern);
-        
-        // If still not found, use hardcoded path
-        if (!pathMatch) {
-          console.log("Using hardcoded path for FCT");
-          const hardcodedFCT = "M379.02,365.63L379.89,367.08L379.96,368.27L381.17,368.98L382.72,369.89L383.7,371.75L383.79,373.68L382.55,375.21L380.88,375.98L380.92,374.14L380.39,372.65L379.02,371.37L377.88,368.73L378.26,367.57L379.02,365.63z";
-          pathMatch = ["", hardcodedFCT];
-        }
+      if (regionId === "NG-FC" || regionName.includes("Federal Capital Territory") || regionName.includes("FCT")) {
+        console.log("Region thumbnail: Setting FCT path directly");
+        // Use hardcoded path directly
+        const hardcodedFCT = "M379.02,365.63L379.89,367.08L379.96,368.27L381.17,368.98L382.72,369.89L383.7,371.75L383.79,373.68L382.55,375.21L380.88,375.98L380.92,374.14L380.39,372.65L379.02,371.37L377.88,368.73L378.26,367.57L379.02,365.63z";
+        pathMatch = ["", hardcodedFCT];
+        console.log("FCT path set to:", hardcodedFCT);
       }
       
       // If no match and it's a Kenya county, try a few more patterns
