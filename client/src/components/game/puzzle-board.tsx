@@ -7,6 +7,7 @@ import { getSvgDataById } from "@/data/svg-map-data";
 import { getViewBoxFromSVG, extractNigeriaRegions, extractKenyaRegions } from "@/data/svg-parser";
 import { CountrySvgMap } from "@/components/maps/country-svg-map";
 import { useDragContext } from "@/context/drag-context";
+import { getPathCentroid } from "@/utils/svg-clipper";
 
 interface PuzzleBoardProps {
   countryId: number;
@@ -228,8 +229,23 @@ export function PuzzleBoard({
                         if (matchingRegion) {
                           console.log(`Found matching SVG region for ${draggedRegion.name}`);
                           
-                          // For now, we'll stick with the pre-calculated correctX and correctY
-                          // But we use the knowledge that we found a matching region
+                          // Calculate the actual centroid of the SVG path
+                          const centroid = getPathCentroid(matchingRegion.path);
+                          
+                          if (centroid) {
+                            console.log(`Using calculated centroid for ${draggedRegion.name}: (${centroid.x}, ${centroid.y})`);
+                            
+                            return {
+                              x: centroid.x,
+                              y: centroid.y,
+                              id: matchingRegion.id,
+                              name: matchingRegion.name,
+                              found: true,
+                              path: matchingRegion.path
+                            };
+                          }
+                          
+                          // Fallback to pre-calculated position if centroid calculation fails
                           return {
                             x: draggedRegion.correctX,
                             y: draggedRegion.correctY,

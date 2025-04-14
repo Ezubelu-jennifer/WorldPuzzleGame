@@ -1,5 +1,37 @@
 import { getPathBounds } from 'svg-path-bounds';
 
+// Calculate the centroid (center point) of an SVG path
+export function getPathCentroid(svgPath: string): { x: number, y: number } | null {
+  try {
+    // Sanitize the path to ensure it's processable
+    const sanitizedPath = svgPath
+      .replace(/\s+/g, ' ')
+      .replace(/\s*,\s*/g, ',')
+      .trim();
+    
+    // Get the bounding box of the path
+    const bounds = getPathBounds(sanitizedPath);
+    
+    // Check if bounds calculation was successful
+    const [minX, minY, maxX, maxY] = bounds;
+    if (isNaN(minX) || isNaN(minY) || isNaN(maxX) || isNaN(maxY)) {
+      console.warn('Invalid path bounds, cannot calculate centroid');
+      return null;
+    }
+    
+    // Calculate the center point of the bounding box as an approximation of the centroid
+    // Note: This isn't a true geometric centroid, but a reasonable approximation
+    // that works well for visualization purposes
+    return {
+      x: (minX + maxX) / 2,
+      y: (minY + maxY) / 2
+    };
+  } catch (error) {
+    console.warn('Failed to calculate path centroid:', error);
+    return null;
+  }
+}
+
 // Direct scaling approach for SVG paths
 export function optimizeSvgPath(svgPath: string, scaleFactor: number = 1.5): string {
   try {
