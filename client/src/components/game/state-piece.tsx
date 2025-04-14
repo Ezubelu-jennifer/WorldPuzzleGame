@@ -103,12 +103,12 @@ export function StatePiece({
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
     
-    // Update position to keep the shape directly under the cursor
+    // Update position with the cursor exactly at the shape's position with no offset
     setPosition({
-      x: e.clientX - size/2,
-      y: e.clientY - size/2
+      x: e.clientX,
+      y: e.clientY
     });
-  }, [isDragging, size]);
+  }, [isDragging]);
   
   // Mouse up/drop handler
   const handleMouseUp = useCallback((e: MouseEvent) => {
@@ -142,8 +142,8 @@ export function StatePiece({
     
     const touch = e.touches[0];
     setPosition({
-      x: touch.clientX - size/2,
-      y: touch.clientY - size/2
+      x: touch.clientX,
+      y: touch.clientY
     });
     
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
@@ -154,13 +154,13 @@ export function StatePiece({
     if (!isDragging || e.touches.length !== 1) return;
     e.preventDefault();
     
-    // Keep the shape centered under the finger
+    // Position exactly at the touch point with no offset
     const touch = e.touches[0];
     setPosition({
-      x: touch.clientX - size/2,
-      y: touch.clientY - size/2
+      x: touch.clientX,
+      y: touch.clientY
     });
-  }, [isDragging, size]);
+  }, [isDragging]);
   
   const handleTouchEnd = useCallback((e: TouchEvent) => {
     if (!isDragging) return;

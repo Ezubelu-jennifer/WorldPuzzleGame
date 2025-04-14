@@ -193,8 +193,8 @@ export function RegionThumbnail({
         preserveAspectRatio="xMidYMid meet"
         style={{
           position: 'fixed',
-          left: `${position.x - (typeof width === 'number' ? width/2 : 50)}px`, // Center under cursor
-          top: `${position.y - (typeof height === 'number' ? height/2 : 40)}px`, // Center under cursor
+          left: `${position.x}px`, // Direct under cursor with no offset
+          top: `${position.y}px`, // Direct under cursor with no offset
           zIndex: 9999,
           pointerEvents: 'none',
           opacity: 0.9,

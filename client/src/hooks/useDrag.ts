@@ -59,14 +59,10 @@ export function useDrag({
   const handleMouseMove = (e: MouseEvent | globalThis.MouseEvent) => {
     if (!dragRef.current.dragging) return;
     
-    // Calculate offset from the original position
-    const offsetX = e.clientX - dragStartPositionRef.current.x;
-    const offsetY = e.clientY - dragStartPositionRef.current.y;
-    
-    // Apply offset to the element's original position
+    // Position directly at the cursor position with no offset
     const newPosition = {
-      x: elementStartPositionRef.current.x + offsetX,
-      y: elementStartPositionRef.current.y + offsetY,
+      x: e.clientX,
+      y: e.clientY,
     };
     
     setPosition(newPosition);
@@ -125,14 +121,10 @@ export function useDrag({
     
     e.preventDefault(); // Prevent scrolling while dragging
     
-    // Calculate offset from the original touch position
-    const offsetX = e.touches[0].clientX - dragStartPositionRef.current.x;
-    const offsetY = e.touches[0].clientY - dragStartPositionRef.current.y;
-    
-    // Apply offset to the element's original position
+    // Position directly at the touch point with no offset
     const newPosition = {
-      x: elementStartPositionRef.current.x + offsetX,
-      y: elementStartPositionRef.current.y + offsetY,
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
     };
     
     setPosition(newPosition);
