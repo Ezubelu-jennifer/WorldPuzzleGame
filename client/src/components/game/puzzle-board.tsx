@@ -102,7 +102,65 @@ export function PuzzleBoard({
   const handleRegionClick = (regionId: string, regionName: string) => {
     console.log(`Clicked region: ${regionId} - ${regionName}`);
     
-    // Find matching game region
+    // Check if we have a dragged piece that needs to be dropped on this region
+    if (draggedPieceId !== null && hasRegions && gameState) {
+      console.log(`Have draggedPieceId: ${draggedPieceId}, checking for matching region`);
+      
+      // Get the dragged piece info
+      const draggedPiece = gameState.regions.find(r => r.id === draggedPieceId);
+      if (!draggedPiece) {
+        console.log(`No dragged piece found with id ${draggedPieceId}`);
+        return;
+      }
+      
+      // First try to find a match based on region name
+      let isMatchingRegion = false;
+      
+      // Direct name match (case insensitive)
+      if (draggedPiece.name.toLowerCase() === regionName.toLowerCase()) {
+        isMatchingRegion = true;
+        console.log(`Direct name match: ${draggedPiece.name} ↔ ${regionName}`);
+      }
+      
+      // Name substring match
+      if (!isMatchingRegion && (
+          regionName.toLowerCase().includes(draggedPiece.name.toLowerCase()) || 
+          draggedPiece.name.toLowerCase().includes(regionName.toLowerCase()))) {
+        isMatchingRegion = true;
+        console.log(`Substring match: ${draggedPiece.name} ↔ ${regionName}`);
+      }
+      
+      // For Nigeria, try to match state codes
+      if (!isMatchingRegion && countryId === 1 && regionId.startsWith('NG-')) {
+        const stateCode = regionId.replace('NG-', '');
+        if (draggedPiece.name.toUpperCase().includes(stateCode)) {
+          isMatchingRegion = true;
+          console.log(`State code match: ${draggedPiece.name} ↔ ${stateCode}`);
+        }
+      }
+      
+      // For Kenya, try to match county numbers
+      if (!isMatchingRegion && countryId === 2 && regionId.startsWith('KE-')) {
+        const countyNum = parseInt(regionId.replace('KE-', ''), 10);
+        if (draggedPiece.name.includes(String(countyNum))) {
+          isMatchingRegion = true;
+          console.log(`County number match: ${draggedPiece.name} ↔ ${countyNum}`);
+        }
+      }
+      
+      // If there's a match, use the placePiece function to place it at its correct position
+      if (isMatchingRegion) {
+        console.log(`Placing dragged piece ${draggedPieceId} (${draggedPiece.name}) at correct position`);
+        placePiece(draggedPieceId, draggedPiece.correctX, draggedPiece.correctY);
+        setHighlightedRegion(regionId);
+        setTimeout(() => setHighlightedRegion(null), 800);
+        return;
+      } else {
+        console.log(`Dragged piece ${draggedPiece.name} doesn't match region ${regionName}`);
+      }
+    }
+    
+    // If not handling a dragged piece, find matching game region for hint
     if (hasRegions && gameState) {
       // Get the matching region from gameState
       const gameRegion = gameState.regions.find(r => {

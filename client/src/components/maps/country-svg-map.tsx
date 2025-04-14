@@ -151,18 +151,26 @@ export function CountrySvgMap({
           />
         ))}
         
-        {/* Draw region outlines inside the map */}
+        {/* Draw region outlines inside the map - with click/drop interaction */}
         {uniqueRegions.map((region) => (
           <path
             key={`outline-${region.id}`}
             d={region.path}
-            fill="none"
+            fill="rgba(200, 200, 200, 0.1)"
             stroke="#cccccc"
             strokeWidth="1.5"
             strokeDasharray="2,2"
             data-region-id={region.id}
+            data-region-name={region.name}
             style={{ 
-              pointerEvents: "none"
+              pointerEvents: "all", // Enable interaction with region outlines
+              cursor: "pointer"
+            }}
+            onClick={(e) => {
+              if (onRegionClick) {
+                onRegionClick(region.id, region.name);
+                e.stopPropagation();
+              }
             }}
           />
         ))}
