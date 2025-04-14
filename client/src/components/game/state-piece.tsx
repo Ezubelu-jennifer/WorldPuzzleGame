@@ -140,6 +140,23 @@ export function StatePiece({
     });
   }, [isDragging]);
   
+  // Helper function to check if the position is close to the correct position
+  const isCloseToCorrectPosition = useCallback((dropX: number, dropY: number): boolean => {
+    // Define a tolerance radius for position matching
+    const tolerance = 50; // Adjust this value as needed
+    
+    // Calculate distance between drop position and correct position
+    const dx = dropX - region.correctX;
+    const dy = dropY - region.correctY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    // Log the details for debugging
+    console.log(`Region ${region.name}: Position (${dropX.toFixed(1)}, ${dropY.toFixed(1)}), Correct: (${region.correctX.toFixed(1)}, ${region.correctY.toFixed(1)}), Distance: ${distance.toFixed(1)}`);
+    
+    // Check if it's within tolerance
+    return distance <= tolerance;
+  }, [region.correctX, region.correctY, region.name]);
+  
   // Mouse up/drop handler
   const handleMouseUp = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
@@ -159,10 +176,17 @@ export function StatePiece({
       const relX = e.clientX - containerRect.left;
       const relY = e.clientY - containerRect.top;
       
+      // Check if the piece is close to its correct position
+      const isCorrect = isCloseToCorrectPosition(relX, relY);
+      if (isCorrect) {
+        console.log(`✅ Region ${region.name} placed in correct position!`);
+        // Add visual feedback or a snapping animation here if desired
+      }
+      
       // Try to drop the piece
       onDrop(region.id, relX, relY);
     }
-  }, [isDragging, region.id, onDrop, containerRef, setDraggedPieceId]);
+  }, [isDragging, region.id, onDrop, containerRef, setDraggedPieceId, isCloseToCorrectPosition]);
 
   // Touch handlers
   const handleTouchStart = useCallback((e: React.TouchEvent<SVGElement>) => {
@@ -220,9 +244,24 @@ export function StatePiece({
       const relX = touch.clientX - containerRect.left;
       const relY = touch.clientY - containerRect.top;
       
+      // Check if the piece is close to its correct position
+      const isCorrect = isCloseToCorrectPosition(relX, relY);
+      if (isCorrect) {
+        console.log(`✅ Region ${region.name} placed in correct position!`);
+        // Add visual feedback or a vibration effect here for mobile devices if desired
+        if ('vibrate' in navigator) {
+          try {
+            // Vibrate for 100ms to provide tactile feedback on mobile
+            navigator.vibrate(100);
+          } catch (error) {
+            console.log('Vibration not supported or disabled');
+          }
+        }
+      }
+      
       onDrop(region.id, relX, relY);
     }
-  }, [isDragging, region.id, onDrop, containerRef, setDraggedPieceId]);
+  }, [isDragging, region.id, onDrop, containerRef, setDraggedPieceId, isCloseToCorrectPosition]);
 
   // Build the SVG element directly
   return (
