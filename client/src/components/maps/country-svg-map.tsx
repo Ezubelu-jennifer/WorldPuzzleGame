@@ -34,8 +34,49 @@ export function CountrySvgMap({
 }: CountrySvgMapProps) {
   const [regions, setRegions] = useState<RegionData[]>([]);
   const [viewBox, setViewBox] = useState<string>("0 0 800 600");
+  const [scale, setScale] = useState<number>(1);
+  const [isAnimating, setIsAnimating] = useState<boolean>(false);
   
   const svgRef = useRef<SVGSVGElement>(null);
+  
+  // Add pulse animation effect when component mounts
+  useEffect(() => {
+    // Add a slight zoom effect
+    const animateMap = () => {
+      setIsAnimating(true);
+      setScale(1.05); // Zoom in slightly
+      
+      setTimeout(() => {
+        setScale(1); // Return to normal size
+        setTimeout(() => {
+          setIsAnimating(false);
+        }, 300);
+      }, 300);
+    };
+    
+    // Run animation on initial load
+    animateMap();
+    
+    // Setup interval for periodic animation
+    const intervalId = setInterval(animateMap, 10000); // Animate every 10 seconds
+    
+    return () => clearInterval(intervalId);
+  }, []);
+  
+  // Function to handle click on the map - triggers zoom effect
+  const handleMapClick = () => {
+    if (!isAnimating) {
+      setIsAnimating(true);
+      setScale(1.1); // Zoom in more than the automatic animation
+      
+      setTimeout(() => {
+        setScale(1); // Return to normal size
+        setTimeout(() => {
+          setIsAnimating(false);
+        }, 300);
+      }, 300);
+    }
+  };
   
   // Extract regions from SVG data
   useEffect(() => {
@@ -69,26 +110,57 @@ export function CountrySvgMap({
     <div 
       className={`country-svg-map relative ${className}`} 
       style={{ width, height }}
+      onClick={handleMapClick}
     >
       <svg
         ref={svgRef}
         viewBox={viewBox}
         width="100%"
         height="100%"
-        className="w-full h-full"
+        className="w-full h-full cursor-pointer"
+        style={{ 
+          transform: `scale(${scale})`,
+          transformOrigin: 'center center',
+          transition: isAnimating ? 'transform 0.4s ease-in-out' : 'none'
+        }}
       >
-        {/* Country outer silhouette - draw once as a background to add shadow effect */}
+        {/* Use a clip path to create a boundary-only effect */}
+        <defs>
+          <clipPath id="country-outline">
+            {uniqueRegions.map((region) => (
+              <path
+                key={`clip-${region.id}`}
+                d={region.path}
+              />
+            ))}
+          </clipPath>
+        </defs>
+        
+        {/* Background filled rectangle with shadow */}
         <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.3))">
-          {uniqueRegions.map((region) => (
-            <path
-              key={`silhouette-${region.id}`}
-              d={region.path}
-              fill="#e5e5e5" // Light gray fill for the puzzle outline
-              stroke="#999999" // Darker gray for more prominent border
-              strokeWidth="2.5" // Much thicker border
-              style={{ pointerEvents: "none" }}
-            />
-          ))}
+          {/* Fill the entire viewBox with the outline color */}
+          <rect
+            x="0"
+            y="0"
+            width="100%"
+            height="100%"
+            fill="#e5e5e5" // Light gray fill for the puzzle outline
+            clipPath="url(#country-outline)"
+            style={{ pointerEvents: "none" }}
+          />
+          
+          {/* Draw only the outer boundary line */}
+          <rect
+            x="0"
+            y="0"
+            width="100%"
+            height="100%"
+            fill="none"
+            stroke="#999999" // Darker gray for prominent border
+            strokeWidth="5" // Extra thick border for the outline
+            clipPath="url(#country-outline)"
+            style={{ pointerEvents: "none" }}
+          />
         </g>
           
         {/* Render the overlay elements (like guidance dots) */}
