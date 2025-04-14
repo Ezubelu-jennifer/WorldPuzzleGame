@@ -69,7 +69,7 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
         {gameState.placedPieces.length}/{gameState.regions.length} States
       </div>
       
-      <div ref={trayRef} className="flex gap-2 overflow-x-auto py-4 px-8 min-h-[120px] whitespace-nowrap overflow-y-hidden">
+      <div ref={trayRef} className="grid grid-flow-col auto-cols-min gap-4 overflow-x-auto py-4 px-8 min-h-[120px] whitespace-nowrap overflow-y-hidden" style={{ gridAutoColumns: "minmax(80px, max-content)" }}>
         {allRegions.map((region, index) => {
         // Assign color from our palette, cycling through if needed
         const colorIndex = index % colors.length;
@@ -89,14 +89,9 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
         };
         
         return (
-          <div 
-            key={region.id}
-            className={`flex-shrink-0 relative w-20 h-20 rounded-md 
-              ${region.isPlaced ? 'opacity-60' : ''}`}
-            style={{ background: 'transparent', border: 'none' }}
-          >
+          // Completely stateless rendering - no container div
+          <React.Fragment key={region.id}>
             {svgData && svgRegion ? (
-              // Use the SVG thumbnail for the region, with direct draggable and rotatable support
               <RegionThumbnail
                 svgData={svgData}
                 regionId={svgRegion.id}
@@ -104,16 +99,16 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
                 color={fillColor}
                 strokeColor={strokeColor}
                 strokeWidth={1}
-                width="100%"
-                height="100%"
+                width={80}
+                height={80}
                 showLabel={true}
                 draggable={true}
                 rotatable={true}
                 onDrop={onPieceDrop}
                 regionPieceId={region.id}
+                className={region.isPlaced ? 'opacity-60' : ''}
               />
             ) : (
-              // Render directly - NO container div
               <StatePiece
                 region={regionWithColor}
                 onDrop={onPieceDrop}
@@ -122,13 +117,17 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
               />
             )}
             
-            {/* Status indicator */}
+            {/* Status indicator (independently positioned relative to the grid item) */}
             {region.isPlaced && (
-              <div className="absolute top-1 right-1 bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center shadow-md text-xs">
+              <div className="fixed bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center shadow-md text-xs z-50" 
+                style={{ 
+                  top: svgData && svgRegion ? `calc(${index * 16}px + 8px)` : `calc(${index * 16}px + 8px)`,
+                  left: svgData && svgRegion ? `calc(${index * 84}px + 68px)` : `calc(${index * 84}px + 68px)`
+                }}>
                 ✓
               </div>
             )}
-          </div>
+          </React.Fragment>
         );
       })}
       
