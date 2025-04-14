@@ -124,44 +124,32 @@ export function CountrySvgMap({
           transition: isAnimating ? 'transform 0.4s ease-in-out' : 'none'
         }}
       >
-        {/* Use a clip path to create a boundary-only effect */}
-        <defs>
-          <clipPath id="country-outline">
-            {uniqueRegions.map((region) => (
-              <path
-                key={`clip-${region.id}`}
-                d={region.path}
-              />
-            ))}
-          </clipPath>
-        </defs>
-        
-        {/* Background filled rectangle with shadow */}
-        <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.3))">
-          {/* Fill the entire viewBox with the outline color */}
-          <rect
-            x="0"
-            y="0"
-            width="100%"
-            height="100%"
-            fill="#e5e5e5" // Light gray fill for the puzzle outline
-            clipPath="url(#country-outline)"
-            style={{ pointerEvents: "none" }}
-          />
-          
-          {/* Draw only the outer boundary line */}
-          <rect
-            x="0"
-            y="0"
-            width="100%"
-            height="100%"
+        {/* Draw a thick outer border */}
+        {uniqueRegions.map((region) => (
+          <path
+            key={`border-${region.id}`}
+            d={region.path}
             fill="none"
-            stroke="#999999" // Darker gray for prominent border
-            strokeWidth="12" // Significantly thicker border for the outline
-            clipPath="url(#country-outline)"
+            stroke="#666666"
+            strokeWidth="20"
+            style={{ 
+              pointerEvents: "none",
+              filter: "drop-shadow(0px 2px 4px rgba(0,0,0,0.3))"
+            }}
+          />
+        ))}
+        
+        {/* Draw the filled regions */}
+        {uniqueRegions.map((region) => (
+          <path
+            key={`fill-${region.id}`}
+            d={region.path}
+            fill="#e5e5e5"
+            stroke="#e5e5e5"
+            strokeWidth="2"
             style={{ pointerEvents: "none" }}
           />
-        </g>
+        ))}
           
         {/* Render the overlay elements (like guidance dots) */}
         {renderOverlay && renderOverlay()}

@@ -550,14 +550,22 @@ export function PuzzleBoard({
             />
           ) : (
             <svg className="w-full h-full" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet">
+              {/* Draw thick border first */}
               <path 
                 d={outlinePath} 
-                fill="#e5e5e5" 
-                stroke="#999999"
-                strokeWidth="6"
+                fill="none" 
+                stroke="#666666"
+                strokeWidth="20"
                 style={{
                   filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.3))'
                 }}
+              />
+              {/* Then draw the filled area on top */}
+              <path 
+                d={outlinePath} 
+                fill="#e5e5e5" 
+                stroke="#e5e5e5"
+                strokeWidth="2"
               />
             </svg>
           )}
