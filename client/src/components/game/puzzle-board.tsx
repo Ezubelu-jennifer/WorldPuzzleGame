@@ -8,6 +8,7 @@ import { getViewBoxFromSVG, extractNigeriaRegions, extractKenyaRegions } from "@
 import { CountrySvgMap } from "@/components/maps/country-svg-map";
 import { useDragContext } from "@/context/drag-context";
 import { calculatePathCentroid } from "@/utils/calculate-centroid";
+import { getPathBounds } from "svg-path-bounds";
 
 interface PuzzleBoardProps {
   countryId: number;
@@ -410,45 +411,41 @@ export function PuzzleBoard({
                       
                       const centroid = calculateCentroid();
                       
-                      // Find the corresponding region SVG path for target positioning
-                      const targetRegion = svgRegions.find(r => {
-                        const regionId = r.id.toLowerCase();
-                        const regionName = draggedRegion.name.toLowerCase();
-                        
-                        // Try different matching patterns
-                        return regionId.includes(regionName) || 
-                               regionName.includes(regionId) || 
-                               regionId.includes(regionName.substring(0, 3)) ||
-                               regionName.includes(regionId.substring(0, 3));
-                      });
-
+                      // We need a better positioning method but without using external functions
+                      // For now we'll use a simple offset-based approach
+                      const offsetX = -20; // Adjust based on testing
+                      const offsetY = -20; // Adjust based on testing
+                      
                       return (
                         <g key={`guidance-${draggedRegion.id}`} className="guidance-marker">
                           {/* Semi-transparent state shape overlay showing the target position */}
-                          {targetRegion && targetRegion.path && (
+                          {draggedRegion.svgPath && (
                             <>
-                              {/* Glow effect behind the state shape */}
-                              <path 
-                                d={targetRegion.path}
-                                fill="none"
-                                stroke="rgba(255, 255, 255, 0.8)"
-                                strokeWidth="4"
-                                style={{
-                                  filter: 'blur(8px)',
-                                  animation: 'state-shape-guidance 3s infinite ease-in-out',
-                                }}
-                              />
-                              {/* State shape highlight */}
-                              <path 
-                                d={targetRegion.path} 
-                                fill="rgba(255, 0, 0, 0.2)" 
-                                stroke="rgba(255, 0, 0, 0.7)"
-                                strokeWidth="2"
-                                style={{
-                                  filter: 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.9))',
-                                  animation: 'state-shape-guidance 3s infinite ease-in-out',
-                                }}
-                              />
+                              {/* Create an SVG that properly positions the shape at the target location */}
+                              <g style={{ transform: `translate(${draggedRegion.correctX + offsetX}px, ${draggedRegion.correctY + offsetY}px)` }}>
+                                {/* Glow effect behind the state shape */}
+                                <path 
+                                  d={draggedRegion.svgPath}
+                                  fill="none"
+                                  stroke="rgba(255, 255, 255, 0.8)"
+                                  strokeWidth="4"
+                                  style={{
+                                    filter: 'blur(8px)',
+                                    animation: 'state-shape-guidance 3s infinite ease-in-out',
+                                  }}
+                                />
+                                {/* State shape highlight */}
+                                <path 
+                                  d={draggedRegion.svgPath} 
+                                  fill="rgba(255, 0, 0, 0.25)" 
+                                  stroke="rgba(255, 0, 0, 0.8)"
+                                  strokeWidth="2"
+                                  style={{
+                                    filter: 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.9))',
+                                    animation: 'state-shape-guidance 3s infinite ease-in-out',
+                                  }}
+                                />
+                              </g>
                             </>
                           )}
                           
