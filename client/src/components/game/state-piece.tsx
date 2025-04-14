@@ -241,10 +241,10 @@ export function StatePiece({
           textAnchor="middle"
           dominantBaseline="middle"
           fill="#000000" 
-          fontSize="24"
+          fontSize="38"
           fontWeight="bold"
           style={{ 
-            textShadow: '0 0 3px white, 0 0 3px white, 0 0 3px white, 0 0 3px white',
+            textShadow: '0 0 5px white, 0 0 5px white, 0 0 5px white, 0 0 5px white',
             fontFamily: 'Arial, sans-serif',
             pointerEvents: 'none'
           }}
