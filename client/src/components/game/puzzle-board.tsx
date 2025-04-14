@@ -410,32 +410,56 @@ export function PuzzleBoard({
                       
                       const centroid = calculateCentroid();
                       
+                      // Find the corresponding region SVG path for target positioning
+                      const targetRegion = svgRegions.find(r => {
+                        const regionId = r.id.toLowerCase();
+                        const regionName = draggedRegion.name.toLowerCase();
+                        
+                        // Try different matching patterns
+                        return regionId.includes(regionName) || 
+                               regionName.includes(regionId) || 
+                               regionId.includes(regionName.substring(0, 3)) ||
+                               regionName.includes(regionId.substring(0, 3));
+                      });
+
                       return (
                         <g key={`guidance-${draggedRegion.id}`} className="guidance-marker">
-                          {/* Outer glow effect */}
-                          <circle 
-                            cx={centroid.x} 
-                            cy={centroid.y} 
-                            r="22" 
-                            fill="none" 
-                            stroke="rgba(255,255,255,0.5)" 
-                            strokeWidth="2"
-                            style={{ 
-                              animation: 'pulse 2s infinite ease-in-out',
-                              animationDelay: "0.3s",
-                              transformOrigin: 'center center',
-                              filter: 'blur(2px)'
-                            }}
-                          />
+                          {/* Semi-transparent state shape overlay showing the target position */}
+                          {targetRegion && targetRegion.path && (
+                            <>
+                              {/* Glow effect behind the state shape */}
+                              <path 
+                                d={targetRegion.path}
+                                fill="none"
+                                stroke="rgba(255, 255, 255, 0.8)"
+                                strokeWidth="4"
+                                style={{
+                                  filter: 'blur(8px)',
+                                  animation: 'state-shape-guidance 3s infinite ease-in-out',
+                                }}
+                              />
+                              {/* State shape highlight */}
+                              <path 
+                                d={targetRegion.path} 
+                                fill="rgba(255, 0, 0, 0.2)" 
+                                stroke="rgba(255, 0, 0, 0.7)"
+                                strokeWidth="2"
+                                style={{
+                                  filter: 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.9))',
+                                  animation: 'state-shape-guidance 3s infinite ease-in-out',
+                                }}
+                              />
+                            </>
+                          )}
                           
-                          {/* Pulsing outer circle */}
+                          {/* Pulsing outer circle at centroid */}
                           <circle 
                             cx={centroid.x} 
                             cy={centroid.y} 
                             r="16" 
                             fill="none" 
                             stroke="rgba(255,0,0,0.9)" 
-                            strokeWidth="4"
+                            strokeWidth="3"
                             style={{ 
                               animation: 'pulse 1.5s infinite ease-in-out',
                               transformOrigin: 'center center',
@@ -447,51 +471,13 @@ export function PuzzleBoard({
                           <circle 
                             cx={centroid.x} 
                             cy={centroid.y} 
-                            r="7" 
+                            r="5" 
                             fill="red" 
                             stroke="white"
                             strokeWidth="1.5"
                             style={{
                               filter: 'drop-shadow(0 0 6px white)'
                             }}
-                          />
-                          
-                          {/* Cross hairs */}
-                          <line 
-                            x1={centroid.x - 20} 
-                            y1={centroid.y} 
-                            x2={centroid.x - 10} 
-                            y2={centroid.y} 
-                            stroke="rgba(255,0,0,0.7)" 
-                            strokeWidth="2"
-                            style={{ filter: 'drop-shadow(0 0 2px white)' }}
-                          />
-                          <line 
-                            x1={centroid.x + 10} 
-                            y1={centroid.y} 
-                            x2={centroid.x + 20} 
-                            y2={centroid.y} 
-                            stroke="rgba(255,0,0,0.7)" 
-                            strokeWidth="2"
-                            style={{ filter: 'drop-shadow(0 0 2px white)' }}
-                          />
-                          <line 
-                            x1={centroid.x} 
-                            y1={centroid.y - 20} 
-                            x2={centroid.x} 
-                            y2={centroid.y - 10} 
-                            stroke="rgba(255,0,0,0.7)" 
-                            strokeWidth="2"
-                            style={{ filter: 'drop-shadow(0 0 2px white)' }}
-                          />
-                          <line 
-                            x1={centroid.x} 
-                            y1={centroid.y + 10} 
-                            x2={centroid.x} 
-                            y2={centroid.y + 20} 
-                            stroke="rgba(255,0,0,0.7)" 
-                            strokeWidth="2"
-                            style={{ filter: 'drop-shadow(0 0 2px white)' }}
                           />
                         </g>
                       );
