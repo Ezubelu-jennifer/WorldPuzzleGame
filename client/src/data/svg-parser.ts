@@ -27,6 +27,12 @@ export function extractNigeriaRegions(svgData: string) {
     "NG-YO": "Yobe", "NG-ZA": "Zamfara"
   };
   
+  // Hard-code paths for problematic Nigerian states that might not be in the SVG properly
+  const knownPaths: Record<string, string> = {
+    "Nasarawa": "M402.62,337.27L403.22,336.31L404.49,336.24L406.03,336.58L407.31,337.66L407.63,338.92L408.39,339.06L408.92,340.55L408.59,342.84L407.84,342.84L404.04,342.84L403.63,343.04L401.11,342.65L401.7,341.1L401.55,339.88L402.62,337.27z",
+    "Federal Capital Territory": "M379.02,365.63L379.89,367.08L379.96,368.27L381.17,368.98L382.72,369.89L383.7,371.75L383.79,373.68L382.55,375.21L380.88,375.98L380.92,374.14L380.39,372.65L379.02,371.37L377.88,368.73L378.26,367.57L379.02,365.63z"
+  };
+  
   // First try to extract all path elements with id and title attributes, where title follows id
   const regex1 = /<path[^>]*id="([^"]+)"[^>]*title="([^"]+)"[^>]*d="([^"]+)"/g;
   let match1;
@@ -105,26 +111,24 @@ export function extractNigeriaRegions(svgData: string) {
     });
   }
   
-  // Hard-code paths for problematic regions that might not be in the SVG properly
-  const knownPaths: Record<string, string> = {
-    "Nasarawa": "M402.62,337.27L403.22,336.31L404.49,336.24L406.03,336.58L407.31,337.66L407.63,338.92L408.39,339.06L408.92,340.55L408.59,342.84L407.84,342.84L404.04,342.84L403.63,343.04L401.11,342.65L401.7,341.1L401.55,339.88L402.62,337.27z",
-    "Federal Capital Territory": "M379.02,365.63L379.89,367.08L379.96,368.27L381.17,368.98L382.72,369.89L383.7,371.75L383.79,373.68L382.55,375.21L380.88,375.98L380.92,374.14L380.39,372.65L379.02,371.37L377.88,368.73L378.26,367.57L379.02,365.63z"
-  };
+
   
-  for (const [stateName, path] of Object.entries(knownPaths)) {
+  // Add paths for problematic regions
+  for (const [stateName, pathValue] of Object.entries(knownPaths)) {
     const existingRegion = regions.find(r => r.name === stateName);
     if (existingRegion) {
       // Update the existing region's path
-      existingRegion.path = path;
+      existingRegion.path = pathValue;
       console.log(`Updated path for ${stateName}`);
     } else {
       // Find the appropriate state ID for this name
-      const stateId = Object.entries(stateNames).find(([_, name]) => name === stateName)?.[0] || '';
+      const matchingEntry = Object.entries(stateNames).find(([_, name]) => name === stateName);
+      const stateId = matchingEntry ? matchingEntry[0] : '';
       if (stateId) {
         regions.push({
           id: stateId,
           name: stateName,
-          path: path
+          path: pathValue
         });
         console.log(`Added missing state: ${stateName}`);
       }

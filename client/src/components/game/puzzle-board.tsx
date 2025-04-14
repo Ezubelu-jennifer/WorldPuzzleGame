@@ -254,6 +254,38 @@ export function PuzzleBoard({
                         
                         // Special handling for problematic Nigerian states
                         if (!matchingRegion && countryId === 1) {
+                          // First, log all available region names for debugging
+                          console.log(`All available SVG regions for ${draggedRegion.name} matching:`);
+                          svgRegions.forEach(r => {
+                            console.log(`- Region ID: ${r.id}, Name: "${r.name}"`);
+                          });
+                          
+                          // Direct mappings for problematic Nigerian states by explicit IDs
+                          const stateIdMappings: Record<string, string> = {
+                            'Imo': 'NG-IM',
+                            'Lagos': 'NG-LA',
+                            'Kwara': 'NG-KW',
+                            'Kogi': 'NG-KO',
+                            'Niger': 'NG-NI',
+                            'Ogun': 'NG-OG',
+                            'Ondo': 'NG-ON',
+                            'Osun': 'NG-OS',
+                            'Oyo': 'NG-OY',
+                            'Plateau': 'NG-PL',
+                            'Rivers': 'NG-RI',
+                            'Gombe': 'NG-GO',
+                            'Kebbi': 'NG-KE',
+                            'Kaduna': 'NG-KD',
+                            'Kano': 'NG-KN',
+                            'Katsina': 'NG-KT',
+                            'Enugu': 'NG-EN',
+                            'Sokoto': 'NG-SO',
+                            'Taraba': 'NG-TA',
+                            'Yobe': 'NG-YO',
+                            'Zamfara': 'NG-ZA'
+                          };
+                          
+                          // Alternate names (as found in the SVG)
                           const stateNameMappings: Record<string, string> = {
                             'Imo': 'Imo State',
                             'Lagos': 'Lagos State',
@@ -272,20 +304,54 @@ export function PuzzleBoard({
                             'Kano': 'Kano State',
                             'Katsina': 'Katsina State',
                             'Enugu': 'Enugu State',
-                            'Sokoto': 'Sokoto State',
+                            'Sokoto': 'Sokoto State', 
                             'Taraba': 'Taraba State',
                             'Yobe': 'Yobe State',
                             'Zamfara': 'Zamfara State'
                           };
                           
-                          const alternativeName = stateNameMappings[draggedRegion.name];
-                          if (alternativeName) {
-                            matchingRegion = svgRegions.find(r => 
-                              r.name.toLowerCase() === alternativeName.toLowerCase()
+                          // First try direct ID matching
+                          const directId = stateIdMappings[draggedRegion.name];
+                          if (directId) {
+                            const regionByDirectId = svgRegions.find(r => r.id === directId);
+                            if (regionByDirectId) {
+                              console.log(`Found match for ${draggedRegion.name} using direct ID: ${directId}`);
+                              matchingRegion = regionByDirectId;
+                            }
+                          }
+                          
+                          // If we still don't have a match, try with alternate names
+                          if (!matchingRegion) {
+                            const alternativeName = stateNameMappings[draggedRegion.name];
+                            if (alternativeName) {
+                              matchingRegion = svgRegions.find(r => 
+                                r.name.toLowerCase() === alternativeName.toLowerCase()
+                              );
+                              
+                              if (matchingRegion) {
+                                console.log(`Found match for ${draggedRegion.name} using alternate name: ${alternativeName}`);
+                              }
+                            }
+                          }
+                          
+                          // Last resort partial matching
+                          if (!matchingRegion) {
+                            const partialMatches = svgRegions.filter(r => 
+                              r.name.toLowerCase().includes(draggedRegion.name.toLowerCase()) || 
+                              draggedRegion.name.toLowerCase().includes(r.name.toLowerCase())
                             );
                             
-                            if (matchingRegion) {
-                              console.log(`Found match for ${draggedRegion.name} using alternate name: ${alternativeName}`);
+                            if (partialMatches.length > 0) {
+                              console.log(`Found ${partialMatches.length} partial matches for ${draggedRegion.name}:`);
+                              partialMatches.forEach((match, i) => {
+                                console.log(`  ${i+1}. "${match.name}" (ID: ${match.id})`);
+                              });
+                              
+                              // Use the first partial match
+                              matchingRegion = partialMatches[0];
+                              console.log(`Using "${matchingRegion.name}" as match for ${draggedRegion.name}`);
+                            } else {
+                              console.log(`No matches found for ${draggedRegion.name} in the SVG data. Using fallback coordinates.`);
                             }
                           }
                         }
