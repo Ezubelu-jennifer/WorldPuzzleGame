@@ -183,7 +183,7 @@ export function PuzzleBoard({
                             'Abia': 'AB', 'Adamawa': 'AD', 'Akwa Ibom': 'AK', 'Anambra': 'AN',
                             'Bauchi': 'BA', 'Bayelsa': 'BY', 'Benue': 'BE', 'Borno': 'BO',
                             'Cross River': 'CR', 'Delta': 'DE', 'Ebonyi': 'EB', 'Edo': 'ED',
-                            'Ekiti': 'EK', 'Enugu': 'EN', 'Federal Capital Territory': 'FC',
+                            'Ekiti': 'EK', 'Enugu': 'EN', 'Federal Capital Territory': 'FC', 'FCT': 'FC',
                             'Gombe': 'GO', 'Imo': 'IM', 'Jigawa': 'JI', 'Kaduna': 'KD',
                             'Kano': 'KN', 'Katsina': 'KT', 'Kebbi': 'KE', 'Kogi': 'KO',
                             'Kwara': 'KW', 'Lagos': 'LA', 'Nasarawa': 'NA', 'Niger': 'NI',
@@ -192,7 +192,28 @@ export function PuzzleBoard({
                             'Yobe': 'YO', 'Zamfara': 'ZA'
                           };
                           
-                          return stateCodeMap[stateName] || '';
+                          // Try direct lookup first
+                          if (stateCodeMap[stateName]) {
+                            return stateCodeMap[stateName];
+                          }
+                          
+                          // Try case-insensitive lookup
+                          const normalizedName = stateName.toLowerCase();
+                          for (const [key, value] of Object.entries(stateCodeMap)) {
+                            if (key.toLowerCase() === normalizedName) {
+                              return value;
+                            }
+                          }
+                          
+                          // Try partial match
+                          for (const [key, value] of Object.entries(stateCodeMap)) {
+                            if (key.toLowerCase().includes(normalizedName) || 
+                                normalizedName.includes(key.toLowerCase())) {
+                              return value;
+                            }
+                          }
+                          
+                          return '';
                         };
                         
                         let matchingRegion;
@@ -210,11 +231,65 @@ export function PuzzleBoard({
                             }
                           }
                         } else if (countryId === 2) { // Kenya
-                          // Try to find a region matching the name
-                          matchingRegion = svgRegions.find(r => 
-                            r.name.toLowerCase() === draggedRegion.name.toLowerCase() ||
-                            r.id.toLowerCase().includes(draggedRegion.name.toLowerCase().replace(/\s+/g, '-'))
-                          );
+                          // Define a map of Kenya county names to their ID numbers
+                          const kenyaCountyMap: Record<string, string> = {
+                            'Mombasa': '01', 'Kwale': '02', 'Kilifi': '03', 'Tana River': '04',
+                            'Lamu': '05', 'Taita Taveta': '06', 'Garissa': '07', 'Wajir': '08',
+                            'Mandera': '09', 'Marsabit': '10', 'Isiolo': '11', 'Meru': '12',
+                            'Tharaka-Nithi': '13', 'Embu': '14', 'Kitui': '15', 'Machakos': '16',
+                            'Makueni': '17', 'Nyandarua': '18', 'Nyeri': '19', 'Kirinyaga': '20',
+                            'Murang\'a': '21', 'Muranga': '21', // Handle apostrophe variant
+                            'Kiambu': '22', 'Turkana': '23', 'West Pokot': '24', 'Samburu': '25',
+                            'Trans Nzoia': '26', 'Uasin Gishu': '27', 'Elgeyo-Marakwet': '28', 
+                            'Nandi': '29', 'Baringo': '30', 'Laikipia': '31', 'Nakuru': '32',
+                            'Narok': '33', 'Kajiado': '34', 'Kericho': '35', 'Bomet': '36',
+                            'Kakamega': '37', 'Vihiga': '38', 'Bungoma': '39', 'Busia': '40',
+                            'Siaya': '41', 'Kisumu': '42', 'Homa Bay': '43', 'Migori': '44',
+                            'Kisii': '45', 'Nyamira': '46', 'Nairobi': '47'
+                          };
+                          
+                          // First try to get the county ID based on the name
+                          const normalizedName = draggedRegion.name.toLowerCase().trim();
+                          let countyId = '';
+                          
+                          // Try direct match first
+                          for (const [key, value] of Object.entries(kenyaCountyMap)) {
+                            if (key.toLowerCase() === normalizedName) {
+                              countyId = value;
+                              break;
+                            }
+                          }
+                          
+                          // If no direct match, try partial match
+                          if (!countyId) {
+                            for (const [key, value] of Object.entries(kenyaCountyMap)) {
+                              if (key.toLowerCase().includes(normalizedName) || 
+                                  normalizedName.includes(key.toLowerCase())) {
+                                countyId = value;
+                                break;
+                              }
+                            }
+                          }
+                          
+                          // If we found a county ID, try to find the region with the corresponding ID
+                          if (countyId) {
+                            const regionId = `KE-${countyId}`;
+                            matchingRegion = svgRegions.find(r => r.id === regionId);
+                            
+                            if (matchingRegion) {
+                              console.log(`Found exact match for ${draggedRegion.name} with Kenya ID: ${regionId}`);
+                            }
+                          }
+                          
+                          // If we still couldn't find a match, try name-based matching as a fallback
+                          if (!matchingRegion) {
+                            matchingRegion = svgRegions.find(r => 
+                              r.name.toLowerCase() === draggedRegion.name.toLowerCase() ||
+                              r.name.toLowerCase().includes(draggedRegion.name.toLowerCase()) ||
+                              draggedRegion.name.toLowerCase().includes(r.name.toLowerCase()) ||
+                              r.id.toLowerCase().includes(draggedRegion.name.toLowerCase().replace(/\s+/g, '-'))
+                            );
+                          }
                         }
                         
                         // If we couldn't find a match by ID, try matching by name

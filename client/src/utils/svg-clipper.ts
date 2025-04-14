@@ -3,6 +3,14 @@ import { getPathBounds } from 'svg-path-bounds';
 // Calculate the centroid (center point) of an SVG path
 export function getPathCentroid(svgPath: string): { x: number, y: number } | null {
   try {
+    // Check if path is empty or undefined
+    if (!svgPath || svgPath.trim() === '') {
+      console.log('SVG path is empty or undefined');
+      return null;
+    }
+    
+    console.log('Processing path:', svgPath.substring(0, 50) + '...');
+    
     // Sanitize the path to ensure it's processable
     const sanitizedPath = svgPath
       .replace(/\s+/g, ' ')
@@ -10,7 +18,14 @@ export function getPathCentroid(svgPath: string): { x: number, y: number } | nul
       .trim();
     
     // Get the bounding box of the path
-    const bounds = getPathBounds(sanitizedPath);
+    let bounds;
+    try {
+      bounds = getPathBounds(sanitizedPath);
+      console.log('Path bounds:', bounds);
+    } catch (e) {
+      console.warn('Error getting path bounds:', e);
+      return null;
+    }
     
     // Check if bounds calculation was successful
     const [minX, minY, maxX, maxY] = bounds;
@@ -22,10 +37,13 @@ export function getPathCentroid(svgPath: string): { x: number, y: number } | nul
     // Calculate the center point of the bounding box as an approximation of the centroid
     // Note: This isn't a true geometric centroid, but a reasonable approximation
     // that works well for visualization purposes
-    return {
+    const centroid = {
       x: (minX + maxX) / 2,
       y: (minY + maxY) / 2
     };
+    
+    console.log('Calculated centroid:', centroid);
+    return centroid;
   } catch (error) {
     console.warn('Failed to calculate path centroid:', error);
     return null;
