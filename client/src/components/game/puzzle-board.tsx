@@ -239,37 +239,63 @@ export function PuzzleBoard({
                       
                       // Calculate appropriate dot size based on viewBox
                       const [, , width, height] = viewBox.split(' ').map(Number);
-                      const baseDotSize = Math.min(width, height) * 0.016; // Slightly larger dots
-                      const dotSize = isPrimary ? baseDotSize * 1.2 : baseDotSize;
+                      const baseDotSize = Math.min(width, height) * 0.018; // Increase base dot size
+                      const dotSize = isPrimary ? baseDotSize * 1.3 : baseDotSize * 1.1;
                       
                       // Set dot styles based on whether this is the primary (dragged) piece
-                      const dotColor = isPrimary ? "rgba(255,50,50,1)" : "rgba(255,220,0,1)";
-                      const outlineColor = isPrimary ? "white" : "rgba(255,255,255,0.9)";
-                      const pulseSpeed = isPrimary ? "1.8s" : "3s";
-                      const opacity = isPrimary ? 1 : 0.85;
+                      // Primary dots are red, secondary dots are bright yellow with stronger contrast
+                      const dotColor = isPrimary ? "rgba(255,30,30,1)" : "rgba(255,240,0,1)";
+                      const outlineColor = isPrimary ? "white" : "rgba(255,255,255,1)"; // Brighten outlines
+                      const pulseSpeed = isPrimary ? "1.5s" : "3s";
+                      const opacity = isPrimary ? 1 : 0.95; // Increase opacity for better visibility
                       
                       return (
                         <g key={`dot-${gameRegion.id}`} className={isPrimary ? "primary-dot" : "secondary-dot"}>
                           {/* If primary dot and crosshair is enabled, show crosshair guides */}
                           {isPrimary && SHOW_CROSSHAIR_GUIDES && (
                             <>
+                              {/* Horizontal guide line with improved visibility */}
                               <line 
                                 x1={0} 
                                 y1={centroid.y} 
                                 x2={width} 
                                 y2={centroid.y} 
-                                stroke="rgba(255,255,255,0.6)" 
-                                strokeWidth={dotSize * 0.5} 
+                                stroke="rgba(255,255,255,0.8)" 
+                                strokeWidth={dotSize * 0.6} 
                                 strokeDasharray="5,5" 
                               />
+                              {/* Shadow/outline for the horizontal line */}
+                              <line 
+                                x1={0} 
+                                y1={centroid.y} 
+                                x2={width} 
+                                y2={centroid.y} 
+                                stroke="rgba(0,0,0,0.3)" 
+                                strokeWidth={dotSize * 0.8} 
+                                strokeDasharray="5,5"
+                                style={{ filter: 'blur(1px)' }}
+                              />
+                              
+                              {/* Vertical guide line with improved visibility */}
                               <line 
                                 x1={centroid.x} 
                                 y1={0} 
                                 x2={centroid.x} 
                                 y2={height} 
-                                stroke="rgba(255,255,255,0.6)" 
-                                strokeWidth={dotSize * 0.5} 
+                                stroke="rgba(255,255,255,0.8)" 
+                                strokeWidth={dotSize * 0.6} 
                                 strokeDasharray="5,5" 
+                              />
+                              {/* Shadow/outline for the vertical line */}
+                              <line 
+                                x1={centroid.x} 
+                                y1={0} 
+                                x2={centroid.x} 
+                                y2={height} 
+                                stroke="rgba(0,0,0,0.3)" 
+                                strokeWidth={dotSize * 0.8} 
+                                strokeDasharray="5,5"
+                                style={{ filter: 'blur(1px)' }}
                               />
                             </>
                           )}
@@ -277,40 +303,55 @@ export function PuzzleBoard({
                           {/* Draw the dot */}
                           {ENHANCED_DOTS ? (
                             <>
-                              {/* Outer halo effect */}
+                              {/* Black shadow for better contrast on any background */}
+                              <circle 
+                                cx={centroid.x} 
+                                cy={centroid.y} 
+                                r={dotSize * 2.2} 
+                                fill="rgba(0,0,0,0.3)" 
+                                style={{ 
+                                  filter: 'blur(2px)',
+                                  opacity: opacity * 0.5
+                                }}
+                              />
+                              
+                              {/* Outer halo effect with improved animation */}
                               <circle 
                                 cx={centroid.x} 
                                 cy={centroid.y} 
                                 r={dotSize * 2} 
                                 fill="none" 
-                                stroke={outlineColor} 
-                                strokeWidth={dotSize * 0.3}
+                                stroke={isPrimary ? "rgba(255,100,100,0.8)" : "rgba(255,255,100,0.7)"} 
+                                strokeWidth={dotSize * 0.4}
                                 style={{ 
-                                  animation: `pulse ${pulseSpeed} infinite ease-in-out`,
+                                  animation: `guidancePulse ${pulseSpeed} infinite ease-in-out`,
                                   animationDelay: isPrimary ? "0s" : `${(gameRegion.id % 5) * 0.15}s`,
-                                  opacity: opacity * 0.5
+                                  opacity: opacity * 0.7
                                 }}
                               />
                               
-                              {/* White outline */}
+                              {/* White outline layer */}
                               <circle 
                                 cx={centroid.x} 
                                 cy={centroid.y} 
                                 r={dotSize * 1.3} 
                                 fill={outlineColor} 
                                 style={{ 
-                                  opacity: opacity * 0.8
+                                  opacity: opacity * 0.9,
+                                  filter: 'drop-shadow(0 0 3px rgba(255,255,255,0.6))'
                                 }}
                               />
                               
-                              {/* Colored center */}
+                              {/* Colored center with enhanced glow */}
                               <circle 
                                 cx={centroid.x} 
                                 cy={centroid.y} 
                                 r={dotSize} 
                                 fill={dotColor} 
                                 style={{ 
-                                  filter: isPrimary ? 'drop-shadow(0 0 4px rgba(255,255,255,0.7))' : 'none',
+                                  filter: isPrimary 
+                                    ? 'drop-shadow(0 0 5px rgba(255,100,100,0.8))' 
+                                    : 'drop-shadow(0 0 3px rgba(255,240,0,0.7))',
                                   opacity: opacity
                                 }}
                               />
