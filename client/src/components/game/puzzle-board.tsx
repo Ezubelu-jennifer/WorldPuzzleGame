@@ -420,7 +420,6 @@ export function PuzzleBoard({
                                 stroke={outlineColor} 
                                 strokeWidth={dotSize * 0.5}
                                 style={{ 
-                                  animation: `pulse ${pulseSpeed} infinite ease-in-out`,
                                   opacity: opacity * 0.7
                                 }}
                               />
@@ -448,19 +447,7 @@ export function PuzzleBoard({
                                 }}
                               />
                               
-                              {/* Label for special regions */}
-                              <text
-                                x={centroid.x}
-                                y={centroid.y + (regionName === "Nasarawa" ? -dotSize * 3 : dotSize * 3)}
-                                textAnchor="middle"
-                                fill="#000000"
-                                stroke="#FFFFFF"
-                                strokeWidth="0.5"
-                                fontSize={dotSize * 1.2}
-                                fontWeight="bold"
-                              >
-                                {regionName === "Federal Capital Territory" ? "FCT" : regionName}
-                              </text>
+                              {/* Labels removed as requested */}
                             </>
                           ) : ENHANCED_DOTS ? (
                             // Standard enhanced dots for regular regions
@@ -474,8 +461,6 @@ export function PuzzleBoard({
                                 stroke={outlineColor} 
                                 strokeWidth={dotSize * 0.3}
                                 style={{ 
-                                  animation: `pulse ${pulseSpeed} infinite ease-in-out`,
-                                  animationDelay: isPrimary ? "0s" : `${(gameRegion.id % 5) * 0.15}s`,
                                   opacity: opacity * 0.5
                                 }}
                               />

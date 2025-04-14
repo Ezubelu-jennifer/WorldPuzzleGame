@@ -45,8 +45,9 @@ export function StatePiece({
   // Country ID
   const countryId = region.countryId || 0;
 
-  // Path reference
-  const pathRef = useRef<SVGElement>(null); // Using more generic SVGElement to handle both path and circle
+  // Path reference - separate refs for path and circle
+  const pathRef = useRef<SVGPathElement>(null); 
+  const circleRef = useRef<SVGCircleElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   
   // Size calculation (important for positioning)
@@ -247,6 +248,7 @@ export function StatePiece({
             
             {/* The actual interactive circle for special regions */}
             <circle
+              ref={circleRef}
               cx="0" 
               cy="0"
               r="150"
@@ -323,7 +325,7 @@ export function StatePiece({
         <g>
           {/* Central indicator on the dragging piece */}
           <circle cx="50%" cy="50%" r="10" fill="none" stroke="rgba(255,0,0,0.5)" strokeWidth="3"
-            style={{ animation: 'pulse 1.5s infinite', pointerEvents: 'none' }} />
+            style={{ pointerEvents: 'none' }} />
           <circle cx="50%" cy="50%" r="4" fill="red" stroke="white" strokeWidth="1" 
             style={{ pointerEvents: 'none' }} />
         </g>

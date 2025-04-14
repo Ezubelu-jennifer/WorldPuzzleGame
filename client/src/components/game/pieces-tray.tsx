@@ -127,10 +127,8 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
           strokeColor,
         };
         
-        // Force use StatePiece for FCT and Nasarawa to ensure they appear as circles
-        const forcedCircle = region.name === "Federal Capital Territory" || 
-                           region.name === "FCT" || 
-                           region.name === "Nasarawa";
+        // Don't use special handling for FCT and Nasarawa thumbnails anymore
+        const forcedCircle = false; // Restore original shapes for all regions
         
         return (
           <div 
