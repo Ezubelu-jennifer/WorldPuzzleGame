@@ -76,11 +76,50 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
         const fillColor = colors[colorIndex].fill;
         const strokeColor = colors[colorIndex].stroke;
         
-        // Find matching SVG region by name
-        const svgRegion = svgRegions.find(r => 
-          r.name.toLowerCase().includes(region.name.toLowerCase()) || 
-          region.name.toLowerCase().includes(r.name.toLowerCase())
-        );
+        // Find matching SVG region by name with more comprehensive matching
+        const svgRegion = svgRegions.find(r => {
+          const rNameLower = r.name.toLowerCase();
+          const regionNameLower = region.name.toLowerCase();
+          
+          // Direct includes matching (bidirectional)
+          if (rNameLower.includes(regionNameLower) || regionNameLower.includes(rNameLower)) {
+            return true;
+          }
+          
+          // Handle special case for Ebonyi (Nigeria)
+          if (region.name === "Ebonyi" && (r.id === "NG-EB" || r.name.includes("Ebon"))) {
+            return true;
+          }
+          
+          // Handle other special cases for Nigeria
+          if (gameState.countryId === 1) {
+            if (region.name === "Federal Capital Territory" && r.id === "NG-FC") return true;
+            if (region.name === "Cross River" && r.id === "NG-CR") return true;
+          }
+          
+          // Handle special cases for Kenya counties
+          if (gameState.countryId === 2) {
+            // Map Trans-Nzoia county
+            if ((region.name.includes("Trans") || region.name.includes("Nzoia")) && 
+                (r.id === "KE-26" || r.id === "26")) {
+              return true;
+            }
+            
+            // Map Taita-Taveta county
+            if ((region.name.includes("Taita") || region.name.includes("Taveta")) && 
+                (r.id === "KE-06" || r.id === "06")) {
+              return true;
+            }
+            
+            // Map Tharaka-Nithi
+            if ((region.name.includes("Tharaka") || region.name.includes("Nithi")) && 
+                (r.id === "KE-13" || r.id === "13")) {
+              return true;
+            }
+          }
+          
+          return false;
+        });
 
         const regionWithColor = {
           ...region,

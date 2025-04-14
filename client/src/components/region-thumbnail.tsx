@@ -91,15 +91,67 @@ export function RegionThumbnail({
       }
       
       // Extract the path for this specific region
-      // First, try to find an exact ID match
-      const pathRegex = new RegExp(`<path[^>]*id="${regionId}"[^>]*d="([^"]+)"`, 'i');
-      let pathMatch = svgData.match(pathRegex);
+      // First, try to find an exact ID match - testing several possible patterns
+      const idPatterns = [
+        // Standard format: id="regionId"
+        new RegExp(`<path[^>]*id="${regionId}"[^>]*d="([^"]+)"`, 'i'),
+        // SVG might use different ID formats
+        new RegExp(`<path[^>]*id="${regionId.replace('NG-', '')}"[^>]*d="([^"]+)"`, 'i'),
+        new RegExp(`<path[^>]*id="${regionId.replace('KE-', '')}"[^>]*d="([^"]+)"`, 'i'),
+        // Try with quotes
+        new RegExp(`<path[^>]*id=['"]${regionId}['"][^>]*d=['"]([^'"]+)['"]`, 'i'),
+      ];
+      
+      // Try each pattern until we find a match
+      let pathMatch = null;
+      for (const pattern of idPatterns) {
+        pathMatch = svgData.match(pattern);
+        if (pathMatch && pathMatch[1]) break;
+      }
+      
+      // Special case for Ebonyi
+      if (!pathMatch && (regionId === "NG-EB" || regionName.includes("Ebonyi"))) {
+        console.log("Special handling for Ebonyi state");
+        // Try to find Ebonyi by name in any attribute
+        const ebonyiPattern = new RegExp(`<path[^>]*(?:id|title|name)=['"](?:.*Ebonyi.*|EB)['"][^>]*d=['"]([^'"]+)['"]`, 'i');
+        pathMatch = svgData.match(ebonyiPattern);
+        
+        // If still not found, try with a simple pattern
+        if (!pathMatch) {
+          const simplePattern = new RegExp(`<path[^>]*d=['"]([^'"]+)['"][^>]*(?:id|title|name)=['"](?:.*Ebonyi.*|EB)['"]`, 'i');
+          pathMatch = svgData.match(simplePattern);
+        }
+      }
+      
+      // If no match and it's a Kenya county, try a few more patterns
+      if (!pathMatch && regionId.startsWith("KE-")) {
+        // Try matching by county number without the KE prefix
+        const countyNum = regionId.replace("KE-", "");
+        const kenyaCountyPattern = new RegExp(`<path[^>]*id=['"]${countyNum}['"][^>]*d=['"]([^'"]+)['"]`, 'i');
+        pathMatch = svgData.match(kenyaCountyPattern);
+        
+        // If still no match, try matching by name (case insensitive)
+        if (!pathMatch) {
+          const countyNameRegex = new RegExp(`<path[^>]*(?:title|name)=['"].*${regionName.replace(/[^a-z0-9]/gi, '.*')}.*['"][^>]*d=['"]([^'"]+)['"]`, 'i');
+          pathMatch = svgData.match(countyNameRegex);
+        }
+      }
       
       // If no match and it's a custom ID (KE-CUSTOM-*, KE-MISSING-*, etc), try to extract by region name
       if (!pathMatch && (regionId.includes('CUSTOM') || regionId.includes('MISSING') || regionId.includes('GEN'))) {
-        // Look for the path with the regionName in title attribute
-        const nameRegex = new RegExp(`<path[^>]*title="${regionName}"[^>]*d="([^"]+)"`, 'i');
-        pathMatch = svgData.match(nameRegex);
+        // Look for the path with the regionName in title attribute (try different attribute variations)
+        const namePatterns = [
+          new RegExp(`<path[^>]*title="${regionName}"[^>]*d="([^"]+)"`, 'i'),
+          new RegExp(`<path[^>]*name="${regionName}"[^>]*d="([^"]+)"`, 'i'),
+          new RegExp(`<path[^>]*label="${regionName}"[^>]*d="([^"]+)"`, 'i'),
+          // Try with simplified name (alphanumeric chars only)
+          new RegExp(`<path[^>]*title=".*${regionName.replace(/[^a-z0-9]/gi, '.*')}.*"[^>]*d="([^"]+)"`, 'i'),
+        ];
+        
+        for (const pattern of namePatterns) {
+          pathMatch = svgData.match(pattern);
+          if (pathMatch && pathMatch[1]) break;
+        }
       }
       
       if (pathMatch && pathMatch[1]) {
@@ -240,7 +292,7 @@ export function RegionThumbnail({
               textAnchor="middle"
               dominantBaseline="middle"
               fill="#000000" 
-              fontSize="80"
+              fontSize={regionId.startsWith("KE-") ? "40" : "60"} // Smaller font for Kenya counties which tend to have longer names
               fontWeight="900"
               style={{ 
                 textShadow: '0 0 10px white, 0 0 10px white, 0 0 10px white, 0 0 10px white',
@@ -389,7 +441,7 @@ export function RegionThumbnail({
                   textAnchor="middle"
                   dominantBaseline="middle"
                   fill="#000000" 
-                  fontSize="80"
+                  fontSize={regionId.startsWith("KE-") ? "40" : "60"} // Smaller font for Kenya counties which tend to have longer names
                   fontWeight="900"
                   style={{ 
                     textShadow: '0 0 10px white, 0 0 10px white, 0 0 10px white, 0 0 10px white',
