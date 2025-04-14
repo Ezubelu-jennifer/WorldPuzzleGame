@@ -179,10 +179,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
     
     const piece = gameState.regions[pieceIndex];
     
-    // Check if piece is near its correct position (within 50px)
-    const isCorrectPosition = 
-      Math.abs(x - piece.correctX) < 50 && 
-      Math.abs(y - piece.correctY) < 50;
+    // Check if piece is near its correct position 
+    // Calculate distance to correct position
+    const dx = x - piece.correctX;
+    const dy = y - piece.correctY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    // Use a tolerance of 60px to make it a bit easier to place pieces
+    const tolerance = 60;
+    const isCorrectPosition = distance <= tolerance;
+    
+    // Log for debugging
+    console.log(`Placing piece ${piece.id} (${piece.name})`);
+    console.log(`Current position: (${x.toFixed(0)}, ${y.toFixed(0)})`);
+    console.log(`Correct position: (${piece.correctX.toFixed(0)}, ${piece.correctY.toFixed(0)})`);
+    console.log(`Distance: ${distance.toFixed(0)}px, Tolerance: ${tolerance}px`);
+    console.log(`Is correct position? ${isCorrectPosition ? 'YES ✓' : 'NO ✗'}`); 
     
     if (isCorrectPosition) {
       // Update the game state with the placed piece
