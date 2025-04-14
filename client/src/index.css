@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom animations */
-
 @layer base {
   * {
     @apply border-border;
@@ -70,8 +68,8 @@ path {
   stroke-linecap: round;
 }
 
-/* Animation for guidance dots - using a different name to avoid conflicts */
-@keyframes guidancePulse {
+/* Animation for guidance dots */
+@keyframes pulse {
   0% {
     transform: scale(0.9);
     opacity: 0.8;
