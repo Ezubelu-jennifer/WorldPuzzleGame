@@ -235,14 +235,14 @@ export function PuzzleBoard({
                       
                       // Calculate appropriate dot size based on viewBox
                       const [, , width, height] = viewBox.split(' ').map(Number);
-                      const baseDotSize = Math.min(width, height) * 0.018; // Increased size for better visibility
-                      const dotSize = isPrimary ? baseDotSize * 1.3 : baseDotSize;
+                      const baseDotSize = Math.min(width, height) * 0.016; // Slightly larger dots
+                      const dotSize = isPrimary ? baseDotSize * 1.2 : baseDotSize;
                       
                       // Set dot styles based on whether this is the primary (dragged) piece
-                      const dotColor = isPrimary ? "rgba(255,50,50,0.95)" : "rgba(255,230,50,0.9)";
-                      const outlineColor = isPrimary ? "white" : "rgba(255,255,255,0.8)";
-                      const pulseSpeed = isPrimary ? "1.5s" : "2.5s";
-                      const opacity = isPrimary ? 1 : 0.9;
+                      const dotColor = isPrimary ? "rgba(255,50,50,1)" : "rgba(255,220,0,1)";
+                      const outlineColor = isPrimary ? "white" : "rgba(255,255,255,0.9)";
+                      const pulseSpeed = isPrimary ? "1.8s" : "3s";
+                      const opacity = isPrimary ? 1 : 0.85;
                       
                       return (
                         <g key={`dot-${gameRegion.id}`} className={isPrimary ? "primary-dot" : "secondary-dot"}>
@@ -254,8 +254,8 @@ export function PuzzleBoard({
                                 y1={centroid.y} 
                                 x2={width} 
                                 y2={centroid.y} 
-                                stroke="rgba(255,255,255,0.4)" 
-                                strokeWidth={dotSize * 0.3} 
+                                stroke="rgba(255,255,255,0.6)" 
+                                strokeWidth={dotSize * 0.5} 
                                 strokeDasharray="5,5" 
                               />
                               <line 
@@ -263,8 +263,8 @@ export function PuzzleBoard({
                                 y1={0} 
                                 x2={centroid.x} 
                                 y2={height} 
-                                stroke="rgba(255,255,255,0.4)" 
-                                strokeWidth={dotSize * 0.3} 
+                                stroke="rgba(255,255,255,0.6)" 
+                                strokeWidth={dotSize * 0.5} 
                                 strokeDasharray="5,5" 
                               />
                             </>

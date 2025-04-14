@@ -3,44 +3,44 @@ import { getPathBounds } from 'svg-path-bounds';
 // Known centroids for ALL Nigerian states and problematic Kenyan counties
 // These coordinates are carefully mapped to match the SVG positions exactly
 const KNOWN_CENTROIDS: Record<string, { x: number, y: number }> = {
-  // Nigerian states with manually adjusted centroids to more accurately reflect visual centers
-  "NG-AB": { x: 306.5, y: 525.1 }, // Abia - adjusted to be more central
-  "NG-AD": { x: 438.5, y: 327.2 }, // Adamawa - fine-tuned position
-  "NG-AK": { x: 288.3, y: 546.5 }, // Akwa Ibom - moved slightly southeast
-  "NG-AN": { x: 294.2, y: 498.4 }, // Anambra - minor adjustment
-  "NG-BA": { x: 403.2, y: 293.6 }, // Bauchi - moved west slightly
-  "NG-BE": { x: 372.2, y: 395.1 }, // Benue - adjusted to true center
-  "NG-BO": { x: 469.9, y: 234.8 }, // Borno - moved east slightly
-  "NG-BY": { x: 268.9, y: 538.4 }, // Bayelsa - moved south
-  "NG-CR": { x: 340.2, y: 503.6 }, // Cross River - adjusted west
-  "NG-DE": { x: 267.5, y: 493.1 }, // Delta - minor adjustment
-  "NG-EB": { x: 325.7, y: 476.9 }, // Ebonyi - moved south slightly
-  "NG-ED": { x: 272.8, y: 463.8 }, // Edo - moved south
-  "NG-EK": { x: 257.9, y: 437.1 }, // Ekiti - moved west slightly
-  "NG-EN": { x: 308.5, y: 485.1 }, // Enugu - minor adjustment
-  "NG-FC": { x: 358.8, y: 363.3 }, // Federal Capital Territory - adjusted to center
-  "NG-GO": { x: 440.6, y: 290.8 }, // Gombe - moved northwest
-  "NG-IM": { x: 305.2, y: 513.6 }, // Imo - moved east slightly
-  "NG-JI": { x: 398.6, y: 223.9 }, // Jigawa - moved southwest
-  "NG-KD": { x: 355.5, y: 301.8 }, // Kaduna - adjusted to true center
-  "NG-KE": { x: 314.5, y: 243.6 }, // Kebbi - adjusted east
-  "NG-KN": { x: 380.2, y: 254.4 }, // Kano - moved southwest
-  "NG-KO": { x: 335.6, y: 379.9 }, // Kogi - adjusted northwest
-  "NG-KT": { x: 356.3, y: 227.2 }, // Katsina - moved southwest
-  "NG-KW": { x: 279.8, y: 401.7 }, // Kwara - adjusted to true center
-  "NG-LA": { x: 238.3, y: 471.5 }, // Lagos - moved southwest
-  "NG-NA": { x: 374.5, y: 349.4 }, // Nasarawa - adjusted for visual center
-  "NG-NI": { x: 335.8, y: 340.5 }, // Niger - moved south
-  "NG-OG": { x: 244.5, y: 458.1 }, // Ogun - moved southwest
-  "NG-ON": { x: 264.3, y: 462.9 }, // Ondo - moved southeast
-  "NG-OS": { x: 253.2, y: 434.9 }, // Osun - moved southwest
-  "NG-OY": { x: 242.0, y: 419.3 }, // Oyo - moved southwest
-  "NG-PL": { x: 404.8, y: 348.2 }, // Plateau - moved southwest
-  "NG-RI": { x: 277.5, y: 526.3 }, // Rivers - moved southeast
-  "NG-SO": { x: 312.4, y: 207.3 }, // Sokoto - moved southwest
-  "NG-TA": { x: 412.9, y: 377.8 }, // Taraba - moved southwest
-  "NG-YO": { x: 387.8, y: 190.3 }, // Yobe - moved northwest
-  "NG-ZA": { x: 345.2, y: 233.5 }, // Zamfara - moved southwest
+  // Nigerian states with manually adjusted centroids
+  "NG-AB": { x: 318.5, y: 520.1 }, // Abia
+  "NG-AD": { x: 443.5, y: 324.2 }, // Adamawa
+  "NG-AK": { x: 286.3, y: 542.5 }, // Akwa Ibom
+  "NG-AN": { x: 293.2, y: 496.4 }, // Anambra
+  "NG-BA": { x: 409.2, y: 289.6 }, // Bauchi
+  "NG-BE": { x: 369.2, y: 394.1 }, // Benue
+  "NG-BO": { x: 463.9, y: 235.8 }, // Borno
+  "NG-BY": { x: 266.9, y: 535.4 }, // Bayelsa
+  "NG-CR": { x: 345.2, y: 501.6 }, // Cross River
+  "NG-DE": { x: 264.5, y: 495.1 }, // Delta
+  "NG-EB": { x: 330.7, y: 473.9 }, // Ebonyi
+  "NG-ED": { x: 274.8, y: 458.8 }, // Edo
+  "NG-EK": { x: 263.9, y: 434.1 }, // Ekiti
+  "NG-EN": { x: 310.5, y: 486.1 }, // Enugu
+  "NG-FC": { x: 362.8, y: 362.3 }, // Federal Capital Territory
+  "NG-GO": { x: 445.6, y: 292.8 }, // Gombe
+  "NG-IM": { x: 303.2, y: 512.6 }, // Imo
+  "NG-JI": { x: 402.6, y: 220.9 }, // Jigawa
+  "NG-KD": { x: 361.5, y: 297.8 }, // Kaduna
+  "NG-KE": { x: 319.5, y: 242.6 }, // Kebbi
+  "NG-KN": { x: 386.2, y: 252.4 }, // Kano
+  "NG-KO": { x: 341.6, y: 375.9 }, // Kogi
+  "NG-KT": { x: 361.3, y: 223.2 }, // Katsina
+  "NG-KW": { x: 283.8, y: 399.7 }, // Kwara
+  "NG-LA": { x: 241.3, y: 468.5 }, // Lagos
+  "NG-NA": { x: 378.5, y: 347.4 }, // Nasarawa
+  "NG-NI": { x: 339.8, y: 337.5 }, // Niger
+  "NG-OG": { x: 248.5, y: 456.1 }, // Ogun
+  "NG-ON": { x: 267.3, y: 457.9 }, // Ondo
+  "NG-OS": { x: 256.2, y: 431.9 }, // Osun
+  "NG-OY": { x: 247.0, y: 416.3 }, // Oyo
+  "NG-PL": { x: 409.8, y: 345.2 }, // Plateau
+  "NG-RI": { x: 282.5, y: 520.3 }, // Rivers
+  "NG-SO": { x: 318.4, y: 205.3 }, // Sokoto
+  "NG-TA": { x: 417.9, y: 375.8 }, // Taraba
+  "NG-YO": { x: 392.8, y: 186.3 }, // Yobe
+  "NG-ZA": { x: 350.2, y: 230.5 }, // Zamfara
   
   // Kenya counties with manually adjusted centroids
   "KE-01": { x: 495.3, y: 783.1 }, // Mombasa
