@@ -184,8 +184,17 @@ export function PuzzleBoard({
                       
                     // If there's a dragged region or we're showing all position guides
                     if (draggedRegion || (SHOW_ALL_POSITION_DOTS && unplacedRegions.length > 0)) {
-                      // Find the exact matching region on the map for the dragged piece
-                      const findMatchingMapRegion = () => {
+                      // Find the exact matching region on the map for a given piece
+                      const findMatchingMapRegion = (targetRegion?: any) => {
+                        // Use the provided targetRegion if available, otherwise use draggedRegion
+                        const regionToMatch = targetRegion || draggedRegion;
+                        
+                        // Safety check - if no region is provided, return default position
+                        if (!regionToMatch) {
+                          console.warn("No region provided for matching");
+                          return { x: 0, y: 0, found: false };
+                        }
+                        
                         // First try to find the region in the SVG data by ID
                         // We'll try different matching patterns based on the region name
 
@@ -234,7 +243,7 @@ export function PuzzleBoard({
                         let matchingRegion;
                         
                         // Log available SVG regions
-                        console.log(`Trying to match region '${draggedRegion.name}' (ID: ${draggedRegion.id})`);
+                        console.log(`Trying to match region '${regionToMatch.name}' (ID: ${regionToMatch.id})`);
                         
                         // Track all Nigeria state names and Kenya county names for debugging
                         const nigeriaStateNames = [
@@ -246,11 +255,11 @@ export function PuzzleBoard({
                         ];
                           
                         // If this is one of our problem states, log all available SVG regions for debugging
-                        if (nigeriaStateNames.includes(draggedRegion.name)) {
-                          console.log(`Debugging SVG regions to match with '${draggedRegion.name}':`);
+                        if (nigeriaStateNames.includes(regionToMatch.name)) {
+                          console.log(`Debugging SVG regions to match with '${regionToMatch.name}':`);
                           svgRegions.forEach(r => {
-                            if (r.name.toLowerCase().includes(draggedRegion.name.toLowerCase()) || 
-                                draggedRegion.name.toLowerCase().includes(r.name.toLowerCase())) {
+                            if (r.name.toLowerCase().includes(regionToMatch.name.toLowerCase()) || 
+                                regionToMatch.name.toLowerCase().includes(r.name.toLowerCase())) {
                               console.log(`- Potential match: ID="${r.id}", name="${r.name}"`);
                             }
                           });
@@ -260,17 +269,17 @@ export function PuzzleBoard({
                         // This is the most reliable way to match regions
                         matchingRegion = svgRegions.find(r => {
                           // Try EXACT name matching first (case insensitive)
-                          return r.name.toLowerCase() === draggedRegion.name.toLowerCase();
+                          return r.name.toLowerCase() === regionToMatch.name.toLowerCase();
                         });
                         
                         if (matchingRegion) {
-                          console.log(`Found direct name match for ${draggedRegion.name} with SVG name: ${matchingRegion.name}`);
+                          console.log(`Found direct name match for ${regionToMatch.name} with SVG name: ${matchingRegion.name}`);
                         }
                         
                         // Special handling for problematic Nigerian states
                         if (!matchingRegion && countryId === 1) {
                           // First, log all available region names for debugging
-                          console.log(`All available SVG regions for ${draggedRegion.name} matching:`);
+                          console.log(`All available SVG regions for ${regionToMatch.name} matching:`);
                           svgRegions.forEach(r => {
                             console.log(`- Region ID: ${r.id}, Name: "${r.name}"`);
                           });
@@ -326,25 +335,25 @@ export function PuzzleBoard({
                           };
                           
                           // First try direct ID matching
-                          const directId = stateIdMappings[draggedRegion.name];
+                          const directId = stateIdMappings[regionToMatch.name];
                           if (directId) {
                             const regionByDirectId = svgRegions.find(r => r.id === directId);
                             if (regionByDirectId) {
-                              console.log(`Found match for ${draggedRegion.name} using direct ID: ${directId}`);
+                              console.log(`Found match for ${regionToMatch.name} using direct ID: ${directId}`);
                               matchingRegion = regionByDirectId;
                             }
                           }
                           
                           // If we still don't have a match, try with alternate names
                           if (!matchingRegion) {
-                            const alternativeName = stateNameMappings[draggedRegion.name];
+                            const alternativeName = stateNameMappings[regionToMatch.name];
                             if (alternativeName) {
                               matchingRegion = svgRegions.find(r => 
                                 r.name.toLowerCase() === alternativeName.toLowerCase()
                               );
                               
                               if (matchingRegion) {
-                                console.log(`Found match for ${draggedRegion.name} using alternate name: ${alternativeName}`);
+                                console.log(`Found match for ${regionToMatch.name} using alternate name: ${alternativeName}`);
                               }
                             }
                           }
@@ -352,28 +361,28 @@ export function PuzzleBoard({
                           // Last resort partial matching
                           if (!matchingRegion) {
                             const partialMatches = svgRegions.filter(r => 
-                              r.name.toLowerCase().includes(draggedRegion.name.toLowerCase()) || 
-                              draggedRegion.name.toLowerCase().includes(r.name.toLowerCase())
+                              r.name.toLowerCase().includes(regionToMatch.name.toLowerCase()) || 
+                              regionToMatch.name.toLowerCase().includes(r.name.toLowerCase())
                             );
                             
                             if (partialMatches.length > 0) {
-                              console.log(`Found ${partialMatches.length} partial matches for ${draggedRegion.name}:`);
+                              console.log(`Found ${partialMatches.length} partial matches for ${regionToMatch.name}:`);
                               partialMatches.forEach((match, i) => {
                                 console.log(`  ${i+1}. "${match.name}" (ID: ${match.id})`);
                               });
                               
                               // Use the first partial match
                               matchingRegion = partialMatches[0];
-                              console.log(`Using "${matchingRegion.name}" as match for ${draggedRegion.name}`);
+                              console.log(`Using "${matchingRegion.name}" as match for ${regionToMatch.name}`);
                             } else {
-                              console.log(`No matches found for ${draggedRegion.name} in the SVG data. Using fallback coordinates.`);
+                              console.log(`No matches found for ${regionToMatch.name} in the SVG data. Using fallback coordinates.`);
                             }
                           }
                         }
                           
                         // If no direct match by name, try country-specific ID matching
                         if (!matchingRegion && countryId === 1) { // Nigeria
-                          const stateCode = getNigeriaStateCode(draggedRegion.name);
+                          const stateCode = getNigeriaStateCode(regionToMatch.name);
                           if (stateCode) {
                             // Try to find the region with ID of "NG-XX" format
                             const regionId = `NG-${stateCode}`;
@@ -381,7 +390,7 @@ export function PuzzleBoard({
                             
                             // Log if we find a match
                             if (matchingRegion) {
-                              console.log(`Found exact match for ${draggedRegion.name} with ID: ${regionId}`);
+                              console.log(`Found exact match for ${regionToMatch.name} with ID: ${regionId}`);
                             }
                           }
                         } else if (!matchingRegion && countryId === 2) { // Kenya
@@ -403,7 +412,7 @@ export function PuzzleBoard({
                           };
                           
                           // First try to get the county ID based on the name
-                          const normalizedName = draggedRegion.name.toLowerCase().trim();
+                          const normalizedName = regionToMatch.name.toLowerCase().trim();
                           let countyId = '';
                           
                           // Try direct match first
@@ -431,7 +440,7 @@ export function PuzzleBoard({
                             matchingRegion = svgRegions.find(r => r.id === regionId);
                             
                             if (matchingRegion) {
-                              console.log(`Found exact match for ${draggedRegion.name} with Kenya ID: ${regionId}`);
+                              console.log(`Found exact match for ${regionToMatch.name} with Kenya ID: ${regionId}`);
                             }
                           }
                         }
@@ -439,20 +448,20 @@ export function PuzzleBoard({
                         // If we couldn't find a match by ID, try matching by name
                         if (!matchingRegion) {
                           matchingRegion = svgRegions.find(r => 
-                            r.name.toLowerCase() === draggedRegion.name.toLowerCase() ||
-                            r.name.toLowerCase().includes(draggedRegion.name.toLowerCase())
+                            r.name.toLowerCase() === regionToMatch.name.toLowerCase() ||
+                            r.name.toLowerCase().includes(regionToMatch.name.toLowerCase())
                           );
                         }
                         
                         // If we found a matching region in the SVG, extract path and calculate a better centroid
                         if (matchingRegion) {
-                          console.log(`Found matching SVG region for ${draggedRegion.name}`);
+                          console.log(`Found matching SVG region for ${regionToMatch.name}`);
                           
                           // Calculate the actual centroid of the SVG path, passing region ID if available
                           const centroid = getPathCentroid(matchingRegion.path, matchingRegion.id);
                           
                           if (centroid) {
-                            console.log(`Using calculated centroid for ${draggedRegion.name}: (${centroid.x}, ${centroid.y})`);
+                            console.log(`Using calculated centroid for ${regionToMatch.name}: (${centroid.x}, ${centroid.y})`);
                             
                             return {
                               x: centroid.x,
@@ -466,8 +475,8 @@ export function PuzzleBoard({
                           
                           // Fallback to pre-calculated position if centroid calculation fails
                           return {
-                            x: draggedRegion.correctX,
-                            y: draggedRegion.correctY,
+                            x: regionToMatch.correctX,
+                            y: regionToMatch.correctY,
                             id: matchingRegion.id,
                             name: matchingRegion.name,
                             found: true
@@ -491,22 +500,22 @@ export function PuzzleBoard({
                           };
                           
                           // Get the state ID for hardcoded positioning
-                          const stateId = stateIdMap[draggedRegion.name];
+                          const stateId = stateIdMap[regionToMatch.name];
                           
                           if (stateId) {
                             // Use hardcoded centroids directly for Nigerian states
-                            console.log(`Using hardcoded position for ${draggedRegion.name} (${stateId})`);
+                            console.log(`Using hardcoded position for ${regionToMatch.name} (${stateId})`);
                             
                             // Get the hardcoded centroid from our utility function
                             const centroid = getPathCentroid("", stateId);
                             
                             if (centroid) {
-                              console.log(`Reliable hardcoded position found for ${draggedRegion.name}: (${centroid.x}, ${centroid.y})`);
+                              console.log(`Reliable hardcoded position found for ${regionToMatch.name}: (${centroid.x}, ${centroid.y})`);
                               return {
                                 x: centroid.x,
                                 y: centroid.y,
                                 id: stateId,
-                                name: draggedRegion.name,
+                                name: regionToMatch.name,
                                 found: true
                               };
                             }
@@ -514,10 +523,10 @@ export function PuzzleBoard({
                         }
                         
                         // Last resort fallback to using the coordinates from game state
-                        console.log(`Using fallback coordinates for ${draggedRegion.name}`);
+                        console.log(`Using fallback coordinates for ${regionToMatch.name}`);
                         return {
-                          x: draggedRegion.correctX,
-                          y: draggedRegion.correctY,
+                          x: regionToMatch.correctX,
+                          y: regionToMatch.correctY,
                           found: false
                         };
                       };
@@ -525,7 +534,7 @@ export function PuzzleBoard({
                       const matchedRegion = findMatchingMapRegion();
                       
                       return (
-                        <g key={`guidance-${draggedRegion.id}`} className="guidance-marker">
+                        <g key={`guidance-${regionToMatch.id}`} className="guidance-marker">
                           {/* Highlight the actual matching region on the SVG map if we found a match */}
                           {/* This appears first (at the bottom of the stack) */}
                           {matchedRegion.found && matchedRegion.id && (
