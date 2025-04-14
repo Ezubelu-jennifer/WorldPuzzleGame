@@ -305,9 +305,16 @@ export function PuzzleBoard({
                       
                       // Special case for Federal Capital Territory
                       if (regionName === "Federal Capital Territory" || regionName === "FCT") {
-                        // Hardcoded centroid for FCT - precisely calculated from path
-                        centroid = { x: 382.0, y: 369.0 };
+                        // Hardcoded centroid for FCT - precisely at the center of the shape
+                        centroid = { x: 380.0, y: 370.0 };
                         console.log("Using hardcoded centroid for FCT");
+                      }
+                      
+                      // Special case for Nasarawa
+                      if (regionName === "Nasarawa") {
+                        // Hardcoded centroid for Nasarawa - precisely at the center of the shape
+                        centroid = { x: 404.0, y: 340.0 };
+                        console.log("Using hardcoded centroid for Nasarawa");
                       }
                       
                       // If not one of the special cases, try all region codes until we find a centroid
