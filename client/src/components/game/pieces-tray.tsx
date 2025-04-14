@@ -152,33 +152,13 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
                 regionPieceId={region.id}
               />
             ) : (
-              // Special handling for Ebonyi and FCT even if we don't find an SVG region
-              region.name === "Ebonyi" || region.name === "Federal Capital Territory" || region.name === "FCT" ? (
-                <RegionThumbnail
-                  svgData={svgData || ""}
-                  regionId={region.name === "Ebonyi" ? "NG-EB" : "NG-FC"}
-                  regionName={region.name}
-                  color={fillColor}
-                  strokeColor={strokeColor}
-                  strokeWidth={1}
-                  width="100%"
-                  height="100%"
-                  showLabel={true}
-                  draggable={true}
-                  rotatable={true}
-                  onDrop={onPieceDrop}
-                  regionPieceId={region.id}
-                  useHardcodedPath={true} // New prop to indicate we want to use the hardcoded path
-                />
-              ) : (
-                // For other regions, fall back to the state piece
-                <StatePiece
-                  region={regionWithColor}
-                  onDrop={onPieceDrop}
-                  containerRef={trayRef}
-                  isTrayPiece
-                />
-              )
+              // Render directly - NO container div
+              <StatePiece
+                region={regionWithColor}
+                onDrop={onPieceDrop}
+                containerRef={trayRef}
+                isTrayPiece
+              />
             )}
             
             {/* Status indicator */}
