@@ -559,28 +559,28 @@ export class MemStorage implements IStorage {
         return regionObj;
       });
       
-      // Verify Nigeria has all 37 states including Nasarawa
+      // Verify Nigeria has all 37 states including Ebonyi
       if (countryId === 1) {
-        const hasNasarawa = regionsArray.some(r => r.name === "Nasarawa");
-        if (!hasNasarawa) {
-          console.warn("Nasarawa missing from Nigeria data - adding it manually");
+        const hasEbonyi = regionsArray.some(r => r.name === "Ebonyi");
+        if (!hasEbonyi) {
+          console.warn("Ebonyi missing from Nigeria data - adding it manually");
           
-          // Find an appropriate template region to copy
-          const templateRegion = regionsArray.find(r => r.name === "Abuja" || r.name === "Kogi") || regionsArray[0];
+          // Hardcoded Ebonyi path
+          const ebonyiPath = "M300.85,493.42L305.2,493.8L307.48,495.6L309.22,496.92L310.5,498.25L311.45,501.38L312.83,503.5L313.78,504.72L315.78,504.72L317.02,506.58L317.24,508.77L317.94,509.81L315.69,526.86L315.11,524.75L313.92,523.28L310.52,522.37L308.1,522.51L307.82,523.42L308.35,526.93L306.51,532.03L301.55,535.5L300.45,536.48L300.38,537.23L301.45,539.17L300.24,544.98L298.8,492.08L300.85,493.42z";
           
-          // Create Nasarawa with a unique ID
-          const nasarawaRegion: Region = {
+          // Create Ebonyi with a unique ID
+          const ebonyiRegion: Region = {
             id: this.regionIdCounter++,
             countryId: 1,
-            name: "Nasarawa",
-            svgPath: templateRegion.svgPath,
-            correctX: templateRegion.correctX + 50, // Offset to make it unique
-            correctY: templateRegion.correctY + 50,
+            name: "Ebonyi",
+            svgPath: ebonyiPath,
+            correctX: 305.2, // Correct position for Ebonyi
+            correctY: 510.4,
             fillColor: "#4fa94d",
             strokeColor: "#2c6e2c"
           };
           
-          regionsArray.push(nasarawaRegion);
+          regionsArray.push(ebonyiRegion);
         }
       }
       
