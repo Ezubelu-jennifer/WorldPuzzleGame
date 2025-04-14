@@ -261,37 +261,37 @@ export function StatePiece({
             style={{ animation: 'pulse 1.5s infinite', pointerEvents: 'none' }} />
           <circle cx="50%" cy="50%" r="4" fill="red" stroke="white" strokeWidth="1" 
             style={{ pointerEvents: 'none' }} />
-          
-          {/* Target position indicator (shown on the puzzle board when dragging) */}
-          {snapToPosition && region.correctX && region.correctY && (
-            <>
-              <circle 
-                cx={region.correctX} 
-                cy={region.correctY} 
-                r="12" 
-                fill="none" 
-                stroke="rgba(255,0,0,0.7)" 
-                strokeWidth="3"
-                style={{ 
-                  animation: 'pulse 1.5s infinite', 
-                  pointerEvents: 'none',
-                  filter: 'drop-shadow(0 0 5px white)' 
-                }} 
-              />
-              <circle 
-                cx={region.correctX} 
-                cy={region.correctY} 
-                r="5" 
-                fill="red" 
-                stroke="white" 
-                strokeWidth="1"
-                style={{ 
-                  pointerEvents: 'none',
-                  filter: 'drop-shadow(0 0 3px white)' 
-                }} 
-              />
-            </>
-          )}
+        </g>
+      )}
+      
+      {/* Target position indicator - Only shown when THIS piece is being dragged */}
+      {isDragging && region.correctX && region.correctY && (
+        <g>
+          <circle 
+            cx={region.correctX} 
+            cy={region.correctY} 
+            r="15" 
+            fill="none" 
+            stroke="rgba(255,0,0,0.7)" 
+            strokeWidth="3"
+            style={{ 
+              animation: 'pulse 1.5s infinite', 
+              pointerEvents: 'none',
+              filter: 'drop-shadow(0 0 5px white)' 
+            }} 
+          />
+          <circle 
+            cx={region.correctX} 
+            cy={region.correctY} 
+            r="6" 
+            fill="red" 
+            stroke="white" 
+            strokeWidth="1.5"
+            style={{ 
+              pointerEvents: 'none',
+              filter: 'drop-shadow(0 0 3px white)' 
+            }} 
+          />
         </g>
       )}
     </svg>

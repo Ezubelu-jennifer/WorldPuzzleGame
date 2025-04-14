@@ -264,51 +264,8 @@ export function CountrySvgMap({
           );
         })}
         
-        {/* Target position markers - red dots for each region */}
-        {uniqueRegions.map((region, index) => {
-          // Use fixed positions instead of calculating from path to avoid TypeScript errors
-          // We'll use a simple algorithm to distribute the dots evenly in the SVG space
-          const [, , vbWidth, vbHeight] = (viewBox || "0 0 800 600").split(' ').map(Number);
-          
-          // Distribute the dots in a grid-like pattern
-          const gridSize = Math.ceil(Math.sqrt(uniqueRegions.length));
-          const cellWidth = vbWidth / gridSize;
-          const cellHeight = vbHeight / gridSize;
-          
-          const row = Math.floor(index / gridSize);
-          const col = index % gridSize;
-          
-          const cx = cellWidth * (col + 0.5);
-          const cy = cellHeight * (row + 0.5);
-          
-          return (
-            <g key={`target-${region.id}`}>
-              {/* Pulsing outer ring */}
-              <circle 
-                cx={cx} 
-                cy={cy} 
-                r="8" 
-                fill="none" 
-                stroke="rgba(255,0,0,0.7)" 
-                strokeWidth="2"
-                style={{ 
-                  animation: 'pulse 2s infinite',
-                  transformOrigin: 'center center' 
-                }}
-              />
-              {/* Inner solid dot */}
-              <circle 
-                cx={cx} 
-                cy={cy} 
-                r="4" 
-                fill="red" 
-                style={{
-                  filter: 'drop-shadow(0px 0px 4px rgba(255,255,255,0.8))'
-                }}
-              />
-            </g>
-          );
-        })}
+        {/* No target position markers displayed in map overview */}
+        {/* Target positions will only be shown when a state is being dragged */}
         
         {showLabels && uniqueRegions.map(region => {
           // For simplicity, we'll use fixed label positions
