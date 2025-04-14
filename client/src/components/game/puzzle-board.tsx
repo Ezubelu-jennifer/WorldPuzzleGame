@@ -239,14 +239,14 @@ export function PuzzleBoard({
                       
                       // Calculate appropriate dot size based on viewBox
                       const [, , width, height] = viewBox.split(' ').map(Number);
-                      const baseDotSize = Math.min(width, height) * 0.016; // Slightly larger dots
-                      const dotSize = isPrimary ? baseDotSize * 1.2 : baseDotSize;
+                      const baseDotSize = Math.min(width, height) * 0.018; // Larger dots for better visibility
+                      const dotSize = isPrimary ? baseDotSize * 1.3 : baseDotSize;
                       
                       // Set dot styles based on whether this is the primary (dragged) piece
                       const dotColor = isPrimary ? "rgba(255,50,50,1)" : "rgba(255,220,0,1)";
-                      const outlineColor = isPrimary ? "white" : "rgba(255,255,255,0.9)";
+                      const outlineColor = isPrimary ? "white" : "rgba(255,255,255,0.95)";
                       const pulseSpeed = isPrimary ? "1.8s" : "3s";
-                      const opacity = isPrimary ? 1 : 0.85;
+                      const opacity = isPrimary ? 1 : 0.9;
                       
                       return (
                         <g key={`dot-${gameRegion.id}`} className={isPrimary ? "primary-dot" : "secondary-dot"}>
@@ -353,19 +353,18 @@ export function PuzzleBoard({
                       if (dot) guidanceElements.push(dot);
                     }
                     
-                    // If we should show all dots, render dots for all unplaced regions
-                    if (SHOW_ALL_POSITION_DOTS && unplacedRegions.length > 0) {
-                      // Limit the number of dots to avoid performance issues
-                      const MAX_DOTS = 20;
-                      const regionsToShow = unplacedRegions
-                        .filter(r => r.id !== draggedPieceId) // Don't show dot for the dragged piece (already shown)
-                        .slice(0, MAX_DOTS);
+                    // Always show dots for all regions (both placed and unplaced)
+                    if (SHOW_ALL_POSITION_DOTS) {
+                      // Get all regions (including placed ones)
+                      const allRegions = gameState.regions;
                       
-                      // Add dots for all unplaced regions
-                      regionsToShow.forEach(region => {
-                        const dot = renderGuidanceDot(region, false);
-                        if (dot) guidanceElements.push(dot);
-                      });
+                      // Add dots for ALL regions (both placed and unplaced)
+                      allRegions
+                        .filter(r => r.id !== draggedPieceId) // Don't show dot for the dragged piece (already shown)
+                        .forEach(region => {
+                          const dot = renderGuidanceDot(region, false);
+                          if (dot) guidanceElements.push(dot);
+                        });
                     }
                     
                     // Return all guidance elements
