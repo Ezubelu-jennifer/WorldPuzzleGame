@@ -68,6 +68,15 @@ path {
   stroke-linecap: round;
 }
 
+/* Special styles for highlighted regions */
+.highlighted-region {
+  opacity: 0.9 !important;
+  stroke-width: 3 !important;
+  fill: #f87171 !important; /* Red-400 */
+  stroke: #b91c1c !important; /* Red-700 */
+  filter: drop-shadow(0px 0px 15px rgba(255,255,255,0.9)) !important;
+}
+
 /* Special animation for the state shape guidance */
 @keyframes state-shape-guidance {
   0% {
