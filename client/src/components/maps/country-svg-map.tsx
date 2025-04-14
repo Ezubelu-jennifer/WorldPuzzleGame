@@ -126,13 +126,32 @@ export function CountrySvgMap({
   const showAllOutlines = true; // When enabled, all region outlines are visible
   
   // Create a map to deduplicate regions with the same ID
+  // Ensure special handling for Ebonyi and FCT to never filter them out
   const uniqueRegions = regions.reduce((acc, region) => {
-    // Only add if we haven't seen this ID before
-    if (!acc.some(r => r.id === region.id)) {
-      acc.push(region);
+    // Special handling for Ebonyi and FCT to ensure they're always included
+    const isEbonyi = region.name === "Ebonyi" || region.id === "NG-EB";
+    const isFCT = region.name === "Federal Capital Territory" || region.id === "NG-FC";
+    
+    // Always include Ebonyi and FCT, or ensure uniqueness for other regions
+    if (isEbonyi || isFCT || !acc.some(r => r.id === region.id)) {
+      // If it's a special region and already exists, replace it
+      if ((isEbonyi || isFCT) && acc.some(r => r.id === region.id)) {
+        const index = acc.findIndex(r => r.id === region.id);
+        if (index >= 0) {
+          acc[index] = region;
+        } else {
+          acc.push(region);
+        }
+      } else {
+        acc.push(region);
+      }
     }
     return acc;
   }, [] as RegionData[]);
+  
+  // Log special regions for debugging
+  console.log("Ebonyi in uniqueRegions:", uniqueRegions.some(r => r.name === "Ebonyi" || r.id === "NG-EB"));
+  console.log("FCT in uniqueRegions:", uniqueRegions.some(r => r.name === "Federal Capital Territory" || r.id === "NG-FC"));
   
   // Handle zoom in/out
   const handleZoomIn = () => {
