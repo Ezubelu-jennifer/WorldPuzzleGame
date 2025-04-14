@@ -3,6 +3,7 @@ import { optimizeSvgPath } from "@/utils/svg-clipper";
 import { getPathBounds } from "svg-path-bounds";
 import { Button } from "@/components/ui/button";
 import { useDrag } from "@/hooks/useDrag";
+import { useDragContext } from "@/context/drag-context";
 
 interface RegionThumbnailProps {
   svgData: string;
@@ -44,16 +45,27 @@ export function RegionThumbnail({
   const [rotation, setRotation] = useState<number>(0);
   const [scale, setScale] = useState<number>(1);
   const thumbnailRef = useRef<HTMLDivElement>(null);
+  const { setDraggedPieceId } = useDragContext();
   
   // Set up drag functionality if draggable is enabled
   const { isDragging, position, dragHandlers } = useDrag({
     onDragStart: () => {
       // Add any needed drag start behavior
       document.body.style.cursor = "grabbing";
+      
+      // Set the dragged piece ID in the global context
+      if (regionPieceId !== undefined) {
+        setDraggedPieceId(regionPieceId);
+        console.log("RegionThumbnail: Setting draggedPieceId to", regionPieceId);
+      }
     },
     onDragEnd: (position, dropped) => {
       // Reset cursor and handle any post-drag behavior
       document.body.style.cursor = "auto";
+      
+      // Clear the dragged piece ID from the global context
+      setDraggedPieceId(null);
+      console.log("RegionThumbnail: Clearing draggedPieceId");
       
       // If there's a custom click handler and we didn't actually drag (just clicked), 
       // trigger the click handler
