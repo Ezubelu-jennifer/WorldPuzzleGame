@@ -294,94 +294,97 @@ export function PuzzleBoard({
                         regionCodes.push("KE");
                       }
                       
-                      // Try to get the centroid using the region's SVG path and region codes
-                      let centroid = null;
+                      // Get the dimensions of the SVG viewBox for sizing and positioning calculations
+                      const [, , svgWidth, svgHeight] = viewBox.split(' ').map(Number);
+                      
+                      // Pre-generate a grid-based centroid first (as a fallback)
+                      // ---------------------------------------------------------
+                      // This will guarantee we have a position even if other methods fail
+                      let dotPosition = { x: svgWidth / 2, y: svgHeight / 2 }; // Default center position
+                      
+                      // Generate evenly distributed positions based on country and region ID
+                      if (countryId === 1) { // Nigeria
+                        const id = gameRegion.id;
+                        const totalCols = 6; // 6 columns grid
+                        const totalRows = 7; // About 7 rows for Nigeria's 37 states
+                        
+                        // Create a deterministic offset to prevent dots from stacking
+                        const offsetAmount = 8; // Pixels of offset
+                        const randOffsetX = ((id * 17) % 11) - 5; // Range: -5 to 5
+                        const randOffsetY = ((id * 23) % 13) - 6; // Range: -6 to 6
+                        
+                        // Distribute dots across the SVG with proper margins
+                        const marginX = svgWidth * 0.12;
+                        const marginY = svgHeight * 0.12;
+                        const gridWidth = svgWidth - (marginX * 2);
+                        const gridHeight = svgHeight - (marginY * 2);
+                        
+                        // Calculate row and column for grid placement
+                        // (subtract 1 from ID to start from 0-based index)
+                        const row = Math.floor((id - 1) / totalCols);
+                        const col = (id - 1) % totalCols;
+                        
+                        // Calculate the position with margins and offsets
+                        const x = marginX + ((col + 0.5) * (gridWidth / totalCols)) + (randOffsetX * offsetAmount);
+                        const y = marginY + ((row + 0.5) * (gridHeight / totalRows)) + (randOffsetY * offsetAmount);
+                        
+                        dotPosition = { x, y };
+                      } else if (countryId === 2) { // Kenya
+                        const id = gameRegion.id;
+                        const idx = id - 101; // Convert to 0-based index (Kenya IDs start at 101)
+                        const totalCols = 7; // 7 columns grid 
+                        const totalRows = 7; // About 7 rows for Kenya's 47 counties
+                        
+                        // Create a deterministic offset to prevent dots from stacking
+                        const offsetAmount = 10; // Pixels of offset
+                        const randOffsetX = ((id * 19) % 13) - 6; // Range: -6 to 6
+                        const randOffsetY = ((id * 29) % 15) - 7; // Range: -7 to 7
+                        
+                        // Distribute dots across the SVG with proper margins
+                        const marginX = svgWidth * 0.12;
+                        const marginY = svgHeight * 0.12;
+                        const gridWidth = svgWidth - (marginX * 2);
+                        const gridHeight = svgHeight - (marginY * 2);
+                        
+                        // Calculate row and column for grid placement
+                        const row = Math.floor(idx / totalCols);
+                        const col = idx % totalCols;
+                        
+                        // Calculate the position with margins and offsets
+                        const x = marginX + ((col + 0.5) * (gridWidth / totalCols)) + (randOffsetX * offsetAmount);
+                        const y = marginY + ((row + 0.5) * (gridHeight / totalRows)) + (randOffsetY * offsetAmount);
+                        
+                        dotPosition = { x, y };
+                      }
+                      
+                      // Try to get a more accurate centroid using known state/county data
+                      // ----------------------------------------------------------------
                       let pathToUse = svgRegion ? svgRegion.path : "";
                       
                       // Try all region codes until we find a centroid
                       for (const code of regionCodes) {
                         if (pathToUse) {
-                          centroid = getPathCentroid(pathToUse, code);
-                          if (centroid) break;
+                          const knownCentroid = getPathCentroid(pathToUse, code);
+                          if (knownCentroid) {
+                            // We found a known centroid, use it instead of the grid-based one
+                            dotPosition = knownCentroid;
+                            break;
+                          }
                         }
                       }
                       
                       // For debugging only
                       if (DEBUG_DOTS) {
-                        console.log(`Finding centroid for ${regionName} (ID: ${gameRegion.id}):`, 
-                                   { regionCodes, foundCentroid: centroid });
-                      }
-
-                      // Always create grid-based fallback centroids for reliability (if FORCE_GRID_DOTS is on)
-                      // or if we couldn't find a centroid through other methods
-                      let gridCentroid = null;
-                      
-                      if (countryId === 1) { // Nigeria
-                        // Create an evenly distributed grid of centroids
-                        const id = gameRegion.id;
-                        // Use predefined rows and columns for a more evenly distributed grid
-                        const totalCols = 6; // 6 columns in grid
-                        const row = Math.floor((id - 1) / totalCols);
-                        const col = (id - 1) % totalCols;
-                        
-                        // Calculate position with small random offset to prevent dots from
-                        // stacking exactly on top of each other
-                        const randOffset = id % 7; // Deterministic random-like offset
-                        const [, , width, height] = viewBox.split(' ').map(Number);
-                        
-                        // Distribute dots across the viewBox
-                        const marginX = width * 0.15;
-                        const marginY = height * 0.15;
-                        const gridWidth = width - (marginX * 2);
-                        const gridHeight = height - (marginY * 2);
-                        
-                        // Adjust to find better-spaced positions
-                        const x = marginX + ((col + 0.5) * (gridWidth / totalCols)) + (randOffset * 2);
-                        const y = marginY + ((row + 0.5) * (gridHeight / 6)) + (randOffset * 2);
-                        
-                        gridCentroid = { x, y };
-                      } else if (countryId === 2) { // Kenya
-                        // Create an evenly distributed grid of centroids for Kenya
-                        const id = gameRegion.id; 
-                        const idx = id - 101; // 0-based index (since Kenya starts at 101)
-                        
-                        // Kenya has 47 counties, so create a grid with appropriate columns
-                        const totalCols = 7; // 7 columns for Kenya
-                        const row = Math.floor(idx / totalCols);
-                        const col = idx % totalCols;
-                        
-                        // Similar deterministic randomization to avoid stacking
-                        const randOffset = id % 5; 
-                        const [, , width, height] = viewBox.split(' ').map(Number);
-                        
-                        // Distribute dots across the viewBox
-                        const marginX = width * 0.15;
-                        const marginY = height * 0.15;
-                        const gridWidth = width - (marginX * 2);
-                        const gridHeight = height - (marginY * 2);
-                        
-                        // Calculate position, distribute more counties in the central area
-                        const x = marginX + ((col + 0.5) * (gridWidth / totalCols)) + (randOffset * 3);
-                        const y = marginY + ((row + 0.5) * (gridHeight / 7)) + (randOffset * 3);
-                        
-                        gridCentroid = { x, y };
+                        console.log(`Centroid for ${regionName} (ID: ${gameRegion.id}):`, 
+                                   { regionCodes, finalPosition: dotPosition });
                       }
                       
-                      // Use the grid centroid if we're forcing grid dots or if no centroid was found
-                      if (FORCE_GRID_DOTS || !centroid) {
-                        centroid = gridCentroid;
-                      }
+                      // Ensure the dot stays within the SVG boundaries
+                      const finalDotX = Math.max(20, Math.min(svgWidth - 20, dotPosition.x));
+                      const finalDotY = Math.max(20, Math.min(svgHeight - 20, dotPosition.y));
                       
-                      // Ensure we always have a valid centroid at this point
-                      // Handle the TypeScript null check once here to simplify later code
-                      if (!centroid) {
-                        // Final fallback - just use the center of the viewBox
-                        const [, , width, height] = viewBox.split(' ').map(Number);
-                        centroid = { x: width / 2, y: height / 2 };
-                      }
-                      
-                      // At this point, centroid is guaranteed to be non-null
-                      const finalCentroid = centroid; // Create a non-nullable reference
+                      // Final dot position that is guaranteed to be valid
+                      const finalCentroid = { x: finalDotX, y: finalDotY };
                       
                       // Calculate appropriate dot size based on viewBox
                       const [, , width, height] = viewBox.split(' ').map(Number);
@@ -401,17 +404,17 @@ export function PuzzleBoard({
                             <>
                               <line 
                                 x1={0} 
-                                y1={centroid.y} 
+                                y1={finalCentroid.y} 
                                 x2={width} 
-                                y2={centroid.y} 
+                                y2={finalCentroid.y} 
                                 stroke="rgba(255,255,255,0.6)" 
                                 strokeWidth={dotSize * 0.5} 
                                 strokeDasharray="5,5" 
                               />
                               <line 
-                                x1={centroid.x} 
+                                x1={finalCentroid.x} 
                                 y1={0} 
-                                x2={centroid.x} 
+                                x2={finalCentroid.x} 
                                 y2={height} 
                                 stroke="rgba(255,255,255,0.6)" 
                                 strokeWidth={dotSize * 0.5} 
@@ -425,8 +428,8 @@ export function PuzzleBoard({
                             <>
                               {/* Outer halo effect */}
                               <circle 
-                                cx={centroid.x} 
-                                cy={centroid.y} 
+                                cx={finalCentroid.x} 
+                                cy={finalCentroid.y} 
                                 r={dotSize * 2} 
                                 fill="none" 
                                 stroke={outlineColor} 
@@ -440,8 +443,8 @@ export function PuzzleBoard({
                               
                               {/* White outline */}
                               <circle 
-                                cx={centroid.x} 
-                                cy={centroid.y} 
+                                cx={finalCentroid.x} 
+                                cy={finalCentroid.y} 
                                 r={dotSize * 1.3} 
                                 fill={outlineColor} 
                                 style={{ 
@@ -451,8 +454,8 @@ export function PuzzleBoard({
                               
                               {/* Colored center */}
                               <circle 
-                                cx={centroid.x} 
-                                cy={centroid.y} 
+                                cx={finalCentroid.x} 
+                                cy={finalCentroid.y} 
                                 r={dotSize} 
                                 fill={dotColor} 
                                 style={{ 
@@ -464,8 +467,8 @@ export function PuzzleBoard({
                           ) : (
                             // Simple dot for non-enhanced mode
                             <circle 
-                              cx={centroid.x} 
-                              cy={centroid.y} 
+                              cx={finalCentroid.x} 
+                              cy={finalCentroid.y} 
                               r={dotSize} 
                               fill={dotColor} 
                               opacity={opacity}
