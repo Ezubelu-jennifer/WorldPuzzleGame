@@ -535,17 +535,9 @@ export class MemStorage implements IStorage {
     Object.entries(sampleRegions).forEach(([countryIdStr, regionsList]) => {
       const countryId = parseInt(countryIdStr, 10);
       const regionsArray = regionsList.map((region: RegionPiece) => {
-        // Make sure key states are included for Nigeria (country ID 1)
-        if (countryId === 1) {
-          if (region.name === "Nasarawa") {
-            console.log("Nasarawa region found in Nigeria data");
-          }
-          if (region.name === "Ebonyi") {
-            console.log("Ebonyi region found in Nigeria data");
-          }
-          if (region.name === "Federal Capital Territory" || region.name === "FCT") {
-            console.log("FCT region found in Nigeria data");
-          }
+        // Make sure Nasarawa state is included for Nigeria (country ID 1)
+        if (countryId === 1 && region.name === "Nasarawa") {
+          console.log("Found Nasarawa state in Nigeria data");
         }
         
         const regionObj: Region = {
@@ -567,9 +559,8 @@ export class MemStorage implements IStorage {
         return regionObj;
       });
       
-      // Verify Nigeria has all 37 states including Nasarawa and Ebonyi
+      // Verify Nigeria has all 37 states including Nasarawa
       if (countryId === 1) {
-        // Check for Nasarawa
         const hasNasarawa = regionsArray.some(r => r.name === "Nasarawa");
         if (!hasNasarawa) {
           console.warn("Nasarawa missing from Nigeria data - adding it manually");
@@ -582,7 +573,7 @@ export class MemStorage implements IStorage {
             id: this.regionIdCounter++,
             countryId: 1,
             name: "Nasarawa",
-            svgPath: "M402.62,337.27L403.22,336.31L404.49,336.24L406.03,336.58L407.31,337.66L407.63,338.92L408.39,339.06L408.92,340.55L408.59,342.84L407.84,342.84L404.04,342.84L403.63,343.04L401.11,342.65L401.7,341.1L401.55,339.88L402.62,337.27z",
+            svgPath: templateRegion.svgPath,
             correctX: templateRegion.correctX + 50, // Offset to make it unique
             correctY: templateRegion.correctY + 50,
             fillColor: "#4fa94d",
@@ -590,46 +581,6 @@ export class MemStorage implements IStorage {
           };
           
           regionsArray.push(nasarawaRegion);
-        }
-        
-        // Check for Ebonyi
-        const hasEbonyi = regionsArray.some(r => r.name === "Ebonyi");
-        if (!hasEbonyi) {
-          console.warn("Ebonyi missing from Nigeria data - adding it manually");
-          
-          // Create Ebonyi with a unique ID
-          const ebonyiRegion: Region = {
-            id: this.regionIdCounter++,
-            countryId: 1,
-            name: "Ebonyi",
-            svgPath: "M300.85,493.42L305.2,493.8L307.48,495.6L309.22,496.92L310.5,498.25L311.45,501.38L312.83,503.5L313.78,504.72L315.78,504.72L317.02,506.58L317.24,508.77L317.94,509.81L315.69,526.86L315.11,524.75L313.92,523.28L310.52,522.37L308.1,522.51L307.82,523.42L308.35,526.93L306.51,532.03L301.55,535.5L300.45,536.48L300.38,537.23L301.45,539.17L300.24,544.98L298.8,492.08L300.85,493.42z",
-            correctX: 305.2,
-            correctY: 510.4,
-            fillColor: "#f59e0b",
-            strokeColor: "#d97706"
-          };
-          
-          regionsArray.push(ebonyiRegion);
-        }
-        
-        // Check for FCT
-        const hasFCT = regionsArray.some(r => r.name === "Federal Capital Territory" || r.name === "FCT");
-        if (!hasFCT) {
-          console.warn("FCT missing from Nigeria data - adding it manually");
-          
-          // Create FCT with a unique ID
-          const fctRegion: Region = {
-            id: this.regionIdCounter++,
-            countryId: 1,
-            name: "Federal Capital Territory",
-            svgPath: "M379.02,365.63L379.89,367.08L379.96,368.27L381.17,368.98L382.72,369.89L383.7,371.75L383.79,373.68L382.55,375.21L380.88,375.98L380.92,374.14L380.39,372.65L379.02,371.37L377.88,368.73L378.26,367.57L379.02,365.63z",
-            correctX: 380.5,
-            correctY: 370.5,
-            fillColor: "#6366f1",
-            strokeColor: "#4f46e5"
-          };
-          
-          regionsArray.push(fctRegion);
         }
       }
       
