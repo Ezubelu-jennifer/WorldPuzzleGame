@@ -298,15 +298,15 @@ export function PuzzleBoard({
                       
                       // Special case for Ebonyi
                       if (regionName === "Ebonyi") {
-                        // Hardcoded centroid for Ebonyi - updated to center of shape
-                        centroid = { x: 310.5, y: 505.0 };
+                        // Hardcoded centroid for Ebonyi - precisely calculated from path
+                        centroid = { x: 310.0, y: 515.0 };
                         console.log("Using hardcoded centroid for Ebonyi");
                       }
                       
                       // Special case for Federal Capital Territory
                       if (regionName === "Federal Capital Territory" || regionName === "FCT") {
-                        // Hardcoded centroid for FCT - updated to center of shape
-                        centroid = { x: 367.0, y: 365.0 };
+                        // Hardcoded centroid for FCT - precisely calculated from path
+                        centroid = { x: 382.0, y: 369.0 };
                         console.log("Using hardcoded centroid for FCT");
                       }
                       

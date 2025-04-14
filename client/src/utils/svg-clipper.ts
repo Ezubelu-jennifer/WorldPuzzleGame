@@ -14,11 +14,11 @@ const KNOWN_CENTROIDS: Record<string, { x: number, y: number }> = {
   "NG-BY": { x: 266.9, y: 535.4 }, // Bayelsa
   "NG-CR": { x: 345.2, y: 501.6 }, // Cross River
   "NG-DE": { x: 264.5, y: 495.1 }, // Delta
-  "NG-EB": { x: 310.5, y: 505.0 }, // Ebonyi - updated for better centering
+  "NG-EB": { x: 310.0, y: 515.0 }, // Ebonyi - precisely calculated from path
   "NG-ED": { x: 274.8, y: 458.8 }, // Edo
   "NG-EK": { x: 263.9, y: 434.1 }, // Ekiti
   "NG-EN": { x: 310.5, y: 486.1 }, // Enugu
-  "NG-FC": { x: 367.0, y: 365.0 }, // Federal Capital Territory - updated for better centering
+  "NG-FC": { x: 382.0, y: 369.0 }, // Federal Capital Territory - precisely calculated from path
   "NG-GO": { x: 445.6, y: 292.8 }, // Gombe
   "NG-IM": { x: 303.2, y: 512.6 }, // Imo
   "NG-JI": { x: 402.6, y: 220.9 }, // Jigawa
