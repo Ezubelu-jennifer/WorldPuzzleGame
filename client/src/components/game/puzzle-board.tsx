@@ -358,13 +358,13 @@ export function PuzzleBoard({
                       
                       // Calculate appropriate dot size based on viewBox
                       const [, , width, height] = viewBox.split(' ').map(Number);
-                      const baseDotSize = Math.min(width, height) * 0.02; // Larger dots for better visibility
-                      const dotSize = isPrimary ? baseDotSize * 1.5 : baseDotSize * 1.2;
+                      const baseDotSize = Math.min(width, height) * 0.008; // Smaller dots as requested
+                      const dotSize = isPrimary ? baseDotSize * 1.2 : baseDotSize * 1.0;
                       
-                      // Set dot styles - using bright red dots with high visibility
+                      // Set dot styles - using only red dots as per user request
                       const dotColor = "rgba(255,0,0,1)"; // Pure red for all dots
                       const outlineColor = "white"; // White outline for better contrast
-                      const opacity = isPrimary ? 1 : 0.9; // Show all dots with high visibility
+                      const opacity = isPrimary ? 1 : 0; // Hide non-primary (secondary) dots
                       
                       return (
                         <g key={`dot-${gameRegion.id}`} className={isPrimary ? "primary-dot" : "secondary-dot"}>
@@ -488,33 +488,14 @@ export function PuzzleBoard({
                               />
                             </>
                           ) : (
-                            // Enhanced simple dot with white outline for better visibility
-                            <>
-                              {/* White outline for visibility */}
-                              <circle 
-                                cx={centroid.x} 
-                                cy={centroid.y} 
-                                r={dotSize * 1.6} 
-                                fill="white" 
-                                opacity={opacity * 0.8}
-                                style={{
-                                  filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.5))'
-                                }}
-                              />
-                              {/* Red dot */}
-                              <circle 
-                                cx={centroid.x} 
-                                cy={centroid.y} 
-                                r={dotSize} 
-                                fill={dotColor}
-                                stroke={isPrimary ? "white" : "transparent"}
-                                strokeWidth={isPrimary ? 2 : 0}
-                                opacity={opacity}
-                                style={{
-                                  filter: 'drop-shadow(0 0 3px rgba(255,0,0,0.5))'
-                                }}
-                              />
-                            </>
+                            // Simple dot for non-enhanced mode
+                            <circle 
+                              cx={centroid.x} 
+                              cy={centroid.y} 
+                              r={dotSize} 
+                              fill={dotColor} 
+                              opacity={opacity}
+                            />
                           )}
                         </g>
                       );

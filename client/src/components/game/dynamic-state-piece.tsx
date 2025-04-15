@@ -36,8 +36,8 @@ export function DynamicStatePiece({
   const [isNearTarget, setIsNearTarget] = useState<boolean>(false);
   const [pulseEffect, setPulseEffect] = useState<boolean>(false);
   const [showPopup, setShowPopup] = useState<boolean>(false);
-  const [popupText, setPopupText] = useState<string>(`Matching ${region.name}`);
-  const [targetRegionName, setTargetRegionName] = useState<string>(region.name);
+  const [popupText, setPopupText] = useState<string>("");
+  const [targetRegionName, setTargetRegionName] = useState<string>("");
   
   // Refs
   const svgRef = useRef<SVGSVGElement>(null);
@@ -45,7 +45,7 @@ export function DynamicStatePiece({
   const circleRef = useRef<SVGCircleElement>(null);
   
   // Constants
-  const size = 100; // Standardized size for ALL pieces, whether in tray or on map
+  const size = isTrayPiece ? 100 : 100; // Size of the SVG viewBox
   
   // Debug logging for initialization
   useEffect(() => {
@@ -169,7 +169,6 @@ export function DynamicStatePiece({
     
     setIsDragging(true);
     setDraggedPieceId(region.id);
-    setShowPopup(true); // Always show popup when dragging
     
     // Get the path element that was clicked
     const pathElement = e.currentTarget;
@@ -189,9 +188,7 @@ export function DynamicStatePiece({
     // Add document event listeners
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-    
-    console.log(`Drag started for ${region.name}, popup should be visible`);
-  }, [region.isPlaced, region.id, region.name, setDraggedPieceId]);
+  }, [region.isPlaced, region.id, setDraggedPieceId]);
   
   // Mouse move handler
   const handleMouseMove = useCallback((e: MouseEvent) => {
@@ -290,7 +287,6 @@ export function DynamicStatePiece({
     
     setIsDragging(true);
     setDraggedPieceId(region.id);
-    setShowPopup(true); // Always show popup when dragging on mobile
     
     // Apply zoom effect when starting touch drag
     setScale(2.0 );
@@ -307,9 +303,7 @@ export function DynamicStatePiece({
     
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleTouchEnd);
-    
-    console.log(`Touch drag started for ${region.name}, popup should be visible`);
-  }, [region.isPlaced, region.id, region.name, setDraggedPieceId]);
+  }, [region.isPlaced, region.id, setDraggedPieceId]);
   
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!isDragging || e.touches.length !== 1) return;
@@ -551,35 +545,29 @@ export function DynamicStatePiece({
         </g>
       )}
       
-      {/* Popup message - ABSOLUTE POSITIONING FOR VISIBILITY */}
-      {isDragging && (
-        <foreignObject x="-125" y="-120" width="250" height="100" style={{ 
-          pointerEvents: 'none',
-          overflow: 'visible',
-          zIndex: 9999,
-          position: 'relative'
+      {/* Popup message */}
+      {showPopup && isDragging && (
+        <foreignObject x="0" y="-80" width="200" height="80" style={{ 
+          transform: 'translateX(-50%)',
+          pointerEvents: 'none'
          }}>
           <div
             style={{
-              backgroundColor: 'rgba(255, 0, 0, 1)',
+              backgroundColor: '#4CAF50',
               color: 'white',
-              padding: '12px 20px',
-              borderRadius: '12px',
-              boxShadow: '0 6px 20px rgba(0,0,0,0.7)',
+              padding: '8px 12px',
+              borderRadius: '8px',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
               fontFamily: 'Arial, sans-serif',
               fontWeight: 'bold',
               textAlign: 'center',
-              fontSize: '18px',
+              fontSize: '14px',
               whiteSpace: 'nowrap',
               pointerEvents: 'none',
-              animation: 'fadeIn 0.3s ease-in-out',
-              border: '3px solid white',
-              textShadow: '1px 1px 2px black',
-              transform: 'scale(1.2)',
-              display: 'inline-block'
+              animation: 'fadeIn 0.3s ease-in-out'
             }}
           >
-            {`Placing ${region.name}`}
+            {popupText}
           </div>
         </foreignObject>
       )}

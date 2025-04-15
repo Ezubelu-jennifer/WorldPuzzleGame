@@ -12,8 +12,6 @@ interface CountrySvgMapProps {
   height?: number | string;
   width?: number | string;
   renderOverlay?: () => React.ReactNode; // Function to render additional overlay elements
-  // FIXED VIEWBOX - force consistent scaling across components
-  forceViewBox?: string;
 }
 
 interface RegionData {
@@ -32,8 +30,7 @@ export function CountrySvgMap({
   showLabels = false,
   height = "100%",
   width = "100%",
-  renderOverlay,
-  forceViewBox
+  renderOverlay
 }: CountrySvgMapProps): JSX.Element {
   const [regions, setRegions] = useState<RegionData[]>([]);
   const [viewBox, setViewBox] = useState<string>("0 0 800 600");
@@ -255,7 +252,7 @@ export function CountrySvgMap({
     >
       <svg
         ref={svgRef}
-        viewBox={forceViewBox || viewBox}
+        viewBox={viewBox}
         width="100%"
         height="100%"
         className="w-full h-full cursor-pointer"
