@@ -102,4 +102,7 @@ export interface RegionPiece {
   fillColor: string;
   strokeColor: string;
   countryId?: number; // Added to help with SVG path matching
+  scale?: number; // Dynamic scale for this specific piece to match map
+  width?: number; // Actual width of the region for dynamic sizing
+  height?: number; // Actual height of the region for dynamic sizing
 }

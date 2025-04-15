@@ -44,8 +44,9 @@ export function DynamicStatePiece({
   const pathRef = useRef<SVGPathElement>(null);
   const circleRef = useRef<SVGCircleElement>(null);
   
-  // Constants
-  const size = 100; // Consistent size for the SVG viewBox
+  // Use dynamic size based on region properties if available
+  const baseSize = 100; // Base size for the SVG viewBox
+  const size = region.width || baseSize; // Use region's own width if available
   
   // Debug logging for initialization
   useEffect(() => {
@@ -120,47 +121,50 @@ export function DynamicStatePiece({
     return null;
   }, [region.id, region.name]);
   
-  // Function to calculate dynamic size based on target element
+  // Function to calculate dynamic size based on target element to ensure exact matching
   const calculateDynamicSize = useCallback(() => {
     // Find the target path element
     const targetElement = findTargetPathElement();
     if (!targetElement || !pathRef.current) {
       console.log('Could not calculate size: missing elements');
-      return 1.0; // Default size
+      return region.scale || 1.0; // Use predefined scale if available, or default
     }
     
     try {
-      // Get target dimensions directly 
-      const targetRect = targetElement.getBoundingClientRect();
-      const targetWidth = targetRect.width;
-      const targetHeight = targetRect.height;
+      // Store dimensions for future reference
+      if (!region.width && targetElement && pathRef.current) {
+        // Use SVG getBBox for more accurate measurement of the actual path
+        const targetSVGRect = targetElement.getBBox();
+        const pieceSVGRect = pathRef.current.getBBox();
+        
+        // Store calculated dimensions for consistency
+        region.width = pieceSVGRect.width;
+        region.height = pieceSVGRect.height;
+        
+        // Calculate the ideal ratio that would make the piece match the target
+        const idealRatio = Math.min(
+          targetSVGRect.width / pieceSVGRect.width,
+          targetSVGRect.height / pieceSVGRect.height
+        );
+        
+        // Store the calculated scale for future reference
+        region.scale = idealRatio;
+        
+        console.log(`Stored dimensions for ${region.name}: ${region.width.toFixed(2)}x${region.height.toFixed(2)}, scale: ${region.scale.toFixed(2)}`);
+      }
       
-      // Get piece dimensions
-      const pieceRect = pathRef.current.getBoundingClientRect();
-      const pieceWidth = pieceRect.width;
-      const pieceHeight = pieceRect.height;
+      // For visual feedback, log the comparison even if we're using stored values
+      console.log(`Size comparison for ${region.name}: Using scale ${(region.scale || 1.0).toFixed(2)}`);
       
-      // Use the maximum dimension for scaling to ensure proper fit
-      const widthRatio = targetWidth / pieceWidth;
-      const heightRatio = targetHeight / pieceHeight;
+      // Apply reasonable constraints to the scale to avoid extreme values
+      const safeScale = Math.max(0.6, Math.min(1.4, region.scale || 1.0));
       
-      // Choose the ratio that ensures the shape fits properly
-      const ratio = Math.min(widthRatio, heightRatio);
-      
-      // Log the detailed information
-      console.log(`Size comparison: Target: ${targetWidth.toFixed(2)}x${targetHeight.toFixed(2)}, Piece: ${pieceWidth.toFixed(2)}x${pieceHeight.toFixed(2)}`);
-      console.log(`Width ratio: ${widthRatio.toFixed(2)}, Height ratio: ${heightRatio.toFixed(2)}, Using: ${ratio.toFixed(2)}`);
-      
-      // Apply some constraints to avoid extreme scaling
-      const newScale = Math.max(0.8, Math.min(1.2, ratio));
-      
-      console.log(`Applying scale: ${newScale.toFixed(2)}`);
-      return newScale;
+      return safeScale;
     } catch (err) {
       console.error('Error calculating size:', err);
-      return 1.0; // Default on error
+      return region.scale || 1.0; // Use stored scale or default on error
     }
-  }, [findTargetPathElement]);
+  }, [findTargetPathElement, region]);
   
   // Mouse drag start handler
   const handleDragStart = useCallback((e: React.MouseEvent<SVGElement>) => {
