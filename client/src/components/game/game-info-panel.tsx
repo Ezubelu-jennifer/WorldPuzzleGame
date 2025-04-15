@@ -1,11 +1,14 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { Clock, ChartBar, Star, Lightbulb, RotateCcw, HelpCircle, ArrowLeft, Wand2 } from "lucide-react";
+import { Clock, ChartBar, Star, Lightbulb, RotateCcw, HelpCircle, ArrowLeft, Wand2, ZoomIn } from "lucide-react";
 import { useGame } from "@/context/game-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useGameTimer } from "@/hooks/useGameTimer";
 import { Progress } from "@/components/ui/progress";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 
 interface GameInfoPanelProps {
   onUseHint: () => void;
@@ -14,7 +17,22 @@ interface GameInfoPanelProps {
 }
 
 export function GameInfoPanel({ onUseHint, onRestart, onHelp }: GameInfoPanelProps) {
-  const { gameState } = useGame();
+  const { gameState, setShapeSize } = useGame();
+  const [shapeSize, setShapeSizeValue] = useState(1.0);
+  
+  // Initialize shape size from game state
+  useEffect(() => {
+    if (gameState?.shapeSize) {
+      setShapeSizeValue(gameState.shapeSize);
+    }
+  }, [gameState?.shapeSize]);
+  
+  // Handle shape size change
+  const handleShapeSizeChange = (value: number[]) => {
+    const newSize = value[0];
+    setShapeSizeValue(newSize);
+    setShapeSize(newSize);
+  };
   
   // Set up timer that starts when gameState is available
   const { formattedTime } = useGameTimer({
@@ -115,6 +133,33 @@ export function GameInfoPanel({ onUseHint, onRestart, onHelp }: GameInfoPanelPro
             </Button>
           </div>
 
+          {/* Shape Size Adjustment */}
+          <div className="bg-gray-100 rounded-lg p-3">
+            <div className="flex justify-between items-center mb-2">
+              <div className="flex items-center space-x-2">
+                <ZoomIn className="h-4 w-4 text-gray-500" />
+                <span className="text-gray-700 font-medium">Piece Size</span>
+              </div>
+              <div className="font-mono text-xs">{shapeSize.toFixed(2)}x</div>
+            </div>
+            <div className="pt-2">
+              <Slider
+                value={[shapeSize]}
+                min={0.5}
+                max={1.5}
+                step={0.05}
+                onValueChange={handleShapeSizeChange}
+                disabled={gameState.isCompleted}
+                className="cursor-pointer"
+              />
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <span>Smaller</span>
+                <span>Larger</span>
+              </div>
+            </div>
+          </div>
+
+          <Separator className="my-2" />
 
 
           {/* Controls */}

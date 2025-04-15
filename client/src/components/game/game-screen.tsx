@@ -18,7 +18,7 @@ interface GameScreenProps {
 }
 
 export function GameScreen({ countryId }: GameScreenProps) {
-  const { gameState, initializeGame, placePiece, useHint, resetGame } = useGame();
+  const { gameState, initializeGame, placePiece, useHint, resetGame, setShapeSize } = useGame();
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
   
