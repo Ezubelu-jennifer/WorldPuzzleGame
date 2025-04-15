@@ -330,12 +330,14 @@ export function StatePiece({
       const relX = touch.clientX - containerRect.left;
       const relY = touch.clientY - containerRect.top;
       
-      // Check if the piece is close to its correct position
-      const isCorrect = isCloseToCorrectPosition(relX, relY);
-      if (isCorrect) {
+      // Try to drop the piece on the board with both shape and position matching
+      const isDropped = onDrop(region.id, relX, relY);
+      
+      if (isDropped) {
         console.log(`✅ Region ${region.name} placed in correct position!`);
         
         // Immediately set position to the exact correct position for a perfect fit
+        // This ensures the SVG path aligns perfectly with the outline on the map
         setPosition({
           x: containerRect.left + region.correctX,
           y: containerRect.top + region.correctY
@@ -357,11 +359,12 @@ export function StatePiece({
           }
         }
         
-        // Try to drop the piece at its exact correct position
-        onDrop(region.id, region.correctX, region.correctY);
-      } else {
-        // If not correct, drop at the current position
-        onDrop(region.id, relX, relY);
+        // Add a visual effect to show the piece fits perfectly
+        // The piece will briefly flash with a highlight and then settle with a slight shadow
+        setPulseEffect(true);
+        setTimeout(() => {
+          setPulseEffect(false);
+        }, 600);
       }
     }
   }, [isDragging, region.id, onDrop, containerRef, setDraggedPieceId, isCloseToCorrectPosition]);
