@@ -31,7 +31,7 @@ export function CountrySvgMap({
   height = "100%",
   width = "100%",
   renderOverlay
-}: CountrySvgMapProps) {
+}: CountrySvgMapProps): JSX.Element {
   const [regions, setRegions] = useState<RegionData[]>([]);
   const [viewBox, setViewBox] = useState<string>("0 0 800 600");
   const [scale, setScale] = useState<number>(1);
@@ -79,7 +79,7 @@ export function CountrySvgMap({
     }
   };
   
-  // Extract regions from SVG data
+  // Extract regions from SVG data and set up region mappings
   useEffect(() => {
     if (!svgData) return;
     
@@ -109,40 +109,125 @@ export function CountrySvgMap({
           throw new Error("Failed to fetch regions");
         }
         
-        const regions = await response.json();
+        const regionsData = await response.json();
         const mappings: Record<string, number> = {};
         
         // Create a mapping from region name to database ID
-        regions.forEach((region: any) => {
-          // Clean up region names for comparison
+        const nameToRegion = new Map<string, any>();
+        
+        // First, build a lookup table of names to DB regions
+        regionsData.forEach((region: any) => {
           const cleanName = region.name.trim().toLowerCase();
+          nameToRegion.set(cleanName, region);
           
-          // Extract the region code from SVG IDs (like NG-AB -> AB)
-          if (countryId === 1) {
-            // For Nigeria, try to match by name or code
-            extractedRegions.forEach(svgRegion => {
-              const svgRegionName = svgRegion.name.trim().toLowerCase();
-              const svgRegionCode = svgRegion.id.replace('NG-', '');
-              
-              if (svgRegionName === cleanName || 
-                  svgRegionName.includes(cleanName) || 
-                  cleanName.includes(svgRegionName)) {
-                mappings[svgRegion.id] = region.id;
-              }
-            });
-          } else if (countryId === 2) {
-            // For Kenya, try to match by name
-            extractedRegions.forEach(svgRegion => {
-              const svgRegionName = svgRegion.name.trim().toLowerCase();
-              
-              if (svgRegionName === cleanName || 
-                  svgRegionName.includes(cleanName) || 
-                  cleanName.includes(svgRegionName)) {
-                mappings[svgRegion.id] = region.id;
-              }
-            });
+          // Add common variations/abbreviations
+          if (cleanName === "federal capital territory") {
+            nameToRegion.set("fct", region);
           }
         });
+        
+        console.log(`Built name lookup with ${nameToRegion.size} entries`);
+        
+        // Then map SVG regions to DB regions
+        if (countryId === 1) { // Nigeria
+          extractedRegions.forEach(svgRegion => {
+            const svgRegionName = svgRegion.name.trim().toLowerCase();
+            const svgRegionCode = svgRegion.id.replace('NG-', '');
+            let mapped = false;
+            
+            // Try direct name match
+            if (nameToRegion.has(svgRegionName)) {
+              const region = nameToRegion.get(svgRegionName);
+              mappings[svgRegion.id] = region.id;
+              console.log(`Direct match: ${svgRegion.name} -> ID ${region.id}`);
+              mapped = true;
+            }
+            
+            // Try prefix match (e.g., "Akwa Ibom" matches "Akwa")
+            if (!mapped) {
+              nameToRegion.forEach((dbRegion, dbName) => {
+                if (svgRegionName.startsWith(dbName) || dbName.startsWith(svgRegionName)) {
+                  mappings[svgRegion.id] = dbRegion.id;
+                  console.log(`Prefix match: ${svgRegion.name} -> ${dbRegion.name} (ID ${dbRegion.id})`);
+                  mapped = true;
+                }
+              });
+            }
+            
+            // Special cases for problematic states
+            if (!mapped) {
+              if (svgRegionName === "ebonyi") {
+                // Find Ebonyi in the regions or use a fallback ID
+                const ebonyiRegion = regionsData.find((r: any) => 
+                  r.name.toLowerCase() === "ebonyi" || r.id === 11);
+                
+                if (ebonyiRegion) {
+                  mappings[svgRegion.id] = ebonyiRegion.id;
+                  console.log(`Special case: Ebonyi -> ID ${ebonyiRegion.id}`);
+                } else {
+                  mappings[svgRegion.id] = 11; // Fallback ID for Ebonyi
+                  console.log(`Special fallback: Ebonyi -> ID 11`);
+                }
+                mapped = true;
+              }
+              else if (svgRegion.name === "Federal Capital Territory" || svgRegionName === "fct") {
+                const fctRegion = regionsData.find((r: any) => 
+                  r.name.toLowerCase().includes("capital") || r.name.toLowerCase() === "fct" || r.id === 12);
+                
+                if (fctRegion) {
+                  mappings[svgRegion.id] = fctRegion.id;
+                  console.log(`Special case: FCT -> ID ${fctRegion.id}`);
+                } else {
+                  mappings[svgRegion.id] = 12; // Fallback ID for FCT
+                  console.log(`Special fallback: FCT -> ID 12`);
+                }
+                mapped = true;
+              }
+            }
+            
+            // For any remaining unmapped regions, add them with a high ID number
+            if (!mapped) {
+              // Find the highest existing ID and add from there
+              const maxId = Math.max(...regionsData.map((r: any) => r.id));
+              
+              // Use an offset to ensure we don't conflict with existing IDs
+              const uniqueId = maxId + 100 + (svgRegionCode.charCodeAt(0) + svgRegionCode.charCodeAt(1));
+              
+              mappings[svgRegion.id] = uniqueId;
+              console.log(`Generated unique ID: ${svgRegion.name} -> ID ${uniqueId}`);
+            }
+          });
+        } else if (countryId === 2) { // Kenya
+          // Similar logic for Kenya
+          extractedRegions.forEach(svgRegion => {
+            const svgRegionName = svgRegion.name.trim().toLowerCase();
+            let mapped = false;
+            
+            // Try direct name match
+            if (nameToRegion.has(svgRegionName)) {
+              const region = nameToRegion.get(svgRegionName);
+              mappings[svgRegion.id] = region.id;
+              mapped = true;
+            }
+            
+            // Try prefix match
+            if (!mapped) {
+              nameToRegion.forEach((dbRegion, dbName) => {
+                if (svgRegionName.startsWith(dbName) || dbName.startsWith(svgRegionName)) {
+                  mappings[svgRegion.id] = dbRegion.id;
+                  mapped = true;
+                }
+              });
+            }
+            
+            // For any remaining unmapped regions, add them with a high ID number
+            if (!mapped) {
+              const maxId = Math.max(...regionsData.map((r: any) => r.id));
+              const uniqueId = maxId + 100 + svgRegion.name.length;
+              mappings[svgRegion.id] = uniqueId;
+            }
+          });
+        }
         
         console.log('Created region mappings:', mappings);
         setRegionMappings(mappings);
