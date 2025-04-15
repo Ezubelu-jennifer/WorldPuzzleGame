@@ -237,6 +237,40 @@ export function StatePiece({
       const relX = e.clientX - containerRect.left;
       const relY = e.clientY - containerRect.top;
       
+      // Try to find the target element before dropping to adjust size
+      try {
+        // Look for matching path element with the same region ID
+        const targetPath = document.querySelector(
+          `path[data-numeric-id="${region.id}"], path[data-region-id="${region.id}"], path[data-region-id="NG-${region.id}"]`
+        ) as SVGPathElement;
+        
+        if (targetPath && pathRef.current) {
+          // Calculate relative size based on path dimensions
+          const targetRect = targetPath.getBBox();
+          const targetArea = targetRect.width * targetRect.height;
+          
+          const pieceRect = pathRef.current.getBBox();
+          const pieceArea = pieceRect.width * pieceRect.height;
+          
+          // Determine appropriate scale based on area ratio
+          let finalScale = 1.0;
+          if (targetArea > pieceArea) {
+            // Target is bigger, enlarge (max 1.5x)
+            finalScale = Math.min(1.5, Math.sqrt(targetArea / pieceArea));
+            console.log(`Target area larger: final scale ${finalScale} (mouse up)`);
+          } else if (targetArea < pieceArea) {
+            // Target is smaller, shrink (min 0.6x)
+            finalScale = Math.max(0.6, Math.sqrt(targetArea / pieceArea));
+            console.log(`Target area smaller: final scale ${finalScale} (mouse up)`);
+          }
+          
+          // Store the calculated scale for use after successful placement
+          setScale(finalScale * shapeSize);
+        }
+      } catch (err) {
+        console.error('Error calculating final size adjustment:', err);
+      }
+      
       // Try to drop the piece on the board using only shape-based matching
       const isDropped = onDrop(region.id, relX, relY);
       
@@ -251,9 +285,12 @@ export function StatePiece({
         });
         
         // Add a smooth animation for the final snap
-        setScale(1.2); // Initially scale up slightly
+        // First slightly enlarge from the current scale
+        const currentScale = scale;
+        setScale(currentScale * 1.1);
         setTimeout(() => {
-          setScale(1.0); // Then scale back to normal
+          // Then return to the appropriate scale for this region
+          setScale(currentScale);
         }, 150);
         
         // Add a visual effect to show the piece fits perfectly
@@ -262,9 +299,12 @@ export function StatePiece({
         setTimeout(() => {
           setPulseEffect(false);
         }, 600);
+      } else {
+        // Reset scale if not dropped successfully
+        setScale(1.0 * shapeSize);
       }
     }
-  }, [isDragging, region.id, onDrop, containerRef, setDraggedPieceId]);
+  }, [isDragging, region.id, onDrop, containerRef, setDraggedPieceId, scale, shapeSize]);
 
   // Touch handlers
   const handleTouchStart = useCallback((e: React.TouchEvent<SVGElement>) => {
@@ -400,7 +440,41 @@ export function StatePiece({
       const relX = touch.clientX - containerRect.left;
       const relY = touch.clientY - containerRect.top;
       
-      // Try to drop the piece on the board using only shape-based matching
+      // Try to find the target element before dropping to adjust size
+      try {
+        // Look for matching path element with the same region ID
+        const targetPath = document.querySelector(
+          `path[data-numeric-id="${region.id}"], path[data-region-id="${region.id}"], path[data-region-id="NG-${region.id}"]`
+        ) as SVGPathElement;
+        
+        if (targetPath && pathRef.current) {
+          // Calculate relative size based on path dimensions
+          const targetRect = targetPath.getBBox();
+          const targetArea = targetRect.width * targetRect.height;
+          
+          const pieceRect = pathRef.current.getBBox();
+          const pieceArea = pieceRect.width * pieceRect.height;
+          
+          // Determine appropriate scale based on area ratio
+          let finalScale = 1.0;
+          if (targetArea > pieceArea) {
+            // Target is bigger, enlarge (max 1.5x)
+            finalScale = Math.min(1.5, Math.sqrt(targetArea / pieceArea));
+            console.log(`Target area larger: final scale ${finalScale} (touch end)`);
+          } else if (targetArea < pieceArea) {
+            // Target is smaller, shrink (min 0.6x)
+            finalScale = Math.max(0.6, Math.sqrt(targetArea / pieceArea));
+            console.log(`Target area smaller: final scale ${finalScale} (touch end)`);
+          }
+          
+          // Store the calculated scale for use after successful placement
+          setScale(finalScale * shapeSize);
+        }
+      } catch (err) {
+        console.error('Error calculating final size adjustment:', err);
+      }
+      
+      // Try to drop the piece on the board using shape-based matching
       const isDropped = onDrop(region.id, relX, relY);
       
       if (isDropped) {
@@ -414,9 +488,12 @@ export function StatePiece({
         });
         
         // Add a smooth animation for the final snap
-        setScale(1.2); // Initially scale up slightly
+        // First slightly enlarge from the current scale
+        const currentScale = scale;
+        setScale(currentScale * 1.1);
         setTimeout(() => {
-          setScale(1.0); // Then scale back to normal
+          // Then return to the appropriate scale for this region
+          setScale(currentScale);
         }, 150);
         
         // Provide tactile feedback for mobile devices
@@ -430,14 +507,16 @@ export function StatePiece({
         }
         
         // Add a visual effect to show the piece fits perfectly
-        // The piece will briefly flash with a highlight and then settle with a slight shadow
         setPulseEffect(true);
         setTimeout(() => {
           setPulseEffect(false);
         }, 600);
+      } else {
+        // Reset scale if not dropped successfully
+        setScale(1.0 * shapeSize);
       }
     }
-  }, [isDragging, region.id, onDrop, containerRef, setDraggedPieceId]);
+  }, [isDragging, region.id, onDrop, containerRef, setDraggedPieceId, scale, shapeSize]);
 
   // Build the SVG element directly
   return (
