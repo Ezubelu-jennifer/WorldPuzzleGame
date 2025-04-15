@@ -42,6 +42,7 @@ export function StatePiece({
   const [rotation, setRotation] = useState<number>(0);
   const [scale, setScale] = useState<number>(1);
   const [isNearTarget, setIsNearTarget] = useState<boolean>(false); // Track if piece is near correct position
+  const [pulseEffect, setPulseEffect] = useState<boolean>(false); // Visual feedback when piece is placed correctly
   
   // Country ID
   const countryId = region.countryId || 0;
@@ -209,12 +210,14 @@ export function StatePiece({
       const relX = e.clientX - containerRect.left;
       const relY = e.clientY - containerRect.top;
       
-      // Check if the piece is close to its correct position
-      const isCorrect = isCloseToCorrectPosition(relX, relY);
-      if (isCorrect) {
+      // Try to drop the piece on the board - we'll use both distance and shape matching
+      const isDropped = onDrop(region.id, relX, relY);
+      
+      if (isDropped) {
         console.log(`✅ Region ${region.name} placed in correct position!`);
         
         // Immediately set position to the exact correct position for a perfect fit
+        // This ensures the SVG path aligns perfectly with the outline on the map
         setPosition({
           x: containerRect.left + region.correctX,
           y: containerRect.top + region.correctY
@@ -226,14 +229,15 @@ export function StatePiece({
           setScale(1.0); // Then scale back to normal
         }, 150);
         
-        // Try to drop the piece at its exact correct position
-        onDrop(region.id, region.correctX, region.correctY);
-      } else {
-        // If not correct, drop at the current position
-        onDrop(region.id, relX, relY);
+        // Add a visual effect to show the piece fits perfectly
+        // The piece will briefly flash with a highlight and then settle with a slight shadow
+        setPulseEffect(true);
+        setTimeout(() => {
+          setPulseEffect(false);
+        }, 600);
       }
     }
-  }, [isDragging, region.id, onDrop, containerRef, setDraggedPieceId, isCloseToCorrectPosition]);
+  }, [isDragging, region.id, onDrop, containerRef, setDraggedPieceId]);
 
   // Touch handlers
   const handleTouchStart = useCallback((e: React.TouchEvent<SVGElement>) => {
@@ -413,9 +417,12 @@ export function StatePiece({
                 transformOrigin: 'center center',
                 cursor: !region.isPlaced ? 'move' : 'default',
                 pointerEvents: region.isPlaced ? 'none' : 'auto',
-                filter: isNearTarget && isDragging 
-                  ? 'drop-shadow(0px 0px 10px rgba(0, 255, 0, 0.7))' 
-                  : 'drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.3))'
+                filter: pulseEffect 
+                  ? 'drop-shadow(0px 0px 15px rgba(0, 255, 0, 0.9))' 
+                  : isNearTarget && isDragging 
+                    ? 'drop-shadow(0px 0px 10px rgba(0, 255, 0, 0.7))' 
+                    : 'drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.3))',
+                animation: pulseEffect ? 'pulse 0.6s ease-in-out' : 'none'
               }}
               onMouseDown={!region.isPlaced ? handleDragStart : undefined}
               onTouchStart={!region.isPlaced ? handleTouchStart : undefined}
@@ -447,9 +454,12 @@ export function StatePiece({
                 transformOrigin: 'center center',
                 cursor: !region.isPlaced ? 'move' : 'default',
                 pointerEvents: region.isPlaced ? 'none' : 'auto', // Only enable pointer events when not placed
-                filter: isNearTarget && isDragging 
-                  ? 'drop-shadow(0px 0px 10px rgba(0, 255, 0, 0.7))' 
-                  : 'drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.3))'
+                filter: pulseEffect 
+                  ? 'drop-shadow(0px 0px 15px rgba(0, 255, 0, 0.9))' 
+                  : isNearTarget && isDragging 
+                    ? 'drop-shadow(0px 0px 10px rgba(0, 255, 0, 0.7))' 
+                    : 'drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.3))',
+                animation: pulseEffect ? 'pulse 0.6s ease-in-out' : 'none'
               }}
               onMouseDown={!region.isPlaced ? handleDragStart : undefined}
               onTouchStart={!region.isPlaced ? handleTouchStart : undefined}

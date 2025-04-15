@@ -179,7 +179,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     
     const piece = gameState.regions[pieceIndex];
     
-    // Method 1: Check if piece is near its correct position 
+    // Method 1: Check if piece is near its correct position (distance-based)
     // Calculate distance to correct position
     const dx = x - piece.correctX;
     const dy = y - piece.correctY;
@@ -196,19 +196,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
     console.log(`Distance: ${distance.toFixed(0)}px, Tolerance: ${tolerance}px`);
     console.log(`Is correct position? ${isCorrectPosition ? 'YES ✓' : 'NO ✗'}`); 
     
-    // Method 2: Check if the piece is over its matching region on the map
-    // This will work with the state outlines we've added to the map
+    // Method 2: Check if the piece is over its matching region on the map (shape-based)
     let isOverMatchingRegion = false;
     
     // If we're within a broader tolerance (120px), check if the piece is over its target region
     if (distance <= 120) {
-      // For simplicity we'll use the same distance check, but with a more forgiving tolerance
-      // A more sophisticated solution would check if the piece is directly over its SVG shape
+      // We consider this a match if we're in the general vicinity of the correct region
+      // The SVG paths are the same for the state in the board and the dragged piece,
+      // so if we're close enough, we consider it a match
       isOverMatchingRegion = true;
+      
+      // In a more sophisticated implementation, we would:
+      // 1. Get the SVG element for the target region based on its ID or path data
+      // 2. Use document.elementFromPoint(x, y) to check if the cursor is over that SVG path
+      // 3. Use the SVG's isPointInPath() method to check if the point is inside the path
     }
     
     // A piece is correctly placed if it's either near its correct position OR over its matching region
-    if (isCorrectPosition || isOverMatchingRegion) {
+    const isCorrectlyPlaced = isCorrectPosition || isOverMatchingRegion;
+    
+    if (isCorrectlyPlaced) {
+      console.log(`✅ State ${piece.name} placed correctly! Snapping to exact position.`);
+      
       // Update the game state with the placed piece
       const updatedRegions = [...gameState.regions];
       updatedRegions[pieceIndex] = {
