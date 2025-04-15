@@ -21,6 +21,7 @@ interface RegionThumbnailProps {
   rotatable?: boolean;
   onDrop?: (id: number, x: number, y: number) => boolean;
   regionPieceId?: number;
+  forceViewBox?: string; // Force a consistent viewBox for scaling
 }
 
 export function RegionThumbnail({

@@ -45,7 +45,7 @@ export function DynamicStatePiece({
   const circleRef = useRef<SVGCircleElement>(null);
   
   // Constants
-  const size = isTrayPiece ? 100 : 100; // Size of the SVG viewBox
+  const size = 100; // Standardized size for ALL pieces, whether in tray or on map
   
   // Debug logging for initialization
   useEffect(() => {
