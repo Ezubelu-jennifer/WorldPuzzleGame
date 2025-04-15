@@ -360,8 +360,8 @@ export function PuzzleBoard({
                       
                       // Calculate appropriate dot size based on viewBox
                       const [, , width, height] = viewBox.split(' ').map(Number);
-                      const baseDotSize = Math.min(width, height) * 0.025; // Larger dots for better visibility
-                      const dotSize = isPrimary ? baseDotSize * 1.5 : baseDotSize * 1.2;
+                      const baseDotSize = Math.min(width, height) * 0.008; // Smaller dots as requested
+                      const dotSize = isPrimary ? baseDotSize * 1.2 : baseDotSize * 1.0;
                       
                       // Set dot styles - using only red dots as per user request
                       const dotColor = "rgba(255,0,0,1)"; // Pure red for all dots

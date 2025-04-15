@@ -213,39 +213,103 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const findRegionElement = (regionId: number): SVGPathElement | null => {
       try {
         // Try to find the corresponding region path in the SVG map
-        const svgPaths = document.querySelectorAll('path[data-region-id], path[data-numeric-id]');
+        const svgPaths = document.querySelectorAll('path[data-region-id], path[data-numeric-id], path[id], use');
         
         // Log for debugging
-        console.log(`Looking for SVG path with region ID ${regionId} among ${svgPaths.length} paths`);
+        console.log(`Looking for SVG path with region ID ${regionId} among ${svgPaths.length} paths/elements`);
         
+        // Get the region name for better matching
+        const regionName = piece.name.toLowerCase();
+        
+        // For Nigeria, create a code-to-id mapping
+        const nigeriaCodeToId: Record<string, number> = {
+          'AB': 1, 'AD': 2, 'AK': 3, 'AN': 4, 'BA': 5, 'BY': 6, 'BE': 7, 'BO': 8,
+          'CR': 9, 'DE': 10, 'EB': 11, 'ED': 12, 'EK': 13, 'EN': 14, 'FC': 15, 
+          'GO': 16, 'IM': 17, 'JI': 18, 'KD': 19, 'KN': 20, 'KT': 21, 'KE': 22, 
+          'KO': 23, 'KW': 24, 'LA': 25, 'NA': 26, 'NI': 27, 'OG': 28, 'ON': 29, 
+          'OS': 30, 'OY': 31, 'PL': 32, 'RI': 33, 'SO': 34, 'TA': 35, 'YO': 36, 
+          'ZA': 37
+        };
+        
+        // First pass: Try direct ID matching which is most reliable
         for (let i = 0; i < svgPaths.length; i++) {
           const pathElement = svgPaths[i] as SVGPathElement;
           
-          // First try to match by numeric ID (which maps to our database IDs)
+          // Try to match by numeric ID (maps to our database IDs)
           const numericId = pathElement.getAttribute('data-numeric-id');
           if (numericId && parseInt(numericId, 10) === regionId) {
-            console.log(`Found matching region by numeric ID: ${numericId}`);
+            console.log(`✅ Found exact match by numeric ID: ${numericId}`);
             return pathElement;
           }
           
-          // If no match by numeric ID, try the SVG region ID
+          // Try matching by SVG data-region-id attribute
           const dataRegionId = pathElement.getAttribute('data-region-id');
-          if (dataRegionId && dataRegionId.includes(`${regionId}`)) {
-            console.log(`Found matching region by SVG ID: ${dataRegionId}`);
-            return pathElement;
+          if (dataRegionId) {
+            // For Nigeria, check for state code
+            if (dataRegionId.startsWith('NG-') && gameState?.countryId === 1) {
+              const stateCode = dataRegionId.replace('NG-', '');
+              const mappedId = nigeriaCodeToId[stateCode];
+              if (mappedId === regionId) {
+                console.log(`✅ Found match by Nigeria state code: ${stateCode} -> ID: ${mappedId}`);
+                return pathElement;
+              }
+            }
+            
+            // Regular ID pattern match
+            if (dataRegionId.includes(`${regionId}`)) {
+              console.log(`✅ Found match by SVG ID: ${dataRegionId}`);
+              return pathElement;
+            }
           }
           
-          // Also try to match by name for completeness (some special cases)
-          const regionName = piece.name.toLowerCase();
+          // Try matching by element ID attribute
+          const elementId = pathElement.id;
+          if (elementId) {
+            // For Nigeria, check for state code in ID
+            if (elementId.startsWith('NG-') && gameState?.countryId === 1) {
+              const stateCode = elementId.replace('NG-', '');
+              const mappedId = nigeriaCodeToId[stateCode];
+              if (mappedId === regionId) {
+                console.log(`✅ Found match by element ID with Nigeria code: ${elementId}`);
+                return pathElement;
+              }
+            }
+            
+            // Regular ID pattern match
+            if (elementId.includes(`${regionId}`)) {
+              console.log(`✅ Found match by element ID: ${elementId}`);
+              return pathElement;
+            }
+          }
+        }
+        
+        // Second pass: Try name-based matching (less reliable but needed for some cases)
+        for (let i = 0; i < svgPaths.length; i++) {
+          const pathElement = svgPaths[i] as SVGPathElement;
+          
+          // Try to match by data-name attribute
           const pathName = pathElement.getAttribute('data-name')?.toLowerCase();
           if (pathName && regionName && (
               pathName.includes(regionName) || 
               regionName.includes(pathName))
           ) {
-            console.log(`Found matching region by name: ${pathName}`);
+            console.log(`✅ Found match by name: ${pathName} ↔ ${regionName}`);
+            return pathElement;
+          }
+          
+          // Try to match by element ID containing name or partial name
+          const elementId = pathElement.id?.toLowerCase();
+          if (elementId && regionName && (
+              elementId.includes(regionName) ||
+              regionName.includes(elementId))
+          ) {
+            console.log(`✅ Found match by element ID containing name: ${elementId} ↔ ${regionName}`);
             return pathElement;
           }
         }
+        
+        // No matches found
+        console.log(`❌ No matching region element found for ID: ${regionId}, Name: ${regionName}`);
       } catch (err) {
         console.error('Error finding region element:', err);
       }

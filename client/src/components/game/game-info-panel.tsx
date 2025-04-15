@@ -1,41 +1,25 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link } from "wouter";
-import { Clock, ChartBar, Star, Lightbulb, RotateCcw, HelpCircle, ArrowLeft, Wand2, ZoomIn, ZoomOut, Move } from "lucide-react";
+import { Clock, ChartBar, Star, Lightbulb, RotateCcw, HelpCircle, ArrowLeft, Wand2 } from "lucide-react";
 import { useGame } from "@/context/game-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useGameTimer } from "@/hooks/useGameTimer";
 import { Progress } from "@/components/ui/progress";
-import { Slider } from "@/components/ui/slider";
 
 interface GameInfoPanelProps {
   onUseHint: () => void;
   onRestart: () => void;
   onHelp: () => void;
-  onSizeChange?: (size: number) => void;
 }
 
-export function GameInfoPanel({ onUseHint, onRestart, onHelp, onSizeChange }: GameInfoPanelProps) {
+export function GameInfoPanel({ onUseHint, onRestart, onHelp }: GameInfoPanelProps) {
   const { gameState } = useGame();
-  const [shapeSize, setShapeSize] = useState<number>(1.0);
   
   // Set up timer that starts when gameState is available
   const { formattedTime } = useGameTimer({
     isRunning: gameState !== null && !gameState?.isCompleted,
   });
-  
-  // Handle shape size change
-  const handleSizeChange = (value: number[]) => {
-    const newSize = value[0];
-    console.log(`GameInfoPanel: Changed size slider to ${newSize}`);
-    setShapeSize(newSize);
-    if (onSizeChange) {
-      console.log(`GameInfoPanel: Calling parent onSizeChange with ${newSize}`);
-      onSizeChange(newSize);
-    } else {
-      console.log(`GameInfoPanel: No onSizeChange function provided`);
-    }
-  };
   
   if (!gameState) {
     return (
