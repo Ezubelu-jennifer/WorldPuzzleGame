@@ -292,7 +292,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const resetGame = () => {
     if (!gameState) return;
     
-    // Reset game state but keep country information
+    // Reset game state but keep country information and shape size
     setGameState({
       ...gameState,
       regions: gameState.regions.map(r => ({ ...r, isPlaced: false, currentX: undefined, currentY: undefined })),
@@ -301,7 +301,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       startTime: Date.now(),
       endTime: null,
       isCompleted: false,
-      score: null
+      score: null,
+      // Maintain the current shape size
+      shapeSize: gameState.shapeSize || 1.0
     });
   };
 
@@ -325,7 +327,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ...gameState,
       endTime,
       isCompleted: true,
-      score: finalScore
+      score: finalScore,
+      // Preserve the current shape size
+      shapeSize: gameState.shapeSize || 1.0
     });
     
     // Send completion to server
@@ -340,6 +344,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
     }
   };
+  
+  // Update the shape size for better matching accuracy
+  const setShapeSize = (size: number) => {
+    if (!gameState) return;
+    
+    // Ensure size is within reasonable bounds
+    const boundedSize = Math.max(0.5, Math.min(1.5, size));
+    
+    console.log(`Setting shape size to ${boundedSize}`);
+    
+    // Update the game state with the new shape size
+    setGameState({
+      ...gameState,
+      shapeSize: boundedSize
+    });
+  };
 
   return (
     <GameContext.Provider
@@ -350,6 +370,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         useHint,
         resetGame,
         completeGame,
+        setShapeSize,
         loading,
         error
       }}

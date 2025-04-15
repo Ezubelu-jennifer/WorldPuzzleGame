@@ -15,10 +15,18 @@ interface GameScreenProps {
 }
 
 export function GameScreen({ countryId }: GameScreenProps) {
-  const { gameState, initializeGame, placePiece, useHint, resetGame } = useGame();
+  const { gameState, initializeGame, placePiece, useHint, resetGame, setShapeSize } = useGame();
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
-  const [shapeSize, setShapeSize] = useState(1.0);
+  // Use state to track the current shape size for the UI
+  const [localShapeSize, setLocalShapeSize] = useState(1.0);
+  
+  // Sync the local shape size with the game state shape size
+  useEffect(() => {
+    if (gameState?.shapeSize) {
+      setLocalShapeSize(gameState.shapeSize);
+    }
+  }, [gameState?.shapeSize]);
   
   // Fetch country data
   const { data: country, isLoading: countryLoading } = useQuery({
@@ -74,6 +82,8 @@ export function GameScreen({ countryId }: GameScreenProps) {
   // Handle shape size change
   const handleShapeSizeChange = (size: number) => {
     console.log(`GameScreen: Changing shape size to ${size}`);
+    // Update both the local state and the game context
+    setLocalShapeSize(size);
     setShapeSize(size);
   };
 
@@ -135,7 +145,7 @@ export function GameScreen({ countryId }: GameScreenProps) {
       <div className="bg-gray-50 border-b overflow-x-auto py-3 px-2">
         <PiecesTray 
           onPieceDrop={handlePieceDrop}
-          shapeSize={shapeSize}
+          shapeSize={localShapeSize}
         />
       </div>
       
@@ -146,7 +156,7 @@ export function GameScreen({ countryId }: GameScreenProps) {
           countryName={country.name}
           outlinePath={country.outlinePath}
           onStart={handleStart}
-          shapeSize={shapeSize}
+          shapeSize={localShapeSize}
         />
       </div>
       
@@ -161,17 +171,17 @@ export function GameScreen({ countryId }: GameScreenProps) {
         <div className="font-bold text-sm mb-1 text-gray-700">Shape Size</div>
         <div className="flex items-center gap-1">
           <button 
-            onClick={() => handleShapeSizeChange(Math.max(0.5, shapeSize - 0.1))}
+            onClick={() => handleShapeSizeChange(Math.max(0.5, localShapeSize - 0.1))}
             className="bg-gray-200 hover:bg-gray-300 rounded-full w-7 h-7 flex items-center justify-center"
             title="Decrease size"
           >
             <span className="text-gray-700 font-bold">-</span>
           </button>
           <div className="w-10 text-center font-mono text-sm">
-            {(shapeSize * 100).toFixed(0)}%
+            {(localShapeSize * 100).toFixed(0)}%
           </div>
           <button 
-            onClick={() => handleShapeSizeChange(Math.min(1.5, shapeSize + 0.1))}
+            onClick={() => handleShapeSizeChange(Math.min(1.5, localShapeSize + 0.1))}
             className="bg-gray-200 hover:bg-gray-300 rounded-full w-7 h-7 flex items-center justify-center"
             title="Increase size"
           >
