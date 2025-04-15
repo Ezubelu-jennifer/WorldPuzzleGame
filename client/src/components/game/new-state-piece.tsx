@@ -366,8 +366,8 @@ export function StatePiece({
         preserveAspectRatio="xMidYMid meet"
         className="region-shape"
         style={{ 
-          width: '60px',
-          height: '60px',
+          width: `${60 * shapeSize}px`,
+          height: `${60 * shapeSize}px`,
           display: 'block',
           pointerEvents: 'none'
         }}
