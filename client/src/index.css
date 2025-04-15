@@ -109,8 +109,19 @@
 
 /* Fade-in animation for popups */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+  0% { opacity: 0; transform: translateY(-10px); }
+  70% { opacity: 1; transform: translateY(5px); }
+  85% { transform: translateY(-2px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Stronger fade-in animation for matched region popups */
+@keyframes popupFadeIn {
+  0% { opacity: 0; transform: translateY(-15px) scale(0.8); }
+  20% { opacity: 1; }
+  60% { transform: translateY(5px) scale(1.1); }
+  80% { transform: translateY(-3px) scale(1.05); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 /* State piece wrapper base styling */

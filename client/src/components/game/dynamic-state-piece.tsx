@@ -126,39 +126,39 @@ export function DynamicStatePiece({
     const targetElement = findTargetPathElement();
     if (!targetElement || !pathRef.current) {
       console.log('Could not calculate size: missing elements');
-      return 1.0 ; // Default size
+      return 1.0; // Default size
     }
     
     try {
-      // Get target and piece areas
-      const targetRect = targetElement.getBBox();
-      const targetArea = targetRect.width * targetRect.height;
+      // Get target dimensions directly 
+      const targetRect = targetElement.getBoundingClientRect();
+      const targetWidth = targetRect.width;
+      const targetHeight = targetRect.height;
       
-      const pieceRect = pathRef.current.getBBox();
-      const pieceArea = pieceRect.width * pieceRect.height;
+      // Get piece dimensions
+      const pieceRect = pathRef.current.getBoundingClientRect();
+      const pieceWidth = pieceRect.width;
+      const pieceHeight = pieceRect.height;
       
-      console.log(`Size comparison: Target area: ${targetArea.toFixed(2)}, Piece area: ${pieceArea.toFixed(2)}`);
+      // Use the maximum dimension for scaling to ensure proper fit
+      const widthRatio = targetWidth / pieceWidth;
+      const heightRatio = targetHeight / pieceHeight;
       
-      // Calculate ratio and determine scale
-      if (targetArea > pieceArea * 1.1) { // More than 10% larger
-        const ratio = Math.sqrt(targetArea / pieceArea);
-        const newScale = Math.min(1.5, ratio); // Cap at 1.5x
-        console.log(`Target is LARGER by ${Math.round((ratio-1)*100)}%, scaling UP to ${newScale.toFixed(2)}`);
-        return newScale ;
-      } 
-      else if (targetArea < pieceArea * 0.9) { // More than 10% smaller
-        const ratio = Math.sqrt(targetArea / pieceArea);
-        const newScale = Math.max(0.6, ratio); // Minimum 0.6x
-        console.log(`Target is SMALLER by ${Math.round((1-ratio)*100)}%, scaling DOWN to ${newScale.toFixed(2)}`);
-        return newScale ;
-      }
+      // Choose the ratio that ensures the shape fits properly
+      const ratio = Math.min(widthRatio, heightRatio);
       
-      // Default: areas are similar (within 10%)
-      console.log('Areas are similar, using default scale');
-      return 1.0 ;
+      // Log the detailed information
+      console.log(`Size comparison: Target: ${targetWidth.toFixed(2)}x${targetHeight.toFixed(2)}, Piece: ${pieceWidth.toFixed(2)}x${pieceHeight.toFixed(2)}`);
+      console.log(`Width ratio: ${widthRatio.toFixed(2)}, Height ratio: ${heightRatio.toFixed(2)}, Using: ${ratio.toFixed(2)}`);
+      
+      // Apply some constraints to avoid extreme scaling
+      const newScale = Math.max(0.8, Math.min(1.2, ratio));
+      
+      console.log(`Applying scale: ${newScale.toFixed(2)}`);
+      return newScale;
     } catch (err) {
       console.error('Error calculating size:', err);
-      return 1.0 ; // Default on error
+      return 1.0; // Default on error
     }
   }, [findTargetPathElement]);
   
@@ -545,28 +545,34 @@ export function DynamicStatePiece({
         </g>
       )}
       
-      {/* Popup message */}
+      {/* Popup message - positioned above the shape */}
       {showPopup && isDragging && (
-        <foreignObject x="0" y="-60" width="200" height="80" style={{ 
-          transform: 'translateX(-50%)',
+        <foreignObject x="-150" y="-100" width="300" height="100" style={{ 
           pointerEvents: 'none',
-          zIndex: 1000
+          zIndex: 1000,
+          overflow: 'visible'
          }}>
           <div
             style={{
               backgroundColor: '#4CAF50',
               color: 'white',
-              padding: '8px 12px',
-              borderRadius: '8px',
-              boxShadow: '0 4px 14px rgba(0,0,0,0.4)',
+              padding: '10px 16px',
+              borderRadius: '12px',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.5)',
               fontFamily: 'Arial, sans-serif',
               fontWeight: 'bold',
               textAlign: 'center',
               fontSize: '16px',
               whiteSpace: 'nowrap',
               pointerEvents: 'none',
-              animation: 'fadeIn 0.3s ease-in-out',
-              border: '2px solid white'
+              animation: 'popupFadeIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+              border: '3px solid white',
+              position: 'absolute',
+              left: '50%',
+              top: 0,
+              transform: 'translateX(-50%) translateY(-100%)',
+              margin: '0 auto',
+              width: 'fit-content'
             }}
           >
             {popupText}
