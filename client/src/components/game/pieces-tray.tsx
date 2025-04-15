@@ -8,9 +8,10 @@ import { RegionPiece } from "@shared/schema";
 
 interface PiecesTrayProps {
   onPieceDrop: (id: number, x: number, y: number) => boolean;
+  shapeSize?: number; // Add shape size prop
 }
 
-export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
+export function PiecesTray({ onPieceDrop, shapeSize = 1.0 }: PiecesTrayProps) {
   const { gameState } = useGame();
   const trayRef = useRef<HTMLDivElement>(null);
   const [svgData, setSvgData] = useState<string>("");
@@ -160,6 +161,7 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
                 onDrop={onPieceDrop}
                 containerRef={trayRef}
                 isTrayPiece
+                shapeSize={shapeSize}
               />
             )}
             
