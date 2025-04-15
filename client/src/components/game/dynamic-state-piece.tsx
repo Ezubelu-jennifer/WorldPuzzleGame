@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, RefObject, useState, useCallback } from "react";
 import { RegionPiece } from "@shared/schema";
 import { useDragContext } from "@/context/drag-context";
+import { compareSvgPaths } from "@/utils/svg-clipper";
 
 interface StatePieceProps {
   region: RegionPiece;
@@ -61,13 +62,10 @@ export function DynamicStatePiece({
       `path[data-name="${region.name}"]`
     ];
     
-    console.log(`🔍 Searching for target path element for ${region.name} (ID: ${region.id})`);
-    
     // Try each selector
     for (const selector of selectors) {
       const element = document.querySelector(selector) as SVGPathElement;
       if (element) {
-        console.log(`✅ Found target element with selector: ${selector}`, element);
         const targetName = element.getAttribute('data-name');
         if (targetName) {
           setTargetRegionName(targetName);
@@ -77,12 +75,12 @@ export function DynamicStatePiece({
     }
     
     // If no direct match, try a more exhaustive search
-    const allPaths = document.querySelectorAll('path[data-region-id], path[data-numeric-id]');
-    console.log(`Searching among ${allPaths.length} possible path elements`);
+    const allPaths = document.querySelectorAll('path[data-region-id], path[data-numeric-id], path[data-name]');
     
-    // Convert NodeList to Array to avoid TypeScript issue
+    // Convert NodeList to Array to avoid TypeScript issues
     const pathsArray = Array.from(allPaths);
     
+    // First try attribute matching
     for (const path of pathsArray) {
       const regionId = path.getAttribute('data-region-id');
       const numericId = path.getAttribute('data-numeric-id');
@@ -92,7 +90,6 @@ export function DynamicStatePiece({
       if ((regionId && regionId.includes(`${region.id}`)) || 
           (numericId && parseInt(numericId) === region.id) ||
           (pathName && pathName.toLowerCase() === region.name.toLowerCase())) {
-        console.log(`✅ Found path with matching attributes:`, path);
         if (pathName) {
           setTargetRegionName(pathName);
         }
@@ -100,7 +97,26 @@ export function DynamicStatePiece({
       }
     }
     
-    console.log(`❌ No matching target found for ${region.name} (ID: ${region.id})`);
+    // If still no match, try SVG path shape matching
+    if (pathRef.current) {
+      const draggedPathData = pathRef.current.getAttribute('d');
+      
+      if (draggedPathData) {
+        for (const path of pathsArray) {
+          const targetPathData = path.getAttribute('d');
+          const pathName = path.getAttribute('data-name');
+          
+          if (targetPathData && compareSvgPaths(draggedPathData, targetPathData, 0.7)) {
+            console.log(`Found matching SVG path shape for ${region.name}`);
+            if (pathName) {
+              setTargetRegionName(pathName);
+            }
+            return path as SVGPathElement;
+          }
+        }
+      }
+    }
+    
     return null;
   }, [region.id, region.name]);
   
