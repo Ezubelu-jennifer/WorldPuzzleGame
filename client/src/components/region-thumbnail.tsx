@@ -39,7 +39,8 @@ export function RegionThumbnail({
   draggable = false,
   rotatable = false,
   onDrop,
-  regionPieceId
+  regionPieceId,
+  forceViewBox
 }: RegionThumbnailProps) {
   const [pathData, setPathData] = useState<string>("");
   const [viewBox, setViewBox] = useState<string>("0 0 800 600");
@@ -276,7 +277,7 @@ export function RegionThumbnail({
       <svg 
         width={typeof width === 'number' ? width : 100}
         height={typeof height === 'number' ? height : 80}
-        viewBox={viewBox}
+        viewBox={forceViewBox || viewBox}
         preserveAspectRatio="xMidYMid meet"
         style={{
           position: 'fixed',
@@ -384,7 +385,7 @@ export function RegionThumbnail({
       {pathData ? (
         <div className="w-full h-full relative" style={{ background: 'transparent' }}>
           <svg 
-            viewBox={viewBox} 
+            viewBox={forceViewBox || viewBox} 
             width="100%" 
             height="100%" 
             preserveAspectRatio="xMidYMid meet"
