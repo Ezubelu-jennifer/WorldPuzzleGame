@@ -179,14 +179,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
     
     const piece = gameState.regions[pieceIndex];
     
-    // Method 1: Check if piece is near its correct position (distance-based)
+    // Method 1: Check if piece is near its correct position (distance-based with dynamic tolerance)
     // Calculate distance to correct position
     const dx = x - piece.correctX;
     const dy = y - piece.correctY;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
-    // Use a tolerance of 60px to make it a bit easier to place pieces
-    const tolerance = 60;
+    // Base tolerance is 60px, but we adjust it based on the piece's size
+    // Smaller pieces should have a smaller tolerance to require more precision
+    // Get the current shape size from game state if available or use default
+    const gameSize = gameState.shapeSize || 1.0;
+    
+    // Dynamic tolerance calculation - inverse relationship with shape size
+    // This ensures smaller shapes need more precision while larger shapes are more forgiving
+    const baseTolerance = 60;
+    const tolerance = baseTolerance * (1 / gameSize);
+    
     const isCorrectPosition = distance <= tolerance;
     
     // Log for debugging

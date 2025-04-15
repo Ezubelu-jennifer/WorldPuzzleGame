@@ -87,6 +87,7 @@ export interface GameState {
   endTime: number | null;
   isCompleted: boolean;
   score: number | null;
+  shapeSize?: number; // Added to control shape sizing for dynamic matching
 }
 
 export interface RegionPiece {

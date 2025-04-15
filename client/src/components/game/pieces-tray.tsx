@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useGame } from "@/context/game-context";
-import { StatePiece } from "@/components/game/state-piece";
+import { StatePiece } from "@/components/game/new-state-piece";
 import { RegionThumbnail } from "@/components/region-thumbnail";
 import { getSvgDataById } from "@/data/svg-map-data";
 import { extractNigeriaRegions, extractKenyaRegions } from "@/data/svg-parser";
