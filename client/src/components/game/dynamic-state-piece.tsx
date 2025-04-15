@@ -75,7 +75,10 @@ export function DynamicStatePiece({
     const allPaths = document.querySelectorAll('path[data-region-id], path[data-numeric-id]');
     console.log(`Searching among ${allPaths.length} possible path elements`);
     
-    for (const path of allPaths) {
+    // Convert NodeList to Array to avoid TypeScript issue
+    const pathsArray = Array.from(allPaths);
+    
+    for (const path of pathsArray) {
       const regionId = path.getAttribute('data-region-id');
       const numericId = path.getAttribute('data-numeric-id');
       const pathName = path.getAttribute('data-name');
