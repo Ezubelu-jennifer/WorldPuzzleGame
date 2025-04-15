@@ -17,6 +17,9 @@ export function PiecesTray({ onPieceDrop, shapeSize = 1.0 }: PiecesTrayProps) {
   const [svgData, setSvgData] = useState<string>("");
   const [svgRegions, setSvgRegions] = useState<{ id: string; name: string; path: string }[]>([]);
   
+  // Debug log
+  console.log(`PiecesTray: Rendering with shapeSize ${shapeSize}`);
+  
   // Load SVG data for the country
   useEffect(() => {
     if (gameState && gameState.countryId) {

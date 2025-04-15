@@ -73,6 +73,7 @@ export function GameScreen({ countryId }: GameScreenProps) {
   
   // Handle shape size change
   const handleShapeSizeChange = (size: number) => {
+    console.log(`GameScreen: Changing shape size to ${size}`);
     setShapeSize(size);
   };
 

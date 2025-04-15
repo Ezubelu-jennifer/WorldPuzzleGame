@@ -27,9 +27,13 @@ export function GameInfoPanel({ onUseHint, onRestart, onHelp, onSizeChange }: Ga
   // Handle shape size change
   const handleSizeChange = (value: number[]) => {
     const newSize = value[0];
+    console.log(`GameInfoPanel: Changed size slider to ${newSize}`);
     setShapeSize(newSize);
     if (onSizeChange) {
+      console.log(`GameInfoPanel: Calling parent onSizeChange with ${newSize}`);
       onSizeChange(newSize);
+    } else {
+      console.log(`GameInfoPanel: No onSizeChange function provided`);
     }
   };
   

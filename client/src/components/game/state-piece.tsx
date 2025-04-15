@@ -30,6 +30,8 @@ export function StatePiece({
   isTrayPiece = false,
   shapeSize = 1.0
 }: StatePieceProps) {
+  // Debug log
+  console.log(`StatePiece: Rendering ${region.name} with shapeSize ${shapeSize}`);
   // Access drag context
   const { draggedPieceId, setDraggedPieceId } = useDragContext();
   
