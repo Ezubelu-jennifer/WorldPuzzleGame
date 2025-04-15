@@ -589,6 +589,7 @@ export function PuzzleBoard({
               snapToPosition
               containerRef={containerRef}
               onDrop={() => false} // Already placed pieces can't be moved
+              shapeSize={gameState?.shapeSize || 1.0} // Use global shape size
             />
           )
         )}
