@@ -169,6 +169,7 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
                 onDrop={onPieceDrop}
                 containerRef={trayRef}
                 isTrayPiece
+                shapeSize={gameState?.shapeSize || 1.0}
               />
             )}
             

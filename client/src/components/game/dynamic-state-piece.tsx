@@ -10,6 +10,7 @@ interface StatePieceProps {
   containerRef: RefObject<HTMLDivElement>;
   snapToPosition?: boolean;
   isTrayPiece?: boolean;
+  shapeSize?: number; // Add shape size prop
 }
 
 interface Position {
@@ -22,7 +23,8 @@ export function DynamicStatePiece({
   onDrop, 
   containerRef,
   snapToPosition = false,
-  isTrayPiece = false
+  isTrayPiece = false,
+  shapeSize
 }: StatePieceProps) {
   // Access drag context
   const { draggedPieceId, setDraggedPieceId } = useDragContext();
@@ -50,11 +52,15 @@ export function DynamicStatePiece({
   
   // Use dynamic size based on region properties and global shape size
   const baseSize = 100; // Base size for the SVG viewBox
-  const globalSizeFactor = gameState?.shapeSize || 1.0; // Get global size factor
+  // Use explicitly passed shapeSize prop first, then gameState.shapeSize, then default to 1.0
+  const globalSizeFactor = shapeSize || gameState?.shapeSize || 1.0;
   const regionWidth = region.width || baseSize; // Use region's width if available
   
   // Apply global size factor to maintain consistent proportions across all pieces
   const size = Math.round(regionWidth * globalSizeFactor);
+  
+  // Debug size calculations
+  console.log(`Piece ${region.name} size: ${size}px with factor ${globalSizeFactor}`);
   
   // Debug logging for initialization
   useEffect(() => {
