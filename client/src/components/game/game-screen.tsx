@@ -132,7 +132,10 @@ export function GameScreen({ countryId }: GameScreenProps) {
 
       {/* Pieces Tray - Horizontal strip at top */}
       <div className="bg-gray-50 border-b overflow-x-auto py-3 px-2">
-        <PiecesTray onPieceDrop={handlePieceDrop} />
+        <PiecesTray 
+          onPieceDrop={handlePieceDrop}
+          shapeSize={shapeSize}
+        />
       </div>
       
       {/* Main Game Area */}
@@ -142,6 +145,7 @@ export function GameScreen({ countryId }: GameScreenProps) {
           countryName={country.name}
           outlinePath={country.outlinePath}
           onStart={handleStart}
+          shapeSize={shapeSize}
         />
       </div>
       

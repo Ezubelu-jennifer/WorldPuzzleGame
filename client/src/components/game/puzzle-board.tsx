@@ -22,13 +22,15 @@ interface PuzzleBoardProps {
   countryName: string;
   outlinePath: string;
   onStart: () => void;
+  shapeSize?: number; // Add shape size prop
 }
 
 export function PuzzleBoard({ 
   countryId, 
   countryName, 
   outlinePath,
-  onStart
+  onStart,
+  shapeSize = 1.0
 }: PuzzleBoardProps) {
   const { gameState, placePiece, useHint } = useGame();
   const { draggedPieceId } = useDragContext();
@@ -588,6 +590,7 @@ export function PuzzleBoard({
               snapToPosition
               containerRef={containerRef}
               onDrop={() => false} // Already placed pieces can't be moved
+              shapeSize={shapeSize}
             />
           )
         )}
