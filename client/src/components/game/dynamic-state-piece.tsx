@@ -34,6 +34,9 @@ export function DynamicStatePiece({
   const [scale, setScale] = useState<number>(1.0);
   const [isNearTarget, setIsNearTarget] = useState<boolean>(false);
   const [pulseEffect, setPulseEffect] = useState<boolean>(false);
+  const [showPopup, setShowPopup] = useState<boolean>(false);
+  const [popupText, setPopupText] = useState<string>("");
+  const [targetRegionName, setTargetRegionName] = useState<string>("");
   
   // Refs
   const svgRef = useRef<SVGSVGElement>(null);
@@ -65,6 +68,10 @@ export function DynamicStatePiece({
       const element = document.querySelector(selector) as SVGPathElement;
       if (element) {
         console.log(`✅ Found target element with selector: ${selector}`, element);
+        const targetName = element.getAttribute('data-name');
+        if (targetName) {
+          setTargetRegionName(targetName);
+        }
         return element;
       }
     }
@@ -86,6 +93,9 @@ export function DynamicStatePiece({
           (numericId && parseInt(numericId) === region.id) ||
           (pathName && pathName.toLowerCase() === region.name.toLowerCase())) {
         console.log(`✅ Found path with matching attributes:`, path);
+        if (pathName) {
+          setTargetRegionName(pathName);
+        }
         return path as SVGPathElement;
       }
     }
@@ -194,9 +204,16 @@ export function DynamicStatePiece({
           // When near target, apply dynamic sizing
           const newScale = calculateDynamicSize();
           setScale(newScale);
+          
+          // Show matching popup
+          if (targetRegionName && region.name) {
+            setPopupText(`Matching ${region.name} to ${targetRegionName}`);
+            setShowPopup(true);
+          }
         } else {
           // Reset to normal size when not near
-          setScale(1.0 );
+          setScale(1.0);
+          setShowPopup(false); // Hide popup when moving away
         }
       }
     }
@@ -304,6 +321,12 @@ export function DynamicStatePiece({
           const newScale = calculateDynamicSize();
           setScale(newScale);
           
+          // Show matching popup
+          if (targetRegionName && region.name) {
+            setPopupText(`Matching ${region.name} to ${targetRegionName}`);
+            setShowPopup(true);
+          }
+          
           // Provide subtle vibration feedback on mobile
           if ('vibrate' in navigator) {
             try {
@@ -314,7 +337,8 @@ export function DynamicStatePiece({
           }
         } else {
           // Reset when not near
-          setScale(1.0 );
+          setScale(1.0);
+          setShowPopup(false); // Hide popup when moving away
         }
       }
     }
@@ -503,6 +527,33 @@ export function DynamicStatePiece({
           <circle cx="50%" cy="50%" r="4" fill="red" stroke="white" strokeWidth="1" 
             style={{ pointerEvents: 'none' }} />
         </g>
+      )}
+      
+      {/* Popup message */}
+      {showPopup && isDragging && (
+        <foreignObject x="0" y="-80" width="200" height="80" style={{ 
+          transform: 'translateX(-50%)',
+          pointerEvents: 'none'
+         }}>
+          <div xmlns="http://www.w3.org/1999/xhtml"
+            style={{
+              backgroundColor: '#4CAF50',
+              color: 'white',
+              padding: '8px 12px',
+              borderRadius: '8px',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+              fontFamily: 'Arial, sans-serif',
+              fontWeight: 'bold',
+              textAlign: 'center',
+              fontSize: '14px',
+              whiteSpace: 'nowrap',
+              pointerEvents: 'none',
+              animation: 'fadeIn 0.3s ease-in-out'
+            }}
+          >
+            {popupText}
+          </div>
+        </foreignObject>
       )}
     </svg>
   );
