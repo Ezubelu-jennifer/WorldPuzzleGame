@@ -167,29 +167,8 @@ export function StatePiece({
     }
   }, [isDragging, containerRef, region.correctX, region.correctY, isNearTarget]);
   
-  // Helper function to check if the position is close to the correct position
-  const isCloseToCorrectPosition = useCallback((dropX: number, dropY: number): boolean => {
-    // Define a tolerance radius for position matching
-    const tolerance = 60; // Match the tolerance in game-context.tsx
-    
-    // Log the region's correct position and current drop position
-    console.log(`Region ${region.name}: Trying to place at (${dropX.toFixed(0)}, ${dropY.toFixed(0)})`);
-    console.log(`Region ${region.name}: Correct position is (${region.correctX.toFixed(0)}, ${region.correctY.toFixed(0)})`);
-    
-    // Calculate distance between drop position and correct position
-    const dx = dropX - region.correctX;
-    const dy = dropY - region.correctY;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    
-    // Log the distance for debugging
-    console.log(`Region ${region.name}: Distance from correct position: ${distance.toFixed(0)}px (tolerance: ${tolerance}px)`);
-    
-    // Check if it's within tolerance
-    const isCorrect = distance <= tolerance;
-    console.log(`Region ${region.name}: Is in correct position? ${isCorrect ? 'YES ✓' : 'NO ✗'}`);
-    
-    return isCorrect;
-  }, [region.correctX, region.correctY, region.name]);
+  // Note: We've removed distance-based matching and now rely completely on shape matching
+  // through the onDrop function that forwards to the game context's placePiece method
   
   // Mouse up/drop handler
   const handleMouseUp = useCallback((e: MouseEvent) => {
@@ -210,7 +189,7 @@ export function StatePiece({
       const relX = e.clientX - containerRect.left;
       const relY = e.clientY - containerRect.top;
       
-      // Try to drop the piece on the board - we'll use both distance and shape matching
+      // Try to drop the piece on the board using only shape-based matching
       const isDropped = onDrop(region.id, relX, relY);
       
       if (isDropped) {
@@ -330,7 +309,7 @@ export function StatePiece({
       const relX = touch.clientX - containerRect.left;
       const relY = touch.clientY - containerRect.top;
       
-      // Try to drop the piece on the board with both shape and position matching
+      // Try to drop the piece on the board using only shape-based matching
       const isDropped = onDrop(region.id, relX, relY);
       
       if (isDropped) {
@@ -367,7 +346,7 @@ export function StatePiece({
         }, 600);
       }
     }
-  }, [isDragging, region.id, onDrop, containerRef, setDraggedPieceId, isCloseToCorrectPosition]);
+  }, [isDragging, region.id, onDrop, containerRef, setDraggedPieceId]);
 
   // Build the SVG element directly
   return (
