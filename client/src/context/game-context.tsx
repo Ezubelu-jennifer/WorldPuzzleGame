@@ -187,15 +187,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const dy = y - piece.correctY;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
-    // Base tolerance is 60px, but we adjust it based on the piece's size
-    // Smaller pieces should have a smaller tolerance to require more precision
+    // Base tolerance is 100px, and we adjust it based on the piece's size
     // Get the current shape size from game state if available or use default
     const gameSize = gameState.shapeSize || 1.0;
     
-    // Dynamic tolerance calculation - inverse relationship with shape size
-    // This ensures smaller shapes need more precision while larger shapes are more forgiving
-    const baseTolerance = 60;
-    const tolerance = baseTolerance * (1 / gameSize);
+    // Dynamic tolerance calculation - for better placement precision at all shapes
+    // Higher tolerance to be more forgiving and make placement easier
+    const baseTolerance = 100;
+    // Using proportional relationship with shape size to make it more forgiving
+    const tolerance = baseTolerance * gameSize; 
     
     const isCorrectPosition = distance <= tolerance;
     
@@ -380,13 +380,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
           console.log(`Cursor position: (${x}, ${y}) - Over matching region? ${isOverMatchingRegion}`);
         } else {
           // Fallback to distance-based matching if we can't find the shape
-          isOverMatchingRegion = distance <= 60;
-          console.log(`Fallback to distance matching (${distance} <= 60? ${isOverMatchingRegion})`);
+          // Using a more generous tolerance for fallback cases
+          const fallbackTolerance = 120 * (gameState?.shapeSize || 1.0);
+          isOverMatchingRegion = distance <= fallbackTolerance;
+          console.log(`Fallback to distance matching (${distance} <= ${fallbackTolerance}? ${isOverMatchingRegion})`);
         }
       } catch (err) {
         console.error('Error in shape matching:', err);
-        // Fallback to distance-based matching
-        isOverMatchingRegion = distance <= 60;
+        // Fallback to distance-based matching with generous tolerance
+        const fallbackTolerance = 120 * (gameState?.shapeSize || 1.0);
+        isOverMatchingRegion = distance <= fallbackTolerance;
       }
     }
     

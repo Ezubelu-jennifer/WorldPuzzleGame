@@ -18,19 +18,26 @@ interface GameInfoPanelProps {
 
 export function GameInfoPanel({ onUseHint, onRestart, onHelp }: GameInfoPanelProps) {
   const { gameState, setShapeSize } = useGame();
-  const [shapeSize, setShapeSizeValue] = useState(1.0);
+  // Initialize with the game state's shape size or default to 1.0
+  const [shapeSize, setShapeSizeValue] = useState(() => gameState?.shapeSize || 1.0);
   
-  // Initialize shape size from game state
+  // Sync local state with game state when it changes
   useEffect(() => {
-    if (gameState?.shapeSize) {
+    if (gameState?.shapeSize !== undefined && gameState?.shapeSize !== shapeSize) {
+      console.log(`Updating local shape size from game state: ${gameState.shapeSize}`);
       setShapeSizeValue(gameState.shapeSize);
     }
-  }, [gameState?.shapeSize]);
+  }, [gameState?.shapeSize, shapeSize]);
   
-  // Handle shape size change
+  // Handle shape size change - debounce the updates to avoid too many state changes
   const handleShapeSizeChange = (value: number[]) => {
     const newSize = value[0];
+    
+    // Update local state immediately for smooth UI experience
     setShapeSizeValue(newSize);
+    
+    // Update game state for persistence
+    console.log(`Setting shape size to ${newSize}`);
     setShapeSize(newSize);
   };
   
