@@ -18,7 +18,7 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
   const [svgRegions, setSvgRegions] = useState<{ id: string; name: string; path: string }[]>([]);
   
   // Debug log
-  console.log(`PiecesTray: Rendering`); // Shape size has been removed
+  console.log(`PiecesTray: Rendering with shape size ${gameState?.shapeSize || 1.0}`);
   
   // Load SVG data for the country
   useEffect(() => {
@@ -136,9 +136,14 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
         return (
           <div 
             key={region.id}
-            className={`flex-shrink-0 relative w-20 h-20 rounded-md 
+            className={`flex-shrink-0 relative rounded-md 
               ${region.isPlaced ? 'opacity-60' : ''}`}
-            style={{ background: 'transparent', border: 'none' }}
+            style={{ 
+              background: 'transparent', 
+              border: 'none',
+              width: `${80 * (gameState?.shapeSize || 1.0)}px`,
+              height: `${80 * (gameState?.shapeSize || 1.0)}px`
+            }}
           >
             {svgData && svgRegion && !forcedCircle ? (
               // Use the SVG thumbnail for the region, with direct draggable and rotatable support
@@ -149,8 +154,8 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
                 color={fillColor}
                 strokeColor={strokeColor}
                 strokeWidth={1}
-                width="100%"
-                height="100%"
+                width={`${80 * (gameState?.shapeSize || 1.0)}px`}
+                height={`${80 * (gameState?.shapeSize || 1.0)}px`}
                 showLabel={true}
                 draggable={true}
                 rotatable={true}
