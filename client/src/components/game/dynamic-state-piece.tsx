@@ -45,7 +45,7 @@ export function DynamicStatePiece({
   const circleRef = useRef<SVGCircleElement>(null);
   
   // Constants
-  const size = isTrayPiece ? 100 : 100; // Size of the SVG viewBox
+  const size = 100; // Consistent size for the SVG viewBox
   
   // Debug logging for initialization
   useEffect(() => {
@@ -437,7 +437,7 @@ export function DynamicStatePiece({
         filter: isDragging ? 'drop-shadow(0 0 8px rgba(0,0,0,0.5))' : 'none'
       }}
     >
-      <g transform="translate(50, 50) scale(0.7)">
+      <g transform="translate(50, 50) scale(0.8)">
         {isCircleRegion ? (
           <>
             {/* Shadow circle for special regions */}
@@ -482,7 +482,7 @@ export function DynamicStatePiece({
             <path 
               d={region.svgPath} 
               fill="rgba(0,0,0,0.2)"
-              transform="translate(2, 2) scale(1.0)"
+              transform="translate(2, 2)"
               strokeLinejoin="round"
               strokeLinecap="round"
               style={{ pointerEvents: 'none' }}
@@ -495,7 +495,7 @@ export function DynamicStatePiece({
               fill={region.isPlaced ? region.fillColor : "#ef4444"}
               stroke={region.strokeColor}
               strokeWidth="3.5"
-              transform="scale(1.0)"
+              transform=""
               strokeLinejoin="round"
               strokeLinecap="round"
               className={pulseEffect ? 'pulse-effect' : ''}
@@ -547,9 +547,10 @@ export function DynamicStatePiece({
       
       {/* Popup message */}
       {showPopup && isDragging && (
-        <foreignObject x="0" y="-80" width="200" height="80" style={{ 
+        <foreignObject x="0" y="-60" width="200" height="80" style={{ 
           transform: 'translateX(-50%)',
-          pointerEvents: 'none'
+          pointerEvents: 'none',
+          zIndex: 1000
          }}>
           <div
             style={{
@@ -557,14 +558,15 @@ export function DynamicStatePiece({
               color: 'white',
               padding: '8px 12px',
               borderRadius: '8px',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.4)',
               fontFamily: 'Arial, sans-serif',
               fontWeight: 'bold',
               textAlign: 'center',
-              fontSize: '14px',
+              fontSize: '16px',
               whiteSpace: 'nowrap',
               pointerEvents: 'none',
-              animation: 'fadeIn 0.3s ease-in-out'
+              animation: 'fadeIn 0.3s ease-in-out',
+              border: '2px solid white'
             }}
           >
             {popupText}
