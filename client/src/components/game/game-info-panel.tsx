@@ -1,25 +1,37 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "wouter";
-import { Clock, ChartBar, Star, Lightbulb, RotateCcw, HelpCircle, ArrowLeft, Wand2 } from "lucide-react";
+import { Clock, ChartBar, Star, Lightbulb, RotateCcw, HelpCircle, ArrowLeft, Wand2, ZoomIn, ZoomOut, Move } from "lucide-react";
 import { useGame } from "@/context/game-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useGameTimer } from "@/hooks/useGameTimer";
 import { Progress } from "@/components/ui/progress";
+import { Slider } from "@/components/ui/slider";
 
 interface GameInfoPanelProps {
   onUseHint: () => void;
   onRestart: () => void;
   onHelp: () => void;
+  onSizeChange?: (size: number) => void;
 }
 
-export function GameInfoPanel({ onUseHint, onRestart, onHelp }: GameInfoPanelProps) {
+export function GameInfoPanel({ onUseHint, onRestart, onHelp, onSizeChange }: GameInfoPanelProps) {
   const { gameState } = useGame();
+  const [shapeSize, setShapeSize] = useState<number>(1.0);
   
   // Set up timer that starts when gameState is available
   const { formattedTime } = useGameTimer({
     isRunning: gameState !== null && !gameState?.isCompleted,
   });
+  
+  // Handle shape size change
+  const handleSizeChange = (value: number[]) => {
+    const newSize = value[0];
+    setShapeSize(newSize);
+    if (onSizeChange) {
+      onSizeChange(newSize);
+    }
+  };
   
   if (!gameState) {
     return (
@@ -113,6 +125,33 @@ export function GameInfoPanel({ onUseHint, onRestart, onHelp }: GameInfoPanelPro
               <Wand2 className="h-4 w-4 mr-1" />
               <span>Use Hint</span>
             </Button>
+          </div>
+
+          {/* Shape Size Control */}
+          <div className="bg-gray-100 rounded-lg p-3">
+            <div className="flex justify-between items-center mb-2">
+              <div className="flex items-center space-x-2">
+                <Move className="h-4 w-4 text-gray-500" />
+                <span className="text-gray-700 font-medium">Shape Size</span>
+              </div>
+              <div className="flex items-center">
+                <ZoomOut className="h-4 w-4 text-gray-500 mr-2" />
+                <div className="font-bold text-sm">{(shapeSize * 100).toFixed(0)}%</div>
+                <ZoomIn className="h-4 w-4 text-gray-500 ml-2" />
+              </div>
+            </div>
+            <Slider
+              value={[shapeSize]}
+              min={0.5}
+              max={1.5}
+              step={0.05}
+              onValueChange={handleSizeChange}
+              disabled={gameState.isCompleted}
+              className="w-full"
+            />
+            <div className="text-xs text-gray-500 text-center mt-1">
+              Adjust to match shapes with their areas on the map
+            </div>
           </div>
 
           {/* Controls */}

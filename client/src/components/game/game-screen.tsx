@@ -7,6 +7,8 @@ import { PiecesTray } from "@/components/game/pieces-tray";
 import { HowToPlayModal } from "@/components/modals/how-to-play-modal";
 import { SuccessModal } from "@/components/modals/success-modal";
 import { initialCountries } from "@/data/countries";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Settings } from "lucide-react";
 
 interface GameScreenProps {
   countryId: number;
@@ -16,6 +18,7 @@ export function GameScreen({ countryId }: GameScreenProps) {
   const { gameState, initializeGame, placePiece, useHint, resetGame } = useGame();
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
+  const [shapeSize, setShapeSize] = useState(1.0);
   
   // Fetch country data
   const { data: country, isLoading: countryLoading } = useQuery({
@@ -66,6 +69,11 @@ export function GameScreen({ countryId }: GameScreenProps) {
   // Start the game
   const handleStart = () => {
     setGameStarted(true);
+  };
+  
+  // Handle shape size change
+  const handleShapeSizeChange = (size: number) => {
+    setShapeSize(size);
   };
 
   if (countryLoading || !country) {
@@ -141,6 +149,28 @@ export function GameScreen({ countryId }: GameScreenProps) {
       <div className="bg-gray-100 p-2 text-center text-sm text-gray-600">
         <p>Memorize the Map of {country.name}</p>
         {!gameStarted && <p className="text-xs text-gray-500">Starting puzzle in a moment...</p>}
+      </div>
+      
+      {/* Settings panel */}
+      <div className="fixed bottom-4 left-4 z-10">
+        <Sheet>
+          <SheetTrigger asChild>
+            <button 
+              className="bg-white rounded-full p-2 shadow-md hover:bg-gray-100 text-gray-700 hover:text-gray-900 transition"
+              title="Settings"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-80">
+            <GameInfoPanel 
+              onUseHint={handleUseHint} 
+              onRestart={handleRestart} 
+              onHelp={handleHelp}
+              onSizeChange={handleShapeSizeChange}
+            />
+          </SheetContent>
+        </Sheet>
       </div>
       
       {/* Modals */}
