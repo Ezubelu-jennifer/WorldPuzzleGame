@@ -36,8 +36,8 @@ export function DynamicStatePiece({
   const [isNearTarget, setIsNearTarget] = useState<boolean>(false);
   const [pulseEffect, setPulseEffect] = useState<boolean>(false);
   const [showPopup, setShowPopup] = useState<boolean>(false);
-  const [popupText, setPopupText] = useState<string>("");
-  const [targetRegionName, setTargetRegionName] = useState<string>("");
+  const [popupText, setPopupText] = useState<string>(`Matching ${region.name}`);
+  const [targetRegionName, setTargetRegionName] = useState<string>(region.name);
   
   // Refs
   const svgRef = useRef<SVGSVGElement>(null);
@@ -169,6 +169,7 @@ export function DynamicStatePiece({
     
     setIsDragging(true);
     setDraggedPieceId(region.id);
+    setShowPopup(true); // Always show popup when dragging
     
     // Get the path element that was clicked
     const pathElement = e.currentTarget;
@@ -188,7 +189,9 @@ export function DynamicStatePiece({
     // Add document event listeners
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  }, [region.isPlaced, region.id, setDraggedPieceId]);
+    
+    console.log(`Drag started for ${region.name}, popup should be visible`);
+  }, [region.isPlaced, region.id, region.name, setDraggedPieceId]);
   
   // Mouse move handler
   const handleMouseMove = useCallback((e: MouseEvent) => {
@@ -287,6 +290,7 @@ export function DynamicStatePiece({
     
     setIsDragging(true);
     setDraggedPieceId(region.id);
+    setShowPopup(true); // Always show popup when dragging on mobile
     
     // Apply zoom effect when starting touch drag
     setScale(2.0 );
@@ -303,7 +307,9 @@ export function DynamicStatePiece({
     
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleTouchEnd);
-  }, [region.isPlaced, region.id, setDraggedPieceId]);
+    
+    console.log(`Touch drag started for ${region.name}, popup should be visible`);
+  }, [region.isPlaced, region.id, region.name, setDraggedPieceId]);
   
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!isDragging || e.touches.length !== 1) return;
@@ -547,24 +553,26 @@ export function DynamicStatePiece({
       
       {/* Popup message */}
       {showPopup && isDragging && (
-        <foreignObject x="0" y="-80" width="200" height="80" style={{ 
-          transform: 'translateX(-50%)',
-          pointerEvents: 'none'
+        <foreignObject x="-100" y="-80" width="200" height="100" style={{ 
+          pointerEvents: 'none',
+          overflow: 'visible',
+          zIndex: 1000
          }}>
           <div
             style={{
-              backgroundColor: '#4CAF50',
+              backgroundColor: 'rgba(255, 30, 30, 0.9)',
               color: 'white',
-              padding: '8px 12px',
+              padding: '10px 16px',
               borderRadius: '8px',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.5)',
               fontFamily: 'Arial, sans-serif',
               fontWeight: 'bold',
               textAlign: 'center',
-              fontSize: '14px',
+              fontSize: '16px',
               whiteSpace: 'nowrap',
               pointerEvents: 'none',
-              animation: 'fadeIn 0.3s ease-in-out'
+              animation: 'fadeIn 0.3s ease-in-out',
+              border: '2px solid white'
             }}
           >
             {popupText}
