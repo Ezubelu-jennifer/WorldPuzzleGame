@@ -115,32 +115,7 @@ export function GameInfoPanel({ onUseHint, onRestart, onHelp }: GameInfoPanelPro
             </Button>
           </div>
 
-          {/* Shape Size Control */}
-          <div className="bg-gray-100 rounded-lg p-3">
-            <div className="flex justify-between items-center mb-2">
-              <div className="flex items-center space-x-2">
-                <Move className="h-4 w-4 text-gray-500" />
-                <span className="text-gray-700 font-medium">Shape Size</span>
-              </div>
-              <div className="flex items-center">
-                <ZoomOut className="h-4 w-4 text-gray-500 mr-2" />
-                <div className="font-bold text-sm">{(shapeSize * 100).toFixed(0)}%</div>
-                <ZoomIn className="h-4 w-4 text-gray-500 ml-2" />
-              </div>
-            </div>
-            <Slider
-              value={[shapeSize]}
-              min={0.5}
-              max={1.5}
-              step={0.05}
-              onValueChange={handleSizeChange}
-              disabled={gameState.isCompleted}
-              className="w-full"
-            />
-            <div className="text-xs text-gray-500 text-center mt-1">
-              Adjust to match shapes with their areas on the map
-            </div>
-          </div>
+
 
           {/* Controls */}
           <div className="space-y-2">

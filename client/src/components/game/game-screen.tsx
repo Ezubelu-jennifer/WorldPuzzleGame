@@ -15,18 +15,9 @@ interface GameScreenProps {
 }
 
 export function GameScreen({ countryId }: GameScreenProps) {
-  const { gameState, initializeGame, placePiece, useHint, resetGame, setShapeSize } = useGame();
+  const { gameState, initializeGame, placePiece, useHint, resetGame } = useGame();
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
-  // Use state to track the current shape size for the UI
-  const [localShapeSize, setLocalShapeSize] = useState(1.0);
-  
-  // Sync the local shape size with the game state shape size
-  useEffect(() => {
-    if (gameState?.shapeSize) {
-      setLocalShapeSize(gameState.shapeSize);
-    }
-  }, [gameState?.shapeSize]);
   
   // Fetch country data
   const { data: country, isLoading: countryLoading } = useQuery({
@@ -77,14 +68,6 @@ export function GameScreen({ countryId }: GameScreenProps) {
   // Start the game
   const handleStart = () => {
     setGameStarted(true);
-  };
-  
-  // Handle shape size change
-  const handleShapeSizeChange = (size: number) => {
-    console.log(`GameScreen: Changing shape size to ${size}`);
-    // Update both the local state and the game context
-    setLocalShapeSize(size);
-    setShapeSize(size);
   };
 
   if (countryLoading || !country) {
@@ -145,7 +128,6 @@ export function GameScreen({ countryId }: GameScreenProps) {
       <div className="bg-gray-50 border-b overflow-x-auto py-3 px-2">
         <PiecesTray 
           onPieceDrop={handlePieceDrop}
-          shapeSize={localShapeSize}
         />
       </div>
       
@@ -156,7 +138,6 @@ export function GameScreen({ countryId }: GameScreenProps) {
           countryName={country.name}
           outlinePath={country.outlinePath}
           onStart={handleStart}
-          shapeSize={localShapeSize}
         />
       </div>
       
@@ -164,30 +145,6 @@ export function GameScreen({ countryId }: GameScreenProps) {
       <div className="bg-gray-100 p-2 text-center text-sm text-gray-600">
         <p>Memorize the Map of {country.name}</p>
         {!gameStarted && <p className="text-xs text-gray-500">Starting puzzle in a moment...</p>}
-      </div>
-      
-      {/* Shape Size Control Panel - always visible */}
-      <div className="fixed top-20 right-4 z-10 bg-white/90 rounded-lg shadow-md p-3 border border-gray-200 flex flex-col items-center">
-        <div className="font-bold text-sm mb-1 text-gray-700">Shape Size</div>
-        <div className="flex items-center gap-1">
-          <button 
-            onClick={() => handleShapeSizeChange(Math.max(0.5, localShapeSize - 0.1))}
-            className="bg-gray-200 hover:bg-gray-300 rounded-full w-7 h-7 flex items-center justify-center"
-            title="Decrease size"
-          >
-            <span className="text-gray-700 font-bold">-</span>
-          </button>
-          <div className="w-10 text-center font-mono text-sm">
-            {(localShapeSize * 100).toFixed(0)}%
-          </div>
-          <button 
-            onClick={() => handleShapeSizeChange(Math.min(1.5, localShapeSize + 0.1))}
-            className="bg-gray-200 hover:bg-gray-300 rounded-full w-7 h-7 flex items-center justify-center"
-            title="Increase size"
-          >
-            <span className="text-gray-700 font-bold">+</span>
-          </button>
-        </div>
       </div>
       
       {/* Settings panel */}
@@ -206,7 +163,6 @@ export function GameScreen({ countryId }: GameScreenProps) {
               onUseHint={handleUseHint} 
               onRestart={handleRestart} 
               onHelp={handleHelp}
-              onSizeChange={handleShapeSizeChange}
             />
           </SheetContent>
         </Sheet>
