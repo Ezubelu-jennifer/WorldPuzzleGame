@@ -159,7 +159,7 @@ export function PiecesTray({ onPieceDrop, shapeSize = 1.0 }: PiecesTrayProps) {
               />
             ) : (
               // Render directly - NO container div
-              <StatePiece
+              <DynamicStatePiece
                 region={regionWithColor}
                 onDrop={onPieceDrop}
                 containerRef={trayRef}

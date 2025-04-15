@@ -1,0 +1,508 @@
+import React, { useEffect, useRef, RefObject, useState, useCallback } from "react";
+import { RegionPiece } from "@shared/schema";
+import { useDragContext } from "@/context/drag-context";
+
+interface StatePieceProps {
+  region: RegionPiece;
+  onDrop: (id: number, x: number, y: number) => boolean;
+  containerRef: RefObject<HTMLDivElement>;
+  snapToPosition?: boolean;
+  isTrayPiece?: boolean;
+  shapeSize?: number;
+}
+
+interface Position {
+  x: number;
+  y: number;
+}
+
+export function DynamicStatePiece({ 
+  region, 
+  onDrop, 
+  containerRef,
+  snapToPosition = false,
+  isTrayPiece = false,
+  shapeSize = 1.0
+}: StatePieceProps) {
+  // Access drag context
+  const { draggedPieceId, setDraggedPieceId } = useDragContext();
+  
+  // State
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [position, setPosition] = useState<Position>({ 
+    x: region.currentX || 0, 
+    y: region.currentY || 0
+  });
+  const [scale, setScale] = useState<number>(1.0 * shapeSize);
+  const [isNearTarget, setIsNearTarget] = useState<boolean>(false);
+  const [pulseEffect, setPulseEffect] = useState<boolean>(false);
+  
+  // Refs
+  const svgRef = useRef<SVGSVGElement>(null);
+  const pathRef = useRef<SVGPathElement>(null);
+  const circleRef = useRef<SVGCircleElement>(null);
+  
+  // Constants
+  const size = isTrayPiece ? 100 : 100; // Size of the SVG viewBox
+  
+  // Debug logging for initialization
+  useEffect(() => {
+    console.log(`DynamicStatePiece initialized: ${region.name} (ID: ${region.id}), shapeSize: ${shapeSize}`);
+  }, [region.name, region.id, shapeSize]);
+  
+  // Function to find target path element for a region
+  const findTargetPathElement = useCallback(() => {
+    // Try all possible selectors to find the matching path element
+    const selectors = [
+      `path[data-numeric-id="${region.id}"]`,
+      `path[data-region-id="${region.id}"]`,
+      `path[data-region-id="NG-${region.id}"]`,
+      `path[data-name="${region.name}"]`
+    ];
+    
+    console.log(`🔍 Searching for target path element for ${region.name} (ID: ${region.id})`);
+    
+    // Try each selector
+    for (const selector of selectors) {
+      const element = document.querySelector(selector) as SVGPathElement;
+      if (element) {
+        console.log(`✅ Found target element with selector: ${selector}`, element);
+        return element;
+      }
+    }
+    
+    // If no direct match, try a more exhaustive search
+    const allPaths = document.querySelectorAll('path[data-region-id], path[data-numeric-id]');
+    console.log(`Searching among ${allPaths.length} possible path elements`);
+    
+    for (const path of allPaths) {
+      const regionId = path.getAttribute('data-region-id');
+      const numericId = path.getAttribute('data-numeric-id');
+      const pathName = path.getAttribute('data-name');
+      
+      // Check if any attribute matches our region
+      if ((regionId && regionId.includes(`${region.id}`)) || 
+          (numericId && parseInt(numericId) === region.id) ||
+          (pathName && pathName.toLowerCase() === region.name.toLowerCase())) {
+        console.log(`✅ Found path with matching attributes:`, path);
+        return path as SVGPathElement;
+      }
+    }
+    
+    console.log(`❌ No matching target found for ${region.name} (ID: ${region.id})`);
+    return null;
+  }, [region.id, region.name]);
+  
+  // Function to calculate dynamic size based on target element
+  const calculateDynamicSize = useCallback(() => {
+    // Find the target path element
+    const targetElement = findTargetPathElement();
+    if (!targetElement || !pathRef.current) {
+      console.log('Could not calculate size: missing elements');
+      return 1.0 * shapeSize; // Default size
+    }
+    
+    try {
+      // Get target and piece areas
+      const targetRect = targetElement.getBBox();
+      const targetArea = targetRect.width * targetRect.height;
+      
+      const pieceRect = pathRef.current.getBBox();
+      const pieceArea = pieceRect.width * pieceRect.height;
+      
+      console.log(`Size comparison: Target area: ${targetArea.toFixed(2)}, Piece area: ${pieceArea.toFixed(2)}`);
+      
+      // Calculate ratio and determine scale
+      if (targetArea > pieceArea * 1.1) { // More than 10% larger
+        const ratio = Math.sqrt(targetArea / pieceArea);
+        const newScale = Math.min(1.5, ratio); // Cap at 1.5x
+        console.log(`Target is LARGER by ${Math.round((ratio-1)*100)}%, scaling UP to ${newScale.toFixed(2)}`);
+        return newScale * shapeSize;
+      } 
+      else if (targetArea < pieceArea * 0.9) { // More than 10% smaller
+        const ratio = Math.sqrt(targetArea / pieceArea);
+        const newScale = Math.max(0.6, ratio); // Minimum 0.6x
+        console.log(`Target is SMALLER by ${Math.round((1-ratio)*100)}%, scaling DOWN to ${newScale.toFixed(2)}`);
+        return newScale * shapeSize;
+      }
+      
+      // Default: areas are similar (within 10%)
+      console.log('Areas are similar, using default scale');
+      return 1.0 * shapeSize;
+    } catch (err) {
+      console.error('Error calculating size:', err);
+      return 1.0 * shapeSize; // Default on error
+    }
+  }, [findTargetPathElement, shapeSize]);
+  
+  // Mouse drag start handler
+  const handleDragStart = useCallback((e: React.MouseEvent<SVGElement>) => {
+    if (region.isPlaced) return;
+    e.stopPropagation();
+    
+    setIsDragging(true);
+    setDraggedPieceId(region.id);
+    
+    // Get the path element that was clicked
+    const pathElement = e.currentTarget;
+    const rect = pathElement.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    // Set initial position
+    setPosition({
+      x: e.clientX,
+      y: e.clientY
+    });
+    
+    // Start with a slightly larger scale for better visibility
+    setScale(1.2 * shapeSize);
+    
+    // Add document event listeners
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [region.isPlaced, region.id, setDraggedPieceId, shapeSize]);
+  
+  // Mouse move handler
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging) return;
+    
+    // Update position with cursor at center of shape
+    setPosition({
+      x: e.clientX,
+      y: e.clientY
+    });
+    
+    // Check if we're near the target position
+    if (containerRef.current) {
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const relX = e.clientX - containerRect.left;
+      const relY = e.clientY - containerRect.top;
+      
+      // Calculate distance to correct position
+      const dx = relX - region.correctX;
+      const dy = relY - region.correctY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      // Update nearTarget state with tolerance of 60px
+      const isNear = distance <= 60;
+      if (isNear !== isNearTarget) {
+        setIsNearTarget(isNear);
+        
+        if (isNear) {
+          // When near target, apply dynamic sizing
+          const newScale = calculateDynamicSize();
+          setScale(newScale);
+        } else {
+          // Reset to normal size when not near
+          setScale(1.0 * shapeSize);
+        }
+      }
+    }
+  }, [isDragging, containerRef, region.correctX, region.correctY, isNearTarget, shapeSize, calculateDynamicSize]);
+  
+  // Mouse up/drop handler
+  const handleMouseUp = useCallback((e: MouseEvent) => {
+    if (!isDragging) return;
+    
+    // Remove listeners
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+    
+    setIsDragging(false);
+    setDraggedPieceId(null);
+    
+    // Handle drop if we have a container
+    if (containerRef.current) {
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const relX = e.clientX - containerRect.left;
+      const relY = e.clientY - containerRect.top;
+      
+      // Calculate final size before dropping
+      const finalScale = calculateDynamicSize();
+      setScale(finalScale);
+      
+      // Try to drop the piece
+      const isDropped = onDrop(region.id, relX, relY);
+      console.log(`Drop attempted for ${region.name} at (${relX}, ${relY}): ${isDropped ? 'SUCCESS' : 'FAILED'}`);
+      
+      if (isDropped) {
+        // Set position to exact correct position
+        setPosition({
+          x: containerRect.left + region.correctX,
+          y: containerRect.top + region.correctY
+        });
+        
+        // Add visual feedback
+        setPulseEffect(true);
+        setTimeout(() => {
+          setPulseEffect(false);
+        }, 600);
+      } else {
+        // Reset scale if not dropped
+        setScale(1.0 * shapeSize);
+      }
+    }
+  }, [isDragging, region.id, region.name, region.correctX, region.correctY, onDrop, containerRef, setDraggedPieceId, calculateDynamicSize, shapeSize]);
+  
+  // Touch handlers (similar logic to mouse handlers)
+  const handleTouchStart = useCallback((e: React.TouchEvent<SVGElement>) => {
+    if (region.isPlaced || e.touches.length !== 1) return;
+    e.stopPropagation();
+    e.preventDefault();
+    
+    setIsDragging(true);
+    setDraggedPieceId(region.id);
+    
+    // Apply zoom effect when starting touch drag
+    setScale(2.0 * shapeSize);
+    setTimeout(() => {
+      // After 300ms, gradually reduce
+      setScale(1.0 * shapeSize);
+    }, 300);
+    
+    const touch = e.touches[0];
+    setPosition({
+      x: touch.clientX,
+      y: touch.clientY
+    });
+    
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+  }, [region.isPlaced, region.id, setDraggedPieceId, shapeSize]);
+  
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!isDragging || e.touches.length !== 1) return;
+    e.preventDefault();
+    
+    // Position at touch point
+    const touch = e.touches[0];
+    setPosition({
+      x: touch.clientX,
+      y: touch.clientY
+    });
+    
+    // Check if near target position
+    if (containerRef.current) {
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const relX = touch.clientX - containerRect.left;
+      const relY = touch.clientY - containerRect.top;
+      
+      // Calculate distance to correct position
+      const dx = relX - region.correctX;
+      const dy = relY - region.correctY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      // Update nearTarget state
+      const isNear = distance <= 60;
+      if (isNear !== isNearTarget) {
+        setIsNearTarget(isNear);
+        
+        if (isNear) {
+          // When near target, calculate and apply dynamic sizing
+          const newScale = calculateDynamicSize();
+          setScale(newScale);
+          
+          // Provide subtle vibration feedback on mobile
+          if ('vibrate' in navigator) {
+            try {
+              navigator.vibrate(20);
+            } catch (error) {
+              console.log('Vibration not supported or disabled');
+            }
+          }
+        } else {
+          // Reset when not near
+          setScale(1.0 * shapeSize);
+        }
+      }
+    }
+  }, [isDragging, containerRef, region.correctX, region.correctY, isNearTarget, calculateDynamicSize, shapeSize]);
+  
+  const handleTouchEnd = useCallback((e: TouchEvent) => {
+    if (!isDragging) return;
+    
+    document.removeEventListener('touchmove', handleTouchMove);
+    document.removeEventListener('touchend', handleTouchEnd);
+    
+    setIsDragging(false);
+    setDraggedPieceId(null);
+    
+    if (containerRef.current && e.changedTouches.length === 1) {
+      const touch = e.changedTouches[0];
+      const containerRect = containerRef.current.getBoundingClientRect();
+      
+      const relX = touch.clientX - containerRect.left;
+      const relY = touch.clientY - containerRect.top;
+      
+      // Calculate final size before dropping
+      const finalScale = calculateDynamicSize();
+      setScale(finalScale);
+      
+      // Try to drop the piece
+      const isDropped = onDrop(region.id, relX, relY);
+      
+      if (isDropped) {
+        // Set to exact position
+        setPosition({
+          x: containerRect.left + region.correctX,
+          y: containerRect.top + region.correctY
+        });
+        
+        // Provide tactile feedback
+        if ('vibrate' in navigator) {
+          try {
+            navigator.vibrate(100);
+          } catch (error) {
+            console.log('Vibration not supported or disabled');
+          }
+        }
+        
+        // Add visual feedback
+        setPulseEffect(true);
+        setTimeout(() => {
+          setPulseEffect(false);
+        }, 600);
+      } else {
+        // Reset if not dropped
+        setScale(1.0 * shapeSize);
+      }
+    }
+  }, [isDragging, region.id, region.correctX, region.correctY, onDrop, containerRef, setDraggedPieceId, calculateDynamicSize, shapeSize]);
+  
+  // Special properties for circular regions (FCT, Nasarawa)
+  const isCircleRegion = region.name === "Federal Capital Territory" || 
+                         region.name === "FCT" || 
+                         region.name === "Nasarawa";
+  
+  return (
+    <svg
+      ref={svgRef}
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox={`0 0 100 100`}
+      width={size}
+      height={size}
+      className={isDragging ? "z-50" : ""}
+      style={{
+        position: isDragging ? 'fixed' : 'absolute', 
+        top: position.y,
+        left: position.x,
+        opacity: region.isPlaced ? 0.9 : 1,
+        transform: `translate(-50%, -50%) scale(${scale})`,
+        transformOrigin: 'center center',
+        transition: isDragging ? 'transform 0.2s ease' : 'all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+        pointerEvents: 'none',
+        overflow: 'visible',
+        filter: isDragging ? 'drop-shadow(0 0 8px rgba(0,0,0,0.5))' : 'none'
+      }}
+    >
+      <g transform="translate(50, 50) scale(0.7)">
+        {isCircleRegion ? (
+          <>
+            {/* Shadow circle for special regions */}
+            <circle 
+              cx="0" 
+              cy="0" 
+              r="50"
+              fill="rgba(0,0,0,0.2)"
+              transform="translate(2, 2)"
+              style={{ pointerEvents: 'none' }}
+            />
+            
+            {/* Interactive circle */}
+            <circle
+              ref={circleRef}
+              cx="0" 
+              cy="0"
+              r="50"
+              fill={region.isPlaced ? region.fillColor : "#ef4444"}
+              stroke={region.strokeColor}
+              strokeWidth="3.5"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              className={pulseEffect ? 'pulse-effect' : ''}
+              style={{ 
+                transformOrigin: 'center center',
+                cursor: !region.isPlaced ? 'move' : 'default',
+                pointerEvents: region.isPlaced ? 'none' : 'auto',
+                filter: pulseEffect 
+                  ? undefined 
+                  : (isNearTarget && isDragging) 
+                    ? 'drop-shadow(0px 0px 10px rgba(0, 255, 0, 0.7))' 
+                    : 'drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.3))'
+              }}
+              onMouseDown={!region.isPlaced ? handleDragStart : undefined}
+              onTouchStart={!region.isPlaced ? handleTouchStart : undefined}
+            />
+          </>
+        ) : (
+          <>
+            {/* Shadow for depth */}
+            <path 
+              d={region.svgPath} 
+              fill="rgba(0,0,0,0.2)"
+              transform="translate(2, 2) scale(1.0)"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              style={{ pointerEvents: 'none' }}
+            />
+            
+            {/* Interactive path */}
+            <path 
+              ref={pathRef}
+              d={region.svgPath} 
+              fill={region.isPlaced ? region.fillColor : "#ef4444"}
+              stroke={region.strokeColor}
+              strokeWidth="3.5"
+              transform="scale(1.0)"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              className={pulseEffect ? 'pulse-effect' : ''}
+              style={{ 
+                transformOrigin: 'center center',
+                cursor: !region.isPlaced ? 'move' : 'default',
+                pointerEvents: region.isPlaced ? 'none' : 'auto',
+                filter: pulseEffect 
+                  ? undefined 
+                  : (isNearTarget && isDragging) 
+                    ? 'drop-shadow(0px 0px 10px rgba(0, 255, 0, 0.7))' 
+                    : 'drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.3))'
+              }}
+              onMouseDown={!region.isPlaced ? handleDragStart : undefined}
+              onTouchStart={!region.isPlaced ? handleTouchStart : undefined}
+            />
+          </>
+        )}
+
+        {/* Region label */}
+        <text 
+          x="0" 
+          y="0" 
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill="#000000" 
+          fontSize="30"
+          fontWeight="900"
+          style={{ 
+            textShadow: '0 0 5px white, 0 0 5px white, 0 0 5px white, 0 0 5px white',
+            fontFamily: 'Arial, sans-serif',
+            pointerEvents: 'none'
+          }}
+        >
+          {region.name}
+        </text>
+      </g>
+      
+      {/* Drag indicator */}
+      {isDragging && (
+        <g>
+          {/* Central indicator on the dragging piece */}
+          <circle cx="50%" cy="50%" r="10" fill="none" stroke="rgba(255,0,0,0.5)" strokeWidth="3"
+            style={{ pointerEvents: 'none' }} />
+          <circle cx="50%" cy="50%" r="4" fill="red" stroke="white" strokeWidth="1" 
+            style={{ pointerEvents: 'none' }} />
+        </g>
+      )}
+    </svg>
+  );
+}
