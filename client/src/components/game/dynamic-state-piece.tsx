@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, RefObject, useState, useCallback } from "react";
 import { RegionPiece } from "@shared/schema";
 import { useDragContext } from "@/context/drag-context";
+import { useGame } from "@/context/game-context";
 import { compareSvgPaths } from "@/utils/svg-clipper";
 
 interface StatePieceProps {
@@ -44,9 +45,16 @@ export function DynamicStatePiece({
   const pathRef = useRef<SVGPathElement>(null);
   const circleRef = useRef<SVGCircleElement>(null);
   
-  // Use dynamic size based on region properties if available
+  // Get the game context to access global shape size
+  const { gameState } = useGame();
+  
+  // Use dynamic size based on region properties and global shape size
   const baseSize = 100; // Base size for the SVG viewBox
-  const size = region.width || baseSize; // Use region's own width if available
+  const globalSizeFactor = gameState?.shapeSize || 1.0; // Get global size factor
+  const regionWidth = region.width || baseSize; // Use region's width if available
+  
+  // Apply global size factor to maintain consistent proportions across all pieces
+  const size = Math.round(regionWidth * globalSizeFactor);
   
   // Debug logging for initialization
   useEffect(() => {

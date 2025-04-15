@@ -9,6 +9,9 @@ import { SuccessModal } from "@/components/modals/success-modal";
 import { initialCountries } from "@/data/countries";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Settings } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 
 interface GameScreenProps {
   countryId: number;
