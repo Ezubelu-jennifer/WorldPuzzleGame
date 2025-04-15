@@ -156,6 +156,30 @@ export function GameScreen({ countryId }: GameScreenProps) {
         {!gameStarted && <p className="text-xs text-gray-500">Starting puzzle in a moment...</p>}
       </div>
       
+      {/* Shape Size Control Panel - always visible */}
+      <div className="fixed top-20 right-4 z-10 bg-white/90 rounded-lg shadow-md p-3 border border-gray-200 flex flex-col items-center">
+        <div className="font-bold text-sm mb-1 text-gray-700">Shape Size</div>
+        <div className="flex items-center gap-1">
+          <button 
+            onClick={() => handleShapeSizeChange(Math.max(0.5, shapeSize - 0.1))}
+            className="bg-gray-200 hover:bg-gray-300 rounded-full w-7 h-7 flex items-center justify-center"
+            title="Decrease size"
+          >
+            <span className="text-gray-700 font-bold">-</span>
+          </button>
+          <div className="w-10 text-center font-mono text-sm">
+            {(shapeSize * 100).toFixed(0)}%
+          </div>
+          <button 
+            onClick={() => handleShapeSizeChange(Math.min(1.5, shapeSize + 0.1))}
+            className="bg-gray-200 hover:bg-gray-300 rounded-full w-7 h-7 flex items-center justify-center"
+            title="Increase size"
+          >
+            <span className="text-gray-700 font-bold">+</span>
+          </button>
+        </div>
+      </div>
+      
       {/* Settings panel */}
       <div className="fixed bottom-4 left-4 z-10">
         <Sheet>
