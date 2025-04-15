@@ -10,6 +10,7 @@ interface GameContextProps {
   useHint: () => void;
   resetGame: () => void;
   completeGame: () => void;
+  setShapeSize: (size: number) => void; // Add ability to adjust shape size
   loading: boolean;
   error: string | null;
 }
@@ -154,7 +155,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         startTime: Date.now(),
         endTime: null,
         isCompleted: false,
-        score: null
+        score: null,
+        shapeSize: 1.0 // Default shape size
       };
       
       // Set the state
