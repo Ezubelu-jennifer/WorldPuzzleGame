@@ -522,15 +522,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (!gameState) return;
     
     // Ensure size is within reasonable bounds
-    const boundedSize = Math.max(0.5, Math.min(1.5, size));
+    const safeSize = Math.max(0.5, Math.min(2.0, size));
     
-    console.log(`Setting shape size to ${boundedSize}`);
-    
-    // Update the game state with the new shape size
+    // Update game state with new shape size
     setGameState({
       ...gameState,
-      shapeSize: boundedSize
+      shapeSize: safeSize
     });
+    
+    console.log(`Global shape size updated to ${safeSize}`);
   };
 
   return (
