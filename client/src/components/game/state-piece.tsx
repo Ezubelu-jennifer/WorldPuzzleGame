@@ -400,16 +400,16 @@ export function StatePiece({
               strokeWidth="3.5"
               strokeLinejoin="round"
               strokeLinecap="round"
+              className={pulseEffect ? 'pulse-effect' : ''}
               style={{ 
                 transformOrigin: 'center center',
                 cursor: !region.isPlaced ? 'move' : 'default',
                 pointerEvents: region.isPlaced ? 'none' : 'auto',
                 filter: pulseEffect 
-                  ? 'drop-shadow(0px 0px 15px rgba(0, 255, 0, 0.9))' 
-                  : isNearTarget && isDragging 
+                  ? undefined 
+                  : (isNearTarget && isDragging) 
                     ? 'drop-shadow(0px 0px 10px rgba(0, 255, 0, 0.7))' 
-                    : 'drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.3))',
-                animation: pulseEffect ? 'pulse 0.6s ease-in-out' : 'none'
+                    : 'drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.3))'
               }}
               onMouseDown={!region.isPlaced ? handleDragStart : undefined}
               onTouchStart={!region.isPlaced ? handleTouchStart : undefined}
@@ -437,16 +437,16 @@ export function StatePiece({
               transform="scale(1.0)"
               strokeLinejoin="round"
               strokeLinecap="round"
+              className={pulseEffect ? 'pulse-effect' : ''}
               style={{ 
                 transformOrigin: 'center center',
                 cursor: !region.isPlaced ? 'move' : 'default',
                 pointerEvents: region.isPlaced ? 'none' : 'auto', // Only enable pointer events when not placed
                 filter: pulseEffect 
-                  ? 'drop-shadow(0px 0px 15px rgba(0, 255, 0, 0.9))' 
-                  : isNearTarget && isDragging 
+                  ? undefined 
+                  : (isNearTarget && isDragging) 
                     ? 'drop-shadow(0px 0px 10px rgba(0, 255, 0, 0.7))' 
-                    : 'drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.3))',
-                animation: pulseEffect ? 'pulse 0.6s ease-in-out' : 'none'
+                    : 'drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.3))'
               }}
               onMouseDown={!region.isPlaced ? handleDragStart : undefined}
               onTouchStart={!region.isPlaced ? handleTouchStart : undefined}
