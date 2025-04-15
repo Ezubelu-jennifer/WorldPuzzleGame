@@ -154,13 +154,14 @@ export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
                 color={fillColor}
                 strokeColor={strokeColor}
                 strokeWidth={1}
-                width={`${80 * (gameState?.shapeSize || 1.0)}px`}
-                height={`${80 * (gameState?.shapeSize || 1.0)}px`}
+                width={80}
+                height={80}
                 showLabel={true}
                 draggable={true}
                 rotatable={true}
                 onDrop={onPieceDrop}
                 regionPieceId={region.id}
+                shapeSize={gameState?.shapeSize || 1.0}
               />
             ) : (
               // Render directly - NO container div

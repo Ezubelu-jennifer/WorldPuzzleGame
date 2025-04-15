@@ -21,6 +21,7 @@ interface RegionThumbnailProps {
   rotatable?: boolean;
   onDrop?: (id: number, x: number, y: number) => boolean;
   regionPieceId?: number;
+  shapeSize?: number; // Add shapeSize parameter to control dimensions
 }
 
 export function RegionThumbnail({
@@ -38,7 +39,8 @@ export function RegionThumbnail({
   draggable = false,
   rotatable = false,
   onDrop,
-  regionPieceId
+  regionPieceId,
+  shapeSize = 1.0 // Default size factor
 }: RegionThumbnailProps) {
   const [pathData, setPathData] = useState<string>("");
   const [viewBox, setViewBox] = useState<string>("0 0 800 600");
@@ -262,9 +264,10 @@ export function RegionThumbnail({
     }
   };
   
+  // Apply shapeSize to dimensions
   const styles = {
-    width: typeof width === 'number' ? `${width}px` : width,
-    height: typeof height === 'number' ? `${height}px` : height,
+    width: typeof width === 'number' ? `${width * shapeSize}px` : width,
+    height: typeof height === 'number' ? `${height * shapeSize}px` : height,
     cursor: onClick || (draggable || rotatable) ? 'pointer' : 'default',
     position: 'relative' as const
   };
@@ -273,8 +276,8 @@ export function RegionThumbnail({
   if (draggable && isDragging) {
     return (
       <svg 
-        width={typeof width === 'number' ? width : 100}
-        height={typeof height === 'number' ? height : 80}
+        width={typeof width === 'number' ? width * shapeSize : 100}
+        height={typeof height === 'number' ? height * shapeSize : 80}
         viewBox={viewBox}
         preserveAspectRatio="xMidYMid meet"
         style={{
