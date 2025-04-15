@@ -6,6 +6,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Game from "@/pages/game";
 import { DragProvider } from "@/context/drag-context";
+import { GameProvider } from "@/context/game-context";
 
 function Router() {
   return (
@@ -21,8 +22,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <DragProvider>
-        <Router />
-        <Toaster />
+        <GameProvider>
+          <Router />
+          <Toaster />
+        </GameProvider>
       </DragProvider>
     </QueryClientProvider>
   );

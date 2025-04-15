@@ -72,16 +72,10 @@ export const queryClient = new QueryClient({
       staleTime: Infinity,
       retry: 1,
       retryDelay: 1000,
-      onError: (error) => {
-        console.error("Global query error:", error);
-      }
     },
     mutations: {
       retry: 1,
       retryDelay: 1000,
-      onError: (error) => {
-        console.error("Global mutation error:", error);
-      }
     },
-  },
+  }
 });
