@@ -315,14 +315,56 @@ export function StatePiece({
       const dy = relY - region.correctY;
       const distance = Math.sqrt(dx * dx + dy * dy);
       
-      // Update nearTarget state - tolerance of 50px
+      // Update nearTarget state - tolerance of 60px
       const isNear = distance <= 60; // Match tolerance in game-context.tsx
       if (isNear !== isNearTarget) {
         setIsNearTarget(isNear);
         
-        // Provide subtle user feedback when near target
         if (isNear) {
-          setScale(1.2); // Slightly enlarge to show it's in a good spot
+          // Try to find the target element to determine appropriate size
+          try {
+            // Look for matching path element with same region ID
+            const targetPath = document.querySelector(
+              `path[data-numeric-id="${region.id}"], path[data-region-id="${region.id}"], path[data-region-id="NG-${region.id}"]`
+            ) as SVGPathElement;
+            
+            if (targetPath) {
+              // Calculate relative size based on path dimensions
+              const targetRect = targetPath.getBBox();
+              const targetArea = targetRect.width * targetRect.height;
+              
+              if (pathRef.current) {
+                const pieceRect = pathRef.current.getBBox();
+                const pieceArea = pieceRect.width * pieceRect.height;
+                
+                // Scale based on ratio of target area to piece area
+                if (targetArea > pieceArea) {
+                  // Target is bigger, enlarge the piece (but cap at 1.5x)
+                  const newScale = Math.min(1.5, Math.sqrt(targetArea / pieceArea) * shapeSize);
+                  console.log(`Target area larger: scaling UP to ${newScale} (touch)`);
+                  setScale(newScale);
+                } else if (targetArea < pieceArea) {
+                  // Target is smaller, shrink the piece (but not below 0.6x)
+                  const newScale = Math.max(0.6, Math.sqrt(targetArea / pieceArea) * shapeSize);
+                  console.log(`Target area smaller: scaling DOWN to ${newScale} (touch)`);
+                  setScale(newScale);
+                } else {
+                  // Sizes are about the same, use default enlarging
+                  setScale(1.2 * shapeSize);
+                }
+              } else {
+                // Fallback if we can't get path dimensions
+                setScale(1.2 * shapeSize);
+              }
+            } else {
+              // If no matching element found, use the default enlarging
+              setScale(1.2 * shapeSize);
+            }
+          } catch (err) {
+            console.error('Error calculating size adjustment:', err);
+            // Use default if there's an error
+            setScale(1.2 * shapeSize);
+          }
           
           // Provide subtle vibration feedback on mobile
           if ('vibrate' in navigator) {
@@ -334,7 +376,8 @@ export function StatePiece({
             }
           }
         } else {
-          setScale(1.0);
+          // Reset to normal size when not near target
+          setScale(1.0 * shapeSize);
         }
       }
     }
