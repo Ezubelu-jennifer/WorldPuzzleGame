@@ -8,7 +8,6 @@ interface StatePieceProps {
   containerRef: RefObject<HTMLDivElement>;
   snapToPosition?: boolean;
   isTrayPiece?: boolean;
-  shapeSize?: number;
 }
 
 interface Position {
@@ -21,8 +20,7 @@ export function DynamicStatePiece({
   onDrop, 
   containerRef,
   snapToPosition = false,
-  isTrayPiece = false,
-  shapeSize = 1.0
+  isTrayPiece = false
 }: StatePieceProps) {
   // Access drag context
   const { draggedPieceId, setDraggedPieceId } = useDragContext();
@@ -33,7 +31,7 @@ export function DynamicStatePiece({
     x: region.currentX || 0, 
     y: region.currentY || 0
   });
-  const [scale, setScale] = useState<number>(1.0 * shapeSize);
+  const [scale, setScale] = useState<number>(1.0);
   const [isNearTarget, setIsNearTarget] = useState<boolean>(false);
   const [pulseEffect, setPulseEffect] = useState<boolean>(false);
   
@@ -47,8 +45,8 @@ export function DynamicStatePiece({
   
   // Debug logging for initialization
   useEffect(() => {
-    console.log(`DynamicStatePiece initialized: ${region.name} (ID: ${region.id}), shapeSize: ${shapeSize}`);
-  }, [region.name, region.id, shapeSize]);
+    console.log(`DynamicStatePiece initialized: ${region.name} (ID: ${region.id})`);
+  }, [region.name, region.id]);
   
   // Function to find target path element for a region
   const findTargetPathElement = useCallback(() => {
@@ -102,7 +100,7 @@ export function DynamicStatePiece({
     const targetElement = findTargetPathElement();
     if (!targetElement || !pathRef.current) {
       console.log('Could not calculate size: missing elements');
-      return 1.0 * shapeSize; // Default size
+      return 1.0 ; // Default size
     }
     
     try {
@@ -120,23 +118,23 @@ export function DynamicStatePiece({
         const ratio = Math.sqrt(targetArea / pieceArea);
         const newScale = Math.min(1.5, ratio); // Cap at 1.5x
         console.log(`Target is LARGER by ${Math.round((ratio-1)*100)}%, scaling UP to ${newScale.toFixed(2)}`);
-        return newScale * shapeSize;
+        return newScale ;
       } 
       else if (targetArea < pieceArea * 0.9) { // More than 10% smaller
         const ratio = Math.sqrt(targetArea / pieceArea);
         const newScale = Math.max(0.6, ratio); // Minimum 0.6x
         console.log(`Target is SMALLER by ${Math.round((1-ratio)*100)}%, scaling DOWN to ${newScale.toFixed(2)}`);
-        return newScale * shapeSize;
+        return newScale ;
       }
       
       // Default: areas are similar (within 10%)
       console.log('Areas are similar, using default scale');
-      return 1.0 * shapeSize;
+      return 1.0 ;
     } catch (err) {
       console.error('Error calculating size:', err);
-      return 1.0 * shapeSize; // Default on error
+      return 1.0 ; // Default on error
     }
-  }, [findTargetPathElement, shapeSize]);
+  }, [findTargetPathElement]);
   
   // Mouse drag start handler
   const handleDragStart = useCallback((e: React.MouseEvent<SVGElement>) => {
@@ -159,12 +157,12 @@ export function DynamicStatePiece({
     });
     
     // Start with a slightly larger scale for better visibility
-    setScale(1.2 * shapeSize);
+    setScale(1.2 );
     
     // Add document event listeners
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  }, [region.isPlaced, region.id, setDraggedPieceId, shapeSize]);
+  }, [region.isPlaced, region.id, setDraggedPieceId]);
   
   // Mouse move handler
   const handleMouseMove = useCallback((e: MouseEvent) => {
@@ -198,11 +196,11 @@ export function DynamicStatePiece({
           setScale(newScale);
         } else {
           // Reset to normal size when not near
-          setScale(1.0 * shapeSize);
+          setScale(1.0 );
         }
       }
     }
-  }, [isDragging, containerRef, region.correctX, region.correctY, isNearTarget, shapeSize, calculateDynamicSize]);
+  }, [isDragging, containerRef, region.correctX, region.correctY, isNearTarget, calculateDynamicSize]);
   
   // Mouse up/drop handler
   const handleMouseUp = useCallback((e: MouseEvent) => {
@@ -243,10 +241,10 @@ export function DynamicStatePiece({
         }, 600);
       } else {
         // Reset scale if not dropped
-        setScale(1.0 * shapeSize);
+        setScale(1.0 );
       }
     }
-  }, [isDragging, region.id, region.name, region.correctX, region.correctY, onDrop, containerRef, setDraggedPieceId, calculateDynamicSize, shapeSize]);
+  }, [isDragging, region.id, region.name, region.correctX, region.correctY, onDrop, containerRef, setDraggedPieceId, calculateDynamicSize]);
   
   // Touch handlers (similar logic to mouse handlers)
   const handleTouchStart = useCallback((e: React.TouchEvent<SVGElement>) => {
@@ -258,10 +256,10 @@ export function DynamicStatePiece({
     setDraggedPieceId(region.id);
     
     // Apply zoom effect when starting touch drag
-    setScale(2.0 * shapeSize);
+    setScale(2.0 );
     setTimeout(() => {
       // After 300ms, gradually reduce
-      setScale(1.0 * shapeSize);
+      setScale(1.0 );
     }, 300);
     
     const touch = e.touches[0];
@@ -272,7 +270,7 @@ export function DynamicStatePiece({
     
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleTouchEnd);
-  }, [region.isPlaced, region.id, setDraggedPieceId, shapeSize]);
+  }, [region.isPlaced, region.id, setDraggedPieceId]);
   
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!isDragging || e.touches.length !== 1) return;
@@ -316,11 +314,11 @@ export function DynamicStatePiece({
           }
         } else {
           // Reset when not near
-          setScale(1.0 * shapeSize);
+          setScale(1.0 );
         }
       }
     }
-  }, [isDragging, containerRef, region.correctX, region.correctY, isNearTarget, calculateDynamicSize, shapeSize]);
+  }, [isDragging, containerRef, region.correctX, region.correctY, isNearTarget, calculateDynamicSize]);
   
   const handleTouchEnd = useCallback((e: TouchEvent) => {
     if (!isDragging) return;
@@ -368,10 +366,10 @@ export function DynamicStatePiece({
         }, 600);
       } else {
         // Reset if not dropped
-        setScale(1.0 * shapeSize);
+        setScale(1.0 );
       }
     }
-  }, [isDragging, region.id, region.correctX, region.correctY, onDrop, containerRef, setDraggedPieceId, calculateDynamicSize, shapeSize]);
+  }, [isDragging, region.id, region.correctX, region.correctY, onDrop, containerRef, setDraggedPieceId, calculateDynamicSize]);
   
   // Special properties for circular regions (FCT, Nasarawa)
   const isCircleRegion = region.name === "Federal Capital Territory" || 
