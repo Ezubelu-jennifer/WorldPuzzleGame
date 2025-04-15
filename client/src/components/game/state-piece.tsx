@@ -14,6 +14,7 @@ interface StatePieceProps {
   snapToPosition?: boolean;
   isTrayPiece?: boolean;
   useThumbnail?: boolean;
+  shapeSize?: number; // Added shape size prop
 }
 
 interface Position {
@@ -26,7 +27,8 @@ export function StatePiece({
   onDrop, 
   containerRef,
   snapToPosition = false,
-  isTrayPiece = false
+  isTrayPiece = false,
+  shapeSize = 1.0
 }: StatePieceProps) {
   // Access drag context
   const { draggedPieceId, setDraggedPieceId } = useDragContext();
@@ -53,7 +55,8 @@ export function StatePiece({
   const svgRef = useRef<SVGSVGElement>(null);
   
   // Size calculation (important for positioning)
-  const size = isTrayPiece ? 80 : 140;
+  const baseSize = isTrayPiece ? 80 : 140;
+  const size = Math.round(baseSize * shapeSize);
 
   // Fetch SVG data for this region
   useEffect(() => {

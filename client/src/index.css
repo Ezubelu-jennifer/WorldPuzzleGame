@@ -37,12 +37,23 @@
 @keyframes pulse {
   0% {
     filter: drop-shadow(0 0 5px rgba(0, 255, 0, 0.3));
+    transform: scale(1);
   }
+  25% {
+    filter: drop-shadow(0 0 15px rgba(0, 255, 0, 0.7));
+    transform: scale(1.1);
+  } 
   50% {
-    filter: drop-shadow(0 0 20px rgba(0, 255, 0, 0.9));
+    filter: drop-shadow(0 0 25px rgba(0, 255, 0, 0.9));
+    transform: scale(1.2);
+  }
+  75% {
+    filter: drop-shadow(0 0 15px rgba(0, 255, 0, 0.7));
+    transform: scale(1.1);
   }
   100% {
     filter: drop-shadow(0 0 5px rgba(0, 255, 0, 0.3));
+    transform: scale(1);
   }
 }
 
