@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useGame } from "@/context/game-context";
 import { useDrop } from "@/hooks/useDrop";
 import { StatePiece } from "@/components/game/new-state-piece";
+import { DynamicStatePiece } from "@/components/game/dynamic-state-piece"; 
 import { Button } from "@/components/ui/button";
 import { getSvgDataById } from "@/data/svg-map-data";
 import { getViewBoxFromSVG, extractNigeriaRegions, extractKenyaRegions } from "@/data/svg-parser";
@@ -584,7 +585,7 @@ export function PuzzleBoard({
         {/* Puzzle Pieces that have been placed on the board */}
         {hasRegions && gameState.regions.map(region => 
           region.isPlaced && (
-            <StatePiece
+            <DynamicStatePiece
               key={region.id}
               region={region}
               snapToPosition
