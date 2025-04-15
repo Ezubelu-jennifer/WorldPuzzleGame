@@ -9,17 +9,16 @@ import { RegionPiece } from "@shared/schema";
 
 interface PiecesTrayProps {
   onPieceDrop: (id: number, x: number, y: number) => boolean;
-  shapeSize?: number; // Add shape size prop
 }
 
-export function PiecesTray({ onPieceDrop, shapeSize = 1.0 }: PiecesTrayProps) {
+export function PiecesTray({ onPieceDrop }: PiecesTrayProps) {
   const { gameState } = useGame();
   const trayRef = useRef<HTMLDivElement>(null);
   const [svgData, setSvgData] = useState<string>("");
   const [svgRegions, setSvgRegions] = useState<{ id: string; name: string; path: string }[]>([]);
   
   // Debug log
-  console.log(`PiecesTray: Rendering with shapeSize ${shapeSize}`);
+  console.log(`PiecesTray: Rendering`); // Shape size has been removed
   
   // Load SVG data for the country
   useEffect(() => {
@@ -165,7 +164,6 @@ export function PiecesTray({ onPieceDrop, shapeSize = 1.0 }: PiecesTrayProps) {
                 onDrop={onPieceDrop}
                 containerRef={trayRef}
                 isTrayPiece
-                shapeSize={shapeSize}
               />
             )}
             
