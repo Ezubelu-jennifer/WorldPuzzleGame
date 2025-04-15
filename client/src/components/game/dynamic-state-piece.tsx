@@ -551,31 +551,35 @@ export function DynamicStatePiece({
         </g>
       )}
       
-      {/* Popup message */}
-      {showPopup && isDragging && (
-        <foreignObject x="-100" y="-80" width="200" height="100" style={{ 
+      {/* Popup message - ABSOLUTE POSITIONING FOR VISIBILITY */}
+      {isDragging && (
+        <foreignObject x="-125" y="-120" width="250" height="100" style={{ 
           pointerEvents: 'none',
           overflow: 'visible',
-          zIndex: 1000
+          zIndex: 9999,
+          position: 'relative'
          }}>
           <div
             style={{
-              backgroundColor: 'rgba(255, 30, 30, 0.9)',
+              backgroundColor: 'rgba(255, 0, 0, 1)',
               color: 'white',
-              padding: '10px 16px',
-              borderRadius: '8px',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.5)',
+              padding: '12px 20px',
+              borderRadius: '12px',
+              boxShadow: '0 6px 20px rgba(0,0,0,0.7)',
               fontFamily: 'Arial, sans-serif',
               fontWeight: 'bold',
               textAlign: 'center',
-              fontSize: '16px',
+              fontSize: '18px',
               whiteSpace: 'nowrap',
               pointerEvents: 'none',
               animation: 'fadeIn 0.3s ease-in-out',
-              border: '2px solid white'
+              border: '3px solid white',
+              textShadow: '1px 1px 2px black',
+              transform: 'scale(1.2)',
+              display: 'inline-block'
             }}
           >
-            {popupText}
+            {`Placing ${region.name}`}
           </div>
         </foreignObject>
       )}

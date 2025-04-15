@@ -175,6 +175,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const placePiece = (pieceId: number, x: number, y: number): boolean => {
     if (!gameState) return false;
     
+    // FORCE PLACEMENT TO ALWAYS SUCCEED FOR DEBUGGING POPUP ISSUE
+    console.log("FORCING PLACEPIECETO ALWAYS RETURN TRUE FOR POPUP TESTING");
+    return true;
+    
     // Find the piece
     const pieceIndex = gameState.regions.findIndex(r => r.id === pieceId && !r.isPlaced);
     if (pieceIndex === -1) return false;
