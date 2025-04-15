@@ -1,4 +1,5 @@
 import { getPathBounds } from 'svg-path-bounds';
+import * as clipperLib from 'clipper-lib';
 
 // Known centroids for ALL Nigerian states and Kenya counties
 // These coordinates are carefully mapped to match the SVG positions exactly
@@ -296,6 +297,42 @@ export function getPathCentroid(svgPath: string, regionId?: string): { x: number
 }
 
 // Direct scaling approach for SVG paths
+/**
+ * Compare two SVG paths to see if they represent the same shape
+ * This is used for matching verification during drag and drop
+ */
+export function compareSvgPaths(path1: string, path2: string, tolerance: number = 0.8): boolean {
+  try {
+    // Quick check if the paths are identical
+    if (path1 === path2) return true;
+    
+    // If either path is empty, they don't match
+    if (!path1 || !path2 || path1.trim() === '' || path2.trim() === '') {
+      return false;
+    }
+    
+    // Get centroids to help with alignment
+    const centroid1 = getPathCentroid(path1);
+    const centroid2 = getPathCentroid(path2);
+    
+    if (!centroid1 || !centroid2) {
+      return false;
+    }
+    
+    // Simple distance check - if centroids are too far apart, paths probably don't match
+    const dx = centroid1.x - centroid2.x;
+    const dy = centroid1.y - centroid2.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    // This is a basic check using centroid distance
+    // A more sophisticated implementation would compare the actual shapes
+    return distance < 60; // 60px tolerance
+  } catch (error) {
+    console.warn('SVG path comparison failed:', error);
+    return false;
+  }
+}
+
 export function optimizeSvgPath(svgPath: string, scaleFactor: number = 1.5): string {
   try {
     // Skip optimization for very complex paths to prevent errors

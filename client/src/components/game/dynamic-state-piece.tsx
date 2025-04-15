@@ -535,7 +535,7 @@ export function DynamicStatePiece({
           transform: 'translateX(-50%)',
           pointerEvents: 'none'
          }}>
-          <div xmlns="http://www.w3.org/1999/xhtml"
+          <div
             style={{
               backgroundColor: '#4CAF50',
               color: 'white',
