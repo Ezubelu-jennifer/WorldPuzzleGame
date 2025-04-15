@@ -209,17 +209,121 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // Method 2: Check if the piece is over its matching region on the map (shape-based)
     let isOverMatchingRegion = false;
     
-    // If we're within a broader tolerance (120px), check if the piece is over its target region
+    // Find the target region element in the DOM
+    const findRegionElement = (regionId: number): SVGPathElement | null => {
+      try {
+        // Try to find the corresponding region path in the SVG map
+        const svgPaths = document.querySelectorAll('path[data-region-id], path[data-numeric-id]');
+        
+        // Log for debugging
+        console.log(`Looking for SVG path with region ID ${regionId} among ${svgPaths.length} paths`);
+        
+        for (let i = 0; i < svgPaths.length; i++) {
+          const pathElement = svgPaths[i] as SVGPathElement;
+          
+          // First try to match by numeric ID (which maps to our database IDs)
+          const numericId = pathElement.getAttribute('data-numeric-id');
+          if (numericId && parseInt(numericId, 10) === regionId) {
+            console.log(`Found matching region by numeric ID: ${numericId}`);
+            return pathElement;
+          }
+          
+          // If no match by numeric ID, try the SVG region ID
+          const dataRegionId = pathElement.getAttribute('data-region-id');
+          if (dataRegionId && dataRegionId.includes(`${regionId}`)) {
+            console.log(`Found matching region by SVG ID: ${dataRegionId}`);
+            return pathElement;
+          }
+          
+          // Also try to match by name for completeness (some special cases)
+          const regionName = piece.name.toLowerCase();
+          const pathName = pathElement.getAttribute('data-name')?.toLowerCase();
+          if (pathName && regionName && (
+              pathName.includes(regionName) || 
+              regionName.includes(pathName))
+          ) {
+            console.log(`Found matching region by name: ${pathName}`);
+            return pathElement;
+          }
+        }
+      } catch (err) {
+        console.error('Error finding region element:', err);
+      }
+      return null;
+    };
+    
+    // Check if the point is within a shape with the elementFromPoint method
+    const isPointInShape = (x: number, y: number, targetElement: SVGPathElement): boolean => {
+      try {
+        // Get the element at the point
+        const element = document.elementFromPoint(x, y);
+        if (!element) return false;
+        
+        // Get the target element attributes for matching
+        const targetRegionId = targetElement.getAttribute('data-region-id');
+        const targetNumericId = targetElement.getAttribute('data-numeric-id');
+        const targetName = targetElement.getAttribute('data-name')?.toLowerCase();
+        
+        // Try direct element match
+        if (element === targetElement || targetElement.contains(element)) {
+          console.log('Direct element match');
+          return true;
+        }
+        
+        // Try ID-based match
+        if (targetNumericId && element.closest(`path[data-numeric-id="${targetNumericId}"]`)) {
+          console.log('Numeric ID match');
+          return true;
+        }
+        
+        if (targetRegionId && element.closest(`path[data-region-id="${targetRegionId}"]`)) {
+          console.log('Region ID match');
+          return true;
+        }
+        
+        // Try name-based match for special cases
+        if (targetName && piece.name) {
+          const pieceName = piece.name.toLowerCase();
+          const elementName = element.getAttribute('data-name')?.toLowerCase();
+          
+          if (elementName && (
+              elementName.includes(targetName) || 
+              targetName.includes(elementName) ||
+              elementName.includes(pieceName) ||
+              pieceName.includes(elementName)
+          )) {
+            console.log('Name match');
+            return true;
+          }
+        }
+        
+        return false;
+      } catch (err) {
+        console.error('Error checking if point is in shape:', err);
+        return false;
+      }
+    };
+    
+    // First use a broader tolerance to consider if we're near the region
     if (distance <= 120) {
-      // We consider this a match if we're in the general vicinity of the correct region
-      // The SVG paths are the same for the state in the board and the dragged piece,
-      // so if we're close enough, we consider it a match
-      isOverMatchingRegion = true;
-      
-      // In a more sophisticated implementation, we would:
-      // 1. Get the SVG element for the target region based on its ID or path data
-      // 2. Use document.elementFromPoint(x, y) to check if the cursor is over that SVG path
-      // 3. Use the SVG's isPointInPath() method to check if the point is inside the path
+      try {
+        // Get the SVG path element for this region
+        const regionElement = findRegionElement(pieceId);
+        
+        if (regionElement) {
+          // Check if the cursor is over this region's shape
+          isOverMatchingRegion = isPointInShape(x, y, regionElement);
+          console.log(`Cursor position: (${x}, ${y}) - Over matching region? ${isOverMatchingRegion}`);
+        } else {
+          // Fallback to distance-based matching if we can't find the shape
+          isOverMatchingRegion = distance <= 60;
+          console.log(`Fallback to distance matching (${distance} <= 60? ${isOverMatchingRegion})`);
+        }
+      } catch (err) {
+        console.error('Error in shape matching:', err);
+        // Fallback to distance-based matching
+        isOverMatchingRegion = distance <= 60;
+      }
     }
     
     // A piece is correctly placed if it's either near its correct position OR over its matching region

@@ -36,6 +36,7 @@ export function CountrySvgMap({
   const [viewBox, setViewBox] = useState<string>("0 0 800 600");
   const [scale, setScale] = useState<number>(1);
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
+  const [regionMappings, setRegionMappings] = useState<Record<string, number>>({});
   
   const svgRef = useRef<SVGSVGElement>(null);
   
@@ -99,6 +100,58 @@ export function CountrySvgMap({
     // Set viewBox
     const extractedViewBox = getViewBoxFromSVG(svgData);
     setViewBox(extractedViewBox);
+    
+    // Fetch region data from the API to map SVG regions to database regions
+    const fetchRegions = async () => {
+      try {
+        const response = await fetch(`/api/countries/${countryId}/regions`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch regions");
+        }
+        
+        const regions = await response.json();
+        const mappings: Record<string, number> = {};
+        
+        // Create a mapping from region name to database ID
+        regions.forEach((region: any) => {
+          // Clean up region names for comparison
+          const cleanName = region.name.trim().toLowerCase();
+          
+          // Extract the region code from SVG IDs (like NG-AB -> AB)
+          if (countryId === 1) {
+            // For Nigeria, try to match by name or code
+            extractedRegions.forEach(svgRegion => {
+              const svgRegionName = svgRegion.name.trim().toLowerCase();
+              const svgRegionCode = svgRegion.id.replace('NG-', '');
+              
+              if (svgRegionName === cleanName || 
+                  svgRegionName.includes(cleanName) || 
+                  cleanName.includes(svgRegionName)) {
+                mappings[svgRegion.id] = region.id;
+              }
+            });
+          } else if (countryId === 2) {
+            // For Kenya, try to match by name
+            extractedRegions.forEach(svgRegion => {
+              const svgRegionName = svgRegion.name.trim().toLowerCase();
+              
+              if (svgRegionName === cleanName || 
+                  svgRegionName.includes(cleanName) || 
+                  cleanName.includes(svgRegionName)) {
+                mappings[svgRegion.id] = region.id;
+              }
+            });
+          }
+        });
+        
+        console.log('Created region mappings:', mappings);
+        setRegionMappings(mappings);
+      } catch (error) {
+        console.error("Error mapping regions:", error);
+      }
+    };
+    
+    fetchRegions();
   }, [svgData, countryId]);
   
   // Create unique regions list
@@ -161,6 +214,8 @@ export function CountrySvgMap({
             strokeWidth="1.5"
             strokeDasharray="2,2"
             data-region-id={region.id}
+            data-numeric-id={regionMappings[region.id]}
+            data-name={region.name}
             style={{ 
               pointerEvents: "none"
             }}
