@@ -242,7 +242,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setGameState({
         ...gameState,
         regions: updatedRegions,
-        placedPieces: updatedPlacedPieces
+        placedPieces: updatedPlacedPieces,
+        // Preserve the current shape size
+        shapeSize: gameState.shapeSize || 1.0
       });
       
       // Check if game is complete
@@ -279,7 +281,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ...gameState,
       regions: updatedRegions,
       placedPieces: [...gameState.placedPieces, piece.id],
-      hintsUsed: gameState.hintsUsed + 1
+      hintsUsed: gameState.hintsUsed + 1,
+      // Preserve the current shape size
+      shapeSize: gameState.shapeSize || 1.0
     });
     
     // Check if game is complete
