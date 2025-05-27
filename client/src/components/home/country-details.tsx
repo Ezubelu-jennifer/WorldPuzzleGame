@@ -5,10 +5,10 @@ import { CountryData, sampleRegions } from "@/data/countries";
 import { RegionPiece } from "@shared/schema";
 import { RegionMap } from "./region-map";
 import { Button } from "@/components/ui/button";
-import { CountrySvgMap } from "@/components/maps/country-svg-map";
+import  CountrySvgMap  from "@/components/maps/country-svg-map";
 import { getSvgDataById } from "@/data/svg-map-data";
 import { RegionThumbnail } from "@/components/region-thumbnail";
-import { extractNigeriaRegions, extractKenyaRegions } from "@/data/svg-parser";
+import { extractWorldRegions} from "@/data/svg-parser";
 
 interface CountryDetailsProps {
   country: CountryData;
@@ -48,9 +48,8 @@ export function CountryDetails({ country, onBack, onPlay }: CountryDetailsProps)
   }, [data]);
   
   // Get SVG regions from the SVG data
-  const svgRegions = country.id === 1 
-    ? extractNigeriaRegions(svgData || '')
-    : extractKenyaRegions(svgData || '');
+  const svgRegions = extractWorldRegions(svgData || '');
+    
   
   // Handle region click in SVG map
   const handleRegionClick = (regionId: string, regionName: string) => {

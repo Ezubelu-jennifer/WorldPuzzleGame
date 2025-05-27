@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Map as MapIcon } from "lucide-react";
 
 interface CountryMapShowcaseProps {
-  nigeriaSvg: string;
-  kenyaSvg: string;
+  worldSvg: string;
+ 
 }
 
 interface CountryData {
@@ -17,7 +17,7 @@ interface CountryData {
   description: string;
 }
 
-export function CountryMapShowcase({ nigeriaSvg, kenyaSvg }: CountryMapShowcaseProps) {
+export function CountryMapShowcase({ worldSvg,}: CountryMapShowcaseProps) {
   const [selectedCountryIndex, setSelectedCountryIndex] = useState(0);
   const [selectedRegion, setSelectedRegion] = useState<{ id: string; name: string } | null>(null);
   const [regionIds, setRegionIds] = useState<{ id: string; name: string }[]>([]);
@@ -26,24 +26,24 @@ export function CountryMapShowcase({ nigeriaSvg, kenyaSvg }: CountryMapShowcaseP
   const countries: CountryData[] = [
     {
       id: 1,
-      name: "Nigeria",
-      svgData: nigeriaSvg,
-      description: "Nigeria has 10 diverse states, each with unique geography and culture. The map puzzle game lets you explore these regions by solving interactive jigsaw puzzles. Click on a state to learn more."
+      name: "WorldMap",
+      svgData: worldSvg,
+      description: "World Map has 256 diverse Countries, each with unique geography and culture. The map puzzle game lets you explore these regions by solving interactive jigsaw puzzles. Click on a countries to learn more."
     },
-    {
-      id: 2,
-      name: "Kenya",
-      svgData: kenyaSvg,
-      description: "Kenya is divided into 47 counties, established by the 2010 Constitution of Kenya. Each county has its own government with a governor and assembly. Click on a county to see its details."
-    }
+   
   ];
 
   const selectedCountry = countries[selectedCountryIndex];
+  console.log('Countries array:', countries);
+  console.log('Currently selected index:', selectedCountryIndex);
+  console.log('Selected SVG:', selectedCountry.svgData.slice(0, 300));
+
 
   // Extract region IDs and names from SVG data
   useEffect(() => {
     const extractRegions = () => {
       const svgData = selectedCountry.svgData;
+
       const regions: { id: string; name: string }[] = [];
       
       // Extract using regex - find all path elements with id and title attributes
@@ -69,12 +69,16 @@ export function CountryMapShowcase({ nigeriaSvg, kenyaSvg }: CountryMapShowcaseP
   };
 
   const handlePreviousCountry = () => {
-    setSelectedCountryIndex(prev => (prev === 0 ? countries.length - 1 : prev - 1));
+    setSelectedCountryIndex(prevIndex => (prevIndex - 1 + countries.length) % countries.length);
   };
-
+  
+  
   const handleNextCountry = () => {
-    setSelectedCountryIndex(prev => (prev === countries.length - 1 ? 0 : prev + 1));
+    setSelectedCountryIndex(prevIndex => (prevIndex + 1) % countries.length);
   };
+  
+  
+ // console.log('index: ', selectedCountryIndex);
 
   const handlePlay = () => {
     setLocation(`/game/${selectedCountry.id}`);

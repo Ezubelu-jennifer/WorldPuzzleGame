@@ -1,5 +1,6 @@
-import { getPathBounds } from 'svg-path-bounds';
+import  {getPathBounds}  from 'svg-path-bounds';
 import * as clipperLib from 'clipper-lib';
+
 
 // Known centroids for ALL Nigerian states and Kenya counties
 // These coordinates are carefully mapped to match the SVG positions exactly
@@ -333,7 +334,7 @@ export function compareSvgPaths(path1: string, path2: string, tolerance: number 
   }
 }
 
-export function optimizeSvgPath(svgPath: string, scaleFactor: number = 1.5): string {
+export function optimizeSvgPath(svgPath: string, scaleFactor: number = 1.0): string {
   try {
     // Skip optimization for very complex paths to prevent errors
     if (svgPath.length > 5000) {
@@ -375,7 +376,7 @@ export function optimizeSvgPath(svgPath: string, scaleFactor: number = 1.5): str
     // Safe parsing of number values
     const safeParseFloat = (val: string): number => {
       const parsed = parseFloat(val);
-      return isNaN(parsed) ? 0 : parsed;
+      return isNaN(parsed) || parsed === Infinity || parsed === -Infinity ? 0 : parsed;
     };
     
     const scaledCommands = commands.map(command => {

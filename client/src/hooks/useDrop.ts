@@ -1,4 +1,5 @@
-import { useRef, useState, useEffect, RefObject } from "react";
+// useDrop.ts
+import { useRef, useState, useEffect } from "react";
 
 interface Position {
   x: number;
@@ -14,40 +15,47 @@ export function useDrop({ onDrop }: UseDropParams = {}) {
   const [isOver, setIsOver] = useState(false);
 
   useEffect(() => {
-    // We check in the useDrag's onDragEnd if the position is within this drop zone
-    // This is why we're not adding event listeners here
-  }, []);
+    const node = dropRef.current;
+    if (!node) return;
 
-  const checkIsOver = (x: number, y: number): boolean => {
-    if (!dropRef.current) return false;
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      setIsOver(true);
+    };
 
-    const rect = dropRef.current.getBoundingClientRect();
-    return (
-      x >= rect.left &&
-      x <= rect.right &&
-      y >= rect.top &&
-      y <= rect.bottom
-    );
-  };
+    const handleDragLeave = () => {
+      setIsOver(false);
+    };
 
-  const handleDrop = (position: Position) => {
-    if (checkIsOver(position.x, position.y) && onDrop) {
-      // Calculate position relative to drop zone
-      if (dropRef.current) {
-        const rect = dropRef.current.getBoundingClientRect();
-        const relativePosition = {
-          x: position.x - rect.left,
-          y: position.y - rect.top,
-        };
-        onDrop(relativePosition);
+    const handleDrop = (e: DragEvent) => {
+      e.preventDefault();
+      setIsOver(false);
+
+      const pieceId = e.dataTransfer?.getData("pieceId");
+      console.log("DROP EVENT: pieceId =", pieceId);
+
+      if (onDrop && node&& pieceId) {
+        const rect = node.getBoundingClientRect();
+        onDrop({
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top
+        });
       }
-    }
-  };
+    };
+
+    node.addEventListener('dragover', handleDragOver);
+    node.addEventListener('dragleave', handleDragLeave);
+    node.addEventListener('drop', handleDrop);
+
+    return () => {
+      node.removeEventListener('dragover', handleDragOver);
+      node.removeEventListener('dragleave', handleDragLeave);
+      node.removeEventListener('drop', handleDrop);
+    };
+  }, [onDrop]);
 
   return {
     dropRef,
-    isOver,
-    handleDrop,
-    checkIsOver
+    isOver
   };
 }

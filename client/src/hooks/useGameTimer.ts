@@ -2,28 +2,53 @@ import { useState, useEffect, useRef } from "react";
 
 interface UseGameTimerProps {
   isRunning?: boolean;
+  maxTime?: number; // in seconds
   onTick?: (seconds: number) => void;
+  onTimeUp?: () => void;
 }
 
-export function useGameTimer({ isRunning = false, onTick }: UseGameTimerProps = {}) {
+export function useGameTimer({
+  isRunning = false,
+  maxTime,
+  onTick,
+  onTimeUp,
+}: UseGameTimerProps = {}) {
   const [seconds, setSeconds] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number | null>(null);
+  const [running, setRunning] = useState(isRunning);
+
 
   // Start the timer
   const start = () => {
     // Clear any existing timer
+    //stop();
     if (timerRef.current) {
       clearInterval(timerRef.current);
     }
     
     // Set current time as start time
-    startTimeRef.current = Date.now() - (seconds * 1000);
+    //startTimeRef.current = Date.now() - (seconds * 1000);
+     // Use existing startTimeRef if set, otherwise calculate from seconds
+    if (!startTimeRef.current) {
+      startTimeRef.current = Date.now() - (seconds * 1000);
+    }
+   // console.log('timer:',startTimeRef.current);
     
     // Start the interval
     timerRef.current = setInterval(() => {
       const currentSeconds = Math.floor((Date.now() - (startTimeRef.current || 0)) / 1000);
-      setSeconds(currentSeconds);
+      setSeconds((prev) => {
+        if (maxTime && currentSeconds >= maxTime) {
+          clearInterval(timerRef.current!);
+          timerRef.current = null;
+         // console.log('timer:',startTimeRef.current);
+
+          onTimeUp?.(); // Notify when time is up
+          return maxTime;
+        }
+        return currentSeconds;
+      });
       
       if (onTick) {
         onTick(currentSeconds);
@@ -43,7 +68,12 @@ export function useGameTimer({ isRunning = false, onTick }: UseGameTimerProps = 
   const reset = () => {
     stop();
     setSeconds(0);
-    startTimeRef.current = null;
+    startTimeRef.current = Date.now();
+   // console.log('running', running);
+
+    if (running) {
+      start();
+    }
   };
 
   // Format seconds as MM:SS
@@ -55,6 +85,7 @@ export function useGameTimer({ isRunning = false, onTick }: UseGameTimerProps = 
 
   // Effect to manage timer based on isRunning prop
   useEffect(() => {
+    setRunning(isRunning);
     if (isRunning) {
       start();
     } else {
@@ -63,9 +94,8 @@ export function useGameTimer({ isRunning = false, onTick }: UseGameTimerProps = 
     
     // Clean up on unmount
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
+      //clearInterval(timerRef.current!);
+      stop(); // Clear interval on unmount
     };
   }, [isRunning]);
 

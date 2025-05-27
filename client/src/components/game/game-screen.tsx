@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useGame } from "@/context/game-context";
+import { useGameTimer } from "@/hooks/useGameTimer"; // 👈 Import the timer hook
 import { GameInfoPanel } from "@/components/game/game-info-panel";
 import { PuzzleBoard } from "@/components/game/puzzle-board";
 import { PiecesTray } from "@/components/game/pieces-tray";
@@ -12,16 +13,92 @@ import { Settings } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+//import { navigate } from "wouter/use-browser-location";
+import { useLocation } from "wouter";
+
 
 interface GameScreenProps {
   countryId: number;
 }
 
 export function GameScreen({ countryId }: GameScreenProps) {
-  const { gameState, initializeGame, placePiece, useHint, resetGame, setShapeSize } = useGame();
+  const { gameState, initializeGame, placePiece,setCountdown, useHint,setSelectedLevel, resetGame, setHighlightedRegions,setDroppedItems,selectedLevel, } = useGame();
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
+  const [showTimeUpModal, setShowTimeUpModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [timeUp, setTimeUp] = useState(false);
+  const [_, navigate] = useLocation();
+
+
+   // Determine if puzzle is completed
+  const puzzleCompleted = gameState?.isCompleted ?? false;
   
+// Use the enhanced timer hook
+const {
+  formattedTime,
+  seconds,
+  start,
+  stop,
+  reset,
+} = useGameTimer({
+  maxTime:
+    selectedLevel === "easy" ? 480 : // 8 minutes
+    selectedLevel === "medium" ? 480 : // 7 minutes
+    selectedLevel === "hard" ? 300 : // 5 minutes
+
+    240, // 4 minutes for hard
+  isRunning: gameStarted,
+  onTimeUp: () => {
+    if (!puzzleCompleted) {
+      setShowTimeUpModal(true);
+      setTimeUp(true); //Set timeUp when time runs out
+
+    }
+  },
+});
+
+  // Update the puzzle completed effect// Stop the timer and show success modal when puzzle is completed
+
+  useEffect(() => {
+    if (puzzleCompleted) {
+      stop(); // Stop the timer
+      setShowSuccessModal(true);
+    }
+  }, [puzzleCompleted, stop]);
+
+  
+//use effect for level selection collection// Detect level from URL
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const levelParam = url.searchParams.get("level");
+
+    if (levelParam === "easy" || levelParam === "medium" || levelParam === "hard" || levelParam === "very hard") {
+      setSelectedLevel(levelParam);
+    }
+  }, []);
+
+
+  // for medium level popup piece name
+  useEffect(() => {
+    if (!gameStarted || puzzleCompleted || timeUp || selectedLevel !== "medium") return;
+  
+    let intervalId: NodeJS.Timeout;
+    intervalId = setInterval(() => {
+      setCountdown(prev => {
+        if (prev === 0) {
+          useHint(); // 👈 Call hint
+          return 9; // Reset back to 4 seconds
+        }
+        return prev - 1;
+      });
+    }, 1000); // Tick every 1 second
+  
+    return () => clearInterval(intervalId);
+  }, [gameStarted, puzzleCompleted, timeUp, selectedLevel, useHint]);
+  
+
+
   // Fetch country data
   const { data: country, isLoading: countryLoading } = useQuery({
     queryKey: [`/api/countries/${countryId}`],
@@ -40,6 +117,7 @@ export function GameScreen({ countryId }: GameScreenProps) {
     }
   });
 
+
   // Initialize game with country data
   useEffect(() => {
     if (country) {
@@ -47,20 +125,30 @@ export function GameScreen({ countryId }: GameScreenProps) {
     }
   }, [country, initializeGame]);
 
+
+
   // Handle piece drop
-  const handlePieceDrop = (pieceId: number, x: number, y: number): boolean => {
-    return placePiece(pieceId, x, y);
+  const handlePieceDrop = (pieceId: number, x: number, y: number,rotation:number, pathData:string): boolean => {
+    return placePiece(pieceId, x, y,rotation,pathData);
   };
 
   // Handle using a hint
-  const handleUseHint = () => {
-    useHint();
-  };
+ // const handleUseHint = () => {
+   // useHint();
+ // };
 
   // Handle restarting the game
   const handleRestart = () => {
     resetGame();
-    setGameStarted(false);
+    //setGameStarted(false);
+    setDroppedItems([]);
+    setHighlightedRegions([]);
+    reset();
+    setShowSuccessModal(false); // Reset success modal state
+    setShowTimeUpModal(false); // Reset time up modal state
+    setCountdown(0);
+    setGameStarted(true); // Force restart the timer
+
   };
 
   // Show help modal
@@ -72,6 +160,27 @@ export function GameScreen({ countryId }: GameScreenProps) {
   const handleStart = () => {
     setGameStarted(true);
   };
+
+  type Difficulty = "easy" | "medium" | "hard" | "very hard" | null;
+
+
+  const nextLevelMap: Record<Exclude<Difficulty, null>, Difficulty> = {
+    easy: "medium",
+    medium: "hard",
+    hard: "very hard",
+    "very hard": "very hard", // stays at the highest level
+  };
+  
+  const increaseLevel = () => {
+    if (selectedLevel !== null) {
+      const nextLevel = nextLevelMap[selectedLevel];
+      setSelectedLevel(nextLevel);
+      return nextLevel; // 👈 Return it so we can use it
+    }
+    return null;
+  };
+  
+  
 
   if (countryLoading || !country) {
     return (
@@ -90,8 +199,17 @@ export function GameScreen({ countryId }: GameScreenProps) {
     <div className="min-h-screen flex flex-col relative">
       {/* Header with country name and difficulty */}
       <div className="bg-gradient-to-r from-emerald-700 to-emerald-600 py-3 px-4 text-white flex justify-between items-center">
-        <h1 className="text-xl font-bold">{country.name} Puzzle - Easy</h1>
+        <h1 className="text-xl font-bold">{country.name} Puzzle - {selectedLevel}</h1>
         <div className="flex items-center gap-4">
+        
+    < div className="w-20 h-20 fixed down-10 right-6 rounded-full bg-gradient-to-br from-yellow-300 via-yellow-500 to-yellow-700 flex items-center justify-center text-emerald-900 text-3xl font-bold animate-pulse shadow-2xl transform transition-transform duration-300 scale-105 ring-4 ring-yellow-200">
+        {formattedTime}
+         </div>
+         
+        <button onClick={() => setShowHowToPlay(true)} className="text-white hover:text-emerald-200 transition">
+           {/* Help icon */}
+           </button>
+
           <button 
             onClick={handleHelp}
             className="text-white hover:text-emerald-200 transition"
@@ -112,11 +230,48 @@ export function GameScreen({ countryId }: GameScreenProps) {
           </button>
         </div>
       </div>
+     
+
+      {showTimeUpModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="bg-white rounded-lg p-6 shadow-lg max-w-sm text-center">
+      <h2 className="text-xl font-semibold mb-2">Time's Up!</h2>
+      <p className="text-gray-700 mb-4">You ran out of time. Try again!</p>
+      <button
+        className="bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-4 rounded"
+        onClick={() => {
+          setShowTimeUpModal(false);
+          handleRestart();
+        }}
+      >
+        Restart Puzzle
+      </button>
+    </div>
+  </div>
+)}
+
+      {showSuccessModal && (
+        <SuccessModal 
+          isOpen={showSuccessModal}
+          onRestart={() => {
+            setShowSuccessModal(false);
+            handleRestart();
+          }}
+
+          onNextLevel={() => {
+            // Add your next level logic here
+            const nextLevel = increaseLevel();
+            if (nextLevel) {
+              navigate(`/game/${countryId}?level=${nextLevel}`);
+            }
+            }}
+        />
+      )}
 
       {/* Hint button in top-right corner */}
       <div className="absolute top-16 right-4 z-10">
         <button 
-          onClick={handleUseHint}
+          onClick={handleHelp}
           className="bg-white rounded-full p-2 shadow-md hover:bg-gray-100 text-emerald-700 hover:text-emerald-900 transition flex items-center gap-1"
           title="Use a hint"
         >
@@ -127,13 +282,10 @@ export function GameScreen({ countryId }: GameScreenProps) {
         </button>
       </div>
 
-      {/* Pieces Tray - Horizontal strip at top */}
-      <div className="bg-gray-50 border-b overflow-x-auto py-3 px-2">
-        <PiecesTray 
-          onPieceDrop={handlePieceDrop}
-        />
-      </div>
-      
+
+         
+    <div className="flex h-screen">
+       
       {/* Main Game Area */}
       <div className="flex-1 flex flex-col items-center justify-center p-4 bg-white">
         <PuzzleBoard 
@@ -143,6 +295,17 @@ export function GameScreen({ countryId }: GameScreenProps) {
           onStart={handleStart}
         />
       </div>
+
+      
+      {/* Pieces Tray - vertical strip from top to down */}
+      <div className="bg-gray-50 border-l overflow-y-auto py-3 px-2 w-[260px]">
+      <PiecesTray 
+          onPieceDrop={handlePieceDrop}
+        />
+      </div>
+     
+      
+     </div>
       
       {/* Footer */}
       <div className="bg-gray-100 p-2 text-center text-sm text-gray-600">
@@ -163,7 +326,7 @@ export function GameScreen({ countryId }: GameScreenProps) {
           </SheetTrigger>
           <SheetContent side="left" className="w-80">
             <GameInfoPanel 
-              onUseHint={handleUseHint} 
+              onUseHint={handleHelp} 
               onRestart={handleRestart} 
               onHelp={handleHelp}
             />

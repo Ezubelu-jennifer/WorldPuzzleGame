@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo, useLayoutEffect } from "react";
 import { useGame } from "@/context/game-context";
-import { useDrop } from "@/hooks/useDrop";
-import { StatePiece } from "@/components/game/new-state-piece";
-import { DynamicStatePiece } from "@/components/game/dynamic-state-piece"; 
 import { Button } from "@/components/ui/button";
 import { getSvgDataById } from "@/data/svg-map-data";
-import { getViewBoxFromSVG, extractNigeriaRegions, extractKenyaRegions } from "@/data/svg-parser";
-import { CountrySvgMap } from "@/components/maps/country-svg-map";
+import { getViewBoxFromSVG, extractWorldRegions } from "@/data/svg-parser";
+import CountrySvgMap from "@/components/maps/country-svg-map";
 import { useDragContext } from "@/context/drag-context";
 import { getPathCentroid } from "@/utils/svg-clipper";
+import { useScrollContext } from "@/context/scrollcontext";
+
+
 
 // Configuration for the improved guidance system - ONLY RED DOTS MODE
 const ENABLE_ALL_GUIDES = false;         // When true, shows faint outlines for all states
@@ -31,80 +31,150 @@ export function PuzzleBoard({
   outlinePath,
   onStart
 }: PuzzleBoardProps) {
-  const { gameState, placePiece, useHint } = useGame();
-  const { draggedPieceId } = useDragContext();
+  const { gameState, useHint,countdown, errorPopup,droppedItems,setHighlightedRegions,highlightedRegions,selectedLevel,currentTarget,showPopup} = useGame();
   const [gameStarted, setGameStarted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [svgData, setSvgData] = useState<string>("");
-  const [viewBox, setViewBox] = useState<string>("0 0 400 300");
-  const [highlightedRegion, setHighlightedRegion] = useState<string | null>(null);
-  const [svgRegions, setSvgRegions] = useState<{ id: string; name: string; path: string }[]>([]);
+  const { scrollableMapContainerRef } = useScrollContext();
   
-  // Set up the drop zone for the puzzle container
-  const { dropRef } = useDrop({
-    onDrop: (position) => {
-      // The drag and drop is handled in the PuzzlePiece component
-    },
-  });
+  const [svgData, setSvgData] = useState<string>("");
+  const [viewBox, setViewBox] = useState<string>( "0 0 800 600"); // Use initialViewBox or default
+  const [svgRegions, setSvgRegions] = useState<{ id: string; name: string; path: string }[]>( []); // Use initialSvgRegions or default  
+  const svgRef = useRef<SVGSVGElement>(null);
+  const { draggedPieceId, draggedRotation } = useDragContext();
 
-  // Get SVG data for this country
-  useEffect(() => {
-    const data = getSvgDataById(countryId);
-    if (data) {
-      setSvgData(data);
-      const extractedViewBox = getViewBoxFromSVG(data);
-      setViewBox(extractedViewBox);
-      
-      // Extract regions
-      const extractedRegions = countryId === 1 
-        ? extractNigeriaRegions(data)
-        : extractKenyaRegions(data);
-      setSvgRegions(extractedRegions);
-    }
-  }, [countryId]);
-
-  // Handle game start
-  const handleStartPuzzle = () => {
-    setGameStarted(true);
-    onStart();
+   
+  type RegionType = {
+    id: string;
+    name: string;
+    path: string;
   };
 
-  // Calculate container dimensions
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  
-  useEffect(() => {
-    // Update dimensions on mount and window resize
-    const updateDimensions = () => {
-      if (containerRef.current) {
-        setDimensions({
-          width: containerRef.current.offsetWidth,
-          height: containerRef.current.offsetHeight
-        });
+  //selected level for guiding dot
+
+  const isEasy = selectedLevel === "easy";
+  const isMedium= selectedLevel === "medium";
+  const isHard = selectedLevel === "hard";
+  const isVeryHard = selectedLevel === "very hard";
+
+
+   // Helper function to find a matching region in the SVG for a game region
+   const findMatchingRegion = (gameRegion: any) => {
+    if (!gameRegion) return null;
+    
+    // Attempt to find a direct match by name
+    let matchingRegion = svgRegions.find(svgRegion => 
+      svgRegion.name.toLowerCase() === gameRegion.name.toLowerCase()
+    );
+    
+    
+    // If no direct match, try for Nigeria states using state codes
+    if (!matchingRegion && countryId === 1) {
+      // Map of Nigerian state names to their IDs
+      const stateIdMap: Record<string, string> = {
+        "ID-AD": "Andorra","ID-AE" :"United Arab Emirates","ID-AF" :"Afghanistan","ID-AG":"Antigua and Barbuda","ID-AI":"Anguilla", "ID-AL":"Albania","ID-AM" :"Armenia","ID-AO":"Angola","ID-AR": "Argentina","ID-AS":"American Samoa",
+    "ID-AT" :"Austria", "ID-AU":"Australia", "ID-AW":"Aruba", "ID-AX":"Aland Islands","ID-AZ":"Azerbaijan","ID-BA":"Bosnia and Herzegovina","ID-BB":"Barbados","ID-BD":"Bangladesh","ID-BE":"Belgium","ID-BF" :"Burkina Faso",
+    "ID-BG":"Bulgaria", "ID-BH":"Bahrain", "ID-BI":"Burundi", "ID-BJ":"Benin","ID-BL":"Saint Barthelemy","ID-BN":"Brunei Darussalam","ID-BO":"Bolivia","ID-BM" :"Bermuda","ID-BQ" :"Bonaire, Sint Eustatius and Saba","ID-BR":"Brazil",
+    "ID-BS" :"Bahamas", "ID-BT":"Bhutan", "ID-BV" :"Bouvet Island", "ID-BW":"Botswana","ID-BY":"Belarus","ID-BZ":"Belize","ID-CA" :"Canada","ID-CC":"Cocos (Keeling) Islands","ID-CD":"Democratic Republic of Congo","ID-CF": "Central African Republic",
+    "ID-CG" :"Republic of Congo", "ID-CH" :"Switzerland", "ID-CI" :"Côte d'Ivoire","ID-CK":"Cook Islands","ID-CL":"Chile","ID-CM":"Cameroon","ID-CN":"China","ID-CO":"Colombia","ID-CR":"Costa Rica","ID-CU":"Cuba",
+    "ID-CV" :"Cape Verde", "ID-CW":"Curaçao", "ID-CX":"Christmas Island", "ID-CY":"Cyprus","ID-CZ" :"Czechia","ID-DE":"Germany","ID-DJ":"Djibouti","ID-DK":"Denmark","ID-DM":"Dominica","ID-DO":"Dominican Republic",
+    "ID-DZ": "Algeria", "ID-EC":"Ecuador", "ID-EG": "Egypt", "ID-EE":"Estonia","ID-EH":"Western Sahara","ID-ER":"Eritrea","ID-ES":"Spain","ID-ET":"Ethiopia","ID-FI":"Finland","ID-FJ":"Fiji",
+    "ID-FK": "Falkland Islands", "ID-FM":"Federated States of Micronesia", "ID-FO":"Faroe Islands", "ID-FR":"France","ID-GA":"Gabon","ID-GB":"United Kingdom","ID-GE":"Georgia","ID-GD" :"Grenada","ID-GF":"French Guiana","ID-GG":"Guernsey",
+    "ID-GH":"Ghana","ID-GI":"Gibraltar", "ID-GL":"Greenland","ID-GM" :"Gambia", "ID-GN":"Guinea","ID-GO":"Glorioso Islands","ID-GP":"Guadeloupe","ID-GQ":"Equatorial Guinea","ID-GR" :"Greece","ID-GS":"South Georgia and South Sandwich Islands",
+    "ID-GT" :"Guatemala", "ID-GU":"Guam", "ID-GW":"Guinea-Bissau", "ID-GY":"Guyana","ID-HK" :"Hong Kong","ID-HM":"Heard Island and McDonald Islands","ID-HN":"Honduras" ,"ID-HR":"Croatia","ID-HT":"Haiti","ID-HU":"Hungary",
+    "ID-ID" :"Indonesia", "ID-IE" :"Ireland","ID-IL" :"Israel","ID-IM" :"Isle of Man","ID-IN":"India","ID-IO":"British Indian Ocean Territory","ID-IQ":"Iraq","ID-IR" :"Iran","ID-IS" :"Iceland","ID-IT":"Italy",
+    "ID-JE" :"Jersey","ID-JM":"Jamaica","ID-JO" :"Jordan","ID-JP" :"Japan","ID-JU":"Juan De Nova Island","ID-KE":"Kenya","ID-KG":"Kyrgyzstan","ID-KH":"Cambodia","ID-KI":"Kiribati","ID-KM" :"Comoros",
+    "ID-KN" :"Saint Kitts and Nevis","ID-KP" :"North Korea","ID-KR" :"South Korea" ,"ID-XK" :"Kosovo","ID-KW":"Kuwait" ,"ID-KY":"Cayman Islands","ID-KZ" :"Kazakhstan","ID-LA":"Lao People's Democratic Republic","ID-LB":"Lebanon","ID-LC" :"Saint Lucia",
+    "ID-LI" :"Liechtenstein","ID-LK":"Sri Lanka","ID-LR":"Liberia","ID-LS" :"Lesotho","ID-LT":"Lithuania","ID-LU":"Luxembourg","ID-LV" :"Latvia","ID-LY":"Libya","ID-MA":"Morocco","ID-MC":"Monaco",
+    "ID-MD" :"Moldova","ID-MG":"Madagascar","ID-ME":"Montenegro","ID-MF":"Saint Martin","ID-MH" :"Marshall Islands","ID-MK":"North Macedonia" ,"ID-ML":"Mali","ID-MO":"Macau","ID-MM":"Myanmar","ID-MN" :"Mongolia",
+    "ID-MP" :"Northern Mariana Islands","ID-MQ" :"Martinique","ID-MR" :"Mauritania","ID-MS":"Montserrat","ID-MT":"Malta" ,"ID-MU":"Mauritius","ID-MV":"Maldives", "ID-MW":"Malawi","ID-MX":"Mexico","ID-MY":"Malaysia",
+    "ID-MZ" :"Mozambique","ID-NA" :"Namibia","ID-NC":"New Caledonia","ID-NE":"Niger","ID-NF" :"Norfolk Island","ID-NG" :"Nigeria","ID-NI":"Nicaragua","ID-NL":"Netherlands","ID-NO":"Norway","ID-NP":"Nepal",
+    "ID-NR" :"Nauru","ID-NU":"Niue","ID-NZ" :"New Zealand","ID-OM" :"Oman","ID-PA" :"Panama","ID-PE" :"Peru","ID-PF":"French Polynesia","ID-PG" :"Papua New Guinea","ID-PH":"Philippines","ID-PK":"Pakistan",
+    "ID-PL" :"Poland","ID-PM":"Saint Pierre and Miquelon","ID-PN":"Pitcairn Islands","ID-PR" :"Puerto Rico","ID-PS" :"Palestinian Territories","ID-PT" :"Portugal","ID-PW" :"Palau","ID-PY" :"Paraguay","ID-QA" :"Qatar","ID-RE" :"Reunion",
+    "ID-RO" :"Romania","ID-RS" :"Serbia","ID-RU" :"Russia","ID-RW":"Rwanda","ID-SA" :"Saudi Arabia","ID-SB" :"Solomon Islands","ID-SC" :"Seychelles","ID-SD" :"Sudan","ID-SE" :"Sweden","ID-SG" :"Singapore",
+    "ID-SH" :"Saint Helena","ID-SI" :"Slovenia","ID-SJ" :"Svalbard and Jan Mayen","ID-SK" :"Slovakia","ID-SL" :"Sierra Leone","ID-SM" :"San Marino","ID-SN" :"Senegal","ID-SO" :"Somalia","ID-SR" :"Suriname","ID-SS" :"South Sudan",
+    "ID-ST" :"Sao Tome and Principe","ID-SV" :"El Salvador","ID-SX" :"Sint Maarten","ID-SY":"Syria","ID-SZ" :"Swaziland","ID-TC" :"Turks and Caicos Islands","ID-TD" :"Chad","ID-TF" :"French Southern and Antarctic Lands","ID-TG" :"Togo","ID-TH" :"Thailand" ,
+    "ID-TJ" :"Tajikistan","ID-TK" :"Tokelau","ID-TL" :"Timor-Leste","ID-TM":"Turkmenistan","ID-TN" :"Tunisia","ID-TO" :"Tonga","ID-TR" :"Turkey","ID-TT" :"Trinidad and Tobago","ID-TV" :"Tuvalu","ID-TW" :"Taiwan",
+    "ID-TZ" :"Tanzania","ID-UA" :"Ukraine","ID-UG" :"Uganda","ID-UMDQ" :"Jarvis Island","ID-UMFQ" :"Baker Island","ID-UMHQ" :"Howland Island","ID-UMJQ":"Johnston Atoll","ID-UMMQ" :"Midway Islands","ID-UMWQ" :"Wake Island","ID-US" :"United States",
+    "ID-UY" :"Uruguay","ID-UZ" :"Uzbekistan","ID-VA" :"Vatican City","ID-VC" :"Saint Vincent and the Grenadines","ID-VE" :"Venezuela","ID-VG" :"British Virgin Islands","ID-VI" :"US Virgin Islands","ID-VN" :"Vietnam","ID-VU" :"Vanuatu" ,"ID-WF" :"Wallis and Futuna",
+    "ID-WS" :"Samoa","ID-YE" :"Yemen","ID-YT" :"Mayotte","ID-ZA" :"South Africa","ID-ZM" :"Zambia","ID-ZW" :"Zimbabwe",
+      };
+      
+      const stateId = stateIdMap[gameRegion.name];
+      
+      if (stateId) {
+        matchingRegion = svgRegions.find(r => r.id === stateId);
+       
       }
-    };
+    }
     
-    updateDimensions();
-    window.addEventListener('resize', updateDimensions);
+    return matchingRegion;
+  };
+
+
+  // use case for dropping and highlighting piece
+  useEffect(() => {
+    if (droppedItems.length > 0) {
+      const regionNames = droppedItems
+        .map(item => {
+          const region = gameState?.regions.find(r => r.id === item.regionId);
+          return region?.name;
+        })
+        .filter((name): name is string => typeof name === 'string');
+
+        const uniqueRegionNames = Array.from(new Set(regionNames));
+        console.log('Highlighted regions:', uniqueRegionNames);
+        setHighlightedRegions(uniqueRegionNames);
+    }
+  }, [droppedItems, gameState]);
+  
+
+  // Define a map from countryId to their extractor functions
+  const regionExtractors: { [key: number]: (svgData: string) => RegionType[] } = {
+    1: extractWorldRegions,
     
-    return () => {
-      window.removeEventListener('resize', updateDimensions);
-    };
-  }, []);
+
+  // Add more countries here as needed
+  };
+
+  // Get SVG data for this country
+  // Load SVG data
+  useEffect(() => {
+    const loadSvgData = async () => {
+      const data = getSvgDataById(countryId);
+      if (!data) return;
+
+      setSvgData(data);
+      setViewBox(getViewBoxFromSVG(data));
+      
+      const extractor = regionExtractors[countryId];
+    if (extractor) {
+      setSvgRegions(extractor(data));
+    } else {
+      setSvgRegions([]); // fallback if no extractor is defined
+    }
+  };
+
+    loadSvgData();
+  }, [countryId]);
+
+
+ // Handle game start
+  const handleStartPuzzle = useCallback(() => {
+    setGameStarted(true);
+    onStart();
+  }, [onStart]);
+
 
   // Check if regions are available
   const hasRegions = gameState && gameState.regions && gameState.regions.length > 0;
-  
-  // Debug logging for drag context (disabled to reduce console noise)
-  // useEffect(() => {
-  //   console.log("Current draggedPieceId:", draggedPieceId);
-  // }, [draggedPieceId]);
+
   
   // Handle region click
   const handleRegionClick = (regionId: string, regionName: string) => {
     console.log(`Clicked region: ${regionId} - ${regionName}`);
     
     // Find matching game region
-    if (hasRegions && gameState) {
+    if (hasRegions) {
       // Get the matching region from gameState
       const gameRegion = gameState.regions.find(r => {
         // First try direct name match (case insensitive)
@@ -119,27 +189,20 @@ export function PuzzleBoard({
         }
         
         // For Nigeria, try to match state codes
-        if (countryId === 1 && regionId.startsWith('NG-')) {
+        if (countryId === 1 && regionId.startsWith('ID-')) {
           // If our region name contains the short code (like AB, AD, etc.), it's a match
-          const stateCode = regionId.replace('NG-', '');
+          const stateCode = regionId.replace('ID-', '');
+      
           return r.name.toUpperCase().includes(stateCode);
+          
         }
         
-        // For Kenya, try to match county numbers
-        if (countryId === 2 && regionId.startsWith('KE-')) {
-          // If the region ID is something like KE-01, KE-02, etc.
-          const countyNum = parseInt(regionId.replace('KE-', ''), 10);
-          // Match if the game region has a number that matches
-          return r.name.includes(String(countyNum));
-        }
-        
+       
         return false;
       });
       
       if (gameRegion && !gameRegion.isPlaced) {
         console.log(`Found matching game region: ${gameRegion.name}`);
-        // Trigger a hint for this region
-        setHighlightedRegion(regionId);
         // Trigger hint functionality
         useHint();
       } else {
@@ -147,25 +210,31 @@ export function PuzzleBoard({
       }
     }
   };
+ 
 
   return (
+    <div className="w-full max-w-4xl mx-auto h-full flex flex-col">
     <div 
-      ref={containerRef}
-      className="w-full max-w-3xl mx-auto h-full flex flex-col"
+    ref={scrollableMapContainerRef} // ✅ Attach it here
+    className="puzzle-board relative"
+    style={{
+      width: '1000px',
+      height: '700px', // or any scrollable height
+      overflow: 'auto',
+        position: 'relative',
+        //border: '2px solid red'
+      }}
     >
-      {/* Puzzle Container */}
-      <div 
-        ref={dropRef}
-        className="relative h-[500px] flex items-center justify-center flex-grow"
-      >
+     
         {/* Country Outline (using actual interactive SVG map) */}
-        <div className="w-full h-full absolute top-0 left-0">
+        <div className="w-full h-full min-h-[1000px]  absolute top-0 left-0">
           {svgData ? (
             <CountrySvgMap
+              ref={svgRef}
               countryId={countryId}
               countryName={countryName}
               svgData={svgData}
-              highlightRegion={highlightedRegion}
+              highlightRegion={highlightedRegions}
               onRegionClick={handleRegionClick}
               className="w-full h-full"
               renderOverlay={
@@ -184,48 +253,8 @@ export function PuzzleBoard({
                       ? gameState.regions.find(region => region.id === draggedPieceId && !region.isPlaced)
                       : null;
                       
-                    // Helper function to find a matching region in the SVG for a game region
-                    const findMatchingRegion = (gameRegion: any) => {
-                      if (!gameRegion) return null;
-                      
-                      // Attempt to find a direct match by name
-                      let matchingRegion = svgRegions.find(svgRegion => 
-                        svgRegion.name.toLowerCase() === gameRegion.name.toLowerCase()
-                      );
-                      
-                      // If no direct match, try for Nigeria states using state codes
-                      if (!matchingRegion && countryId === 1) {
-                        // Map of Nigerian state names to their IDs
-                        const stateIdMap: Record<string, string> = {
-                          'Abia': 'NG-AB', 'Adamawa': 'NG-AD', 'Akwa Ibom': 'NG-AK', 'Anambra': 'NG-AN',
-                          'Bauchi': 'NG-BA', 'Bayelsa': 'NG-BY', 'Benue': 'NG-BE', 'Borno': 'NG-BO',
-                          'Cross River': 'NG-CR', 'Delta': 'NG-DE', 'Ebonyi': 'NG-EB', 'Edo': 'NG-ED',
-                          'Ekiti': 'NG-EK', 'Enugu': 'NG-EN', 'Federal Capital Territory': 'NG-FC', 
-                          'FCT': 'NG-FC', 'Gombe': 'NG-GO', 'Imo': 'NG-IM', 'Jigawa': 'NG-JI', 
-                          'Kaduna': 'NG-KD', 'Kano': 'NG-KN', 'Katsina': 'NG-KT', 'Kebbi': 'NG-KE', 
-                          'Kogi': 'NG-KO', 'Kwara': 'NG-KW', 'Lagos': 'NG-LA', 'Nasarawa': 'NG-NA', 
-                          'Niger': 'NG-NI', 'Ogun': 'NG-OG', 'Ondo': 'NG-ON', 'Osun': 'NG-OS', 
-                          'Oyo': 'NG-OY', 'Plateau': 'NG-PL', 'Rivers': 'NG-RI', 'Sokoto': 'NG-SO', 
-                          'Taraba': 'NG-TA', 'Yobe': 'NG-YO', 'Zamfara': 'NG-ZA'
-                        };
-                        
-                        const stateId = stateIdMap[gameRegion.name];
-                        if (stateId) {
-                          matchingRegion = svgRegions.find(r => r.id === stateId);
-                        }
-                      }
-                      
-                      // If still no match, try partial name matching as a last resort
-                      if (!matchingRegion) {
-                        matchingRegion = svgRegions.find(r => 
-                          r.name.toLowerCase().includes(gameRegion.name.toLowerCase()) || 
-                          gameRegion.name.toLowerCase().includes(r.name.toLowerCase())
-                        );
-                      }
-                      
-                      return matchingRegion;
-                    };
                     
+                    // console.log('draggedregion', draggedRegion);
                     // Function to render a guidance dot for a specific region
                     const renderGuidanceDot = (gameRegion: any, isPrimary: boolean = false) => {
                       // First try to find a matching region in the SVG data
@@ -238,92 +267,84 @@ export function PuzzleBoard({
                       if (countryId === 1) { // Nigeria
                         // Try standard format first (NG-XX)
                         if (svgRegion && svgRegion.id) {
-                          regionCodes.push(`NG-${svgRegion.id}`);
+                          regionCodes.push(`ID-${svgRegion.id}`);
                         }
                         
                         // Try to match by first two letters of region name
                         const stateCodes = {
-                          "Abia": "AB", "Adamawa": "AD", "Akwa Ibom": "AK", "Anambra": "AN",
-                          "Bauchi": "BA", "Bayelsa": "BY", "Benue": "BE", "Borno": "BO",
-                          "Cross River": "CR", "Delta": "DE", "Ebonyi": "EB", "Edo": "ED",
-                          "Ekiti": "EK", "Enugu": "EN", "Federal Capital Territory": "FC",
-                          "FCT": "FC", "Gombe": "GO", "Imo": "IM", "Jigawa": "JI",
-                          "Kaduna": "KD", "Kano": "KN", "Katsina": "KT", "Kebbi": "KE", 
-                          "Kogi": "KO", "Kwara": "KW", "Lagos": "LA", "Nasarawa": "NA",
-                          "Niger": "NI", "Ogun": "OG", "Ondo": "ON", "Osun": "OS",
-                          "Oyo": "OY", "Plateau": "PL", "Rivers": "RI", "Sokoto": "SO",
-                          "Taraba": "TA", "Yobe": "YO", "Zamfara": "ZA"
+                              "ID-AD": "Andorra","ID-AE" :"United Arab Emirates","ID-AF" :"Afghanistan","ID-AG":"Antigua and Barbuda","ID-AI":"Anguilla", "ID-AL":"Albania","ID-AM" :"Armenia","ID-AO":"Angola","ID-AR": "Argentina","ID-AS":"American Samoa",
+                              "ID-AT" :"Austria", "ID-AU":"Australia", "ID-AW":"Aruba", "ID-AX":"Aland Islands","ID-AZ":"Azerbaijan","ID-BA":"Bosnia and Herzegovina","ID-BB":"Barbados","ID-BD":"Bangladesh","ID-BE":"Belgium","ID-BF" :"Burkina Faso",
+        "ID-BG":"Bulgaria", "ID-BH":"Bahrain", "ID-BI":"Burundi", "ID-BJ":"Benin","ID-BL":"Saint Barthelemy","ID-BN":"Brunei Darussalam","ID-BO":"Bolivia","ID-BM" :"Bermuda","ID-BQ" :"Bonaire, Sint Eustatius and Saba","ID-BR":"Brazil",
+        "ID-BS" :"Bahamas", "ID-BT":"Bhutan", "ID-BV" :"Bouvet Island", "ID-BW":"Botswana","ID-BY":"Belarus","ID-BZ":"Belize","ID-CA" :"Canada","ID-CC":"Cocos (Keeling) Islands","ID-CD":"Democratic Republic of Congo","ID-CF": "Central African Republic",
+        "ID-CG" :"Republic of Congo", "ID-CH" :"Switzerland", "ID-CI" :"Côte d'Ivoire","ID-CK":"Cook Islands","ID-CL":"Chile","ID-CM":"Cameroon","ID-CN":"China","ID-CO":"Colombia","ID-CR":"Costa Rica","ID-CU":"Cuba",
+        "ID-CV" :"Cape Verde", "ID-CW":"Curaçao", "ID-CX":"Christmas Island", "ID-CY":"Cyprus","ID-CZ" :"Czechia","ID-DE":"Germany","ID-DJ":"Djibouti","ID-DK":"Denmark","ID-DM":"Dominica","ID-DO":"Dominican Republic",
+        "ID-DZ": "Algeria", "ID-EC":"Ecuador", "ID-EG": "Egypt", "ID-EE":"Estonia","ID-EH":"Western Sahara","ID-ER":"Eritrea","ID-ES":"Spain","ID-ET":"Ethiopia","ID-FI":"Finland","ID-FJ":"Fiji",
+        "ID-FK": "Falkland Islands", "ID-FM":"Federated States of Micronesia", "ID-FO":"Faroe Islands", "ID-FR":"France","ID-GA":"Gabon","ID-GB":"United Kingdom","ID-GE":"Georgia","ID-GD" :"Grenada","ID-GF":"French Guiana","ID-GG":"Guernsey",
+        "ID-GH":"Ghana","ID-GI":"Gibraltar", "ID-GL":"Greenland","ID-GM" :"Gambia", "ID-GN":"Guinea","ID-GO":"Glorioso Islands","ID-GP":"Guadeloupe","ID-GQ":"Equatorial Guinea","ID-GR" :"Greece","ID-GS":"South Georgia and South Sandwich Islands",
+        "ID-GT" :"Guatemala", "ID-GU":"Guam", "ID-GW":"Guinea-Bissau", "ID-GY":"Guyana","ID-HK" :"Hong Kong","ID-HM":"Heard Island and McDonald Islands","ID-HN":"Honduras" ,"ID-HR":"Croatia","ID-HT":"Haiti","ID-HU":"Hungary",
+        "ID-ID" :"Indonesia", "ID-IE" :"Ireland","ID-IL" :"Israel","ID-IM" :"Isle of Man","ID-IN":"India","ID-IO":"British Indian Ocean Territory","ID-IQ":"Iraq","ID-IR" :"Iran","ID-IS" :"Iceland","ID-IT":"Italy",
+        "ID-JE" :"Jersey","ID-JM":"Jamaica","ID-JO" :"Jordan","ID-JP" :"Japan","ID-JU":"Juan De Nova Island","ID-KE":"Kenya","ID-KG":"Kyrgyzstan","ID-KH":"Cambodia","ID-KI":"Kiribati","ID-KM" :"Comoros",
+        "ID-KN" :"Saint Kitts and Nevis","ID-KP" :"North Korea","ID-KR" :"South Korea" ,"ID-XK" :"Kosovo","ID-KW":"Kuwait" ,"ID-KY":"Cayman Islands","ID-KZ" :"Kazakhstan","ID-LA":"Lao People's Democratic Republic","ID-LB":"Lebanon","ID-LC" :"Saint Lucia",
+        "ID-LI" :"Liechtenstein","ID-LK":"Sri Lanka","ID-LR":"Liberia","ID-LS" :"Lesotho","ID-LT":"Lithuania","ID-LU":"Luxembourg","ID-LV" :"Latvia","ID-LY":"Libya","ID-MA":"Morocco","ID-MC":"Monaco",
+        "ID-MD" :"Moldova","ID-MG":"Madagascar","ID-ME":"Montenegro","ID-MF":"Saint Martin","ID-MH" :"Marshall Islands","ID-MK":"North Macedonia" ,"ID-ML":"Mali","ID-MO":"Macau","ID-MM":"Myanmar","ID-MN" :"Mongolia",
+        "ID-MP" :"Northern Mariana Islands","ID-MQ" :"Martinique","ID-MR" :"Mauritania","ID-MS":"Montserrat","ID-MT":"Malta" ,"ID-MU":"Mauritius","ID-MV":"Maldives", "ID-MW":"Malawi","ID-MX":"Mexico","ID-MY":"Malaysia",
+        "ID-MZ" :"Mozambique","ID-NA" :"Namibia","ID-NC":"New Caledonia","ID-NE":"Niger","ID-NF" :"Norfolk Island","ID-NG" :"Nigeria","ID-NI":"Nicaragua","ID-NL":"Netherlands","ID-NO":"Norway","ID-NP":"Nepal",
+        "ID-NR" :"Nauru","ID-NU":"Niue","ID-NZ" :"New Zealand","ID-OM" :"Oman","ID-PA" :"Panama","ID-PE" :"Peru","ID-PF":"French Polynesia","ID-PG" :"Papua New Guinea","ID-PH":"Philippines","ID-PK":"Pakistan",
+        "ID-PL" :"Poland","ID-PM":"Saint Pierre and Miquelon","ID-PN":"Pitcairn Islands","ID-PR" :"Puerto Rico","ID-PS" :"Palestinian Territories","ID-PT" :"Portugal","ID-PW" :"Palau","ID-PY" :"Paraguay","ID-QA" :"Qatar","ID-RE" :"Reunion",
+        "ID-RO" :"Romania","ID-RS" :"Serbia","ID-RU" :"Russia","ID-RW":"Rwanda","ID-SA" :"Saudi Arabia","ID-SB" :"Solomon Islands","ID-SC" :"Seychelles","ID-SD" :"Sudan","ID-SE" :"Sweden","ID-SG" :"Singapore",
+        "ID-SH" :"Saint Helena","ID-SI" :"Slovenia","ID-SJ" :"Svalbard and Jan Mayen","ID-SK" :"Slovakia","ID-SL" :"Sierra Leone","ID-SM" :"San Marino","ID-SN" :"Senegal","ID-SO" :"Somalia","ID-SR" :"Suriname","ID-SS" :"South Sudan",
+        "ID-ST" :"Sao Tome and Principe","ID-SV" :"El Salvador","ID-SX" :"Sint Maarten","ID-SY":"Syria","ID-SZ" :"Swaziland","ID-TC" :"Turks and Caicos Islands","ID-TD" :"Chad","ID-TF" :"French Southern and Antarctic Lands","ID-TG" :"Togo","ID-TH" :"Thailand" ,
+        "ID-TJ" :"Tajikistan","ID-TK" :"Tokelau","ID-TL" :"Timor-Leste","ID-TM":"Turkmenistan","ID-TN" :"Tunisia","ID-TO" :"Tonga","ID-TR" :"Turkey","ID-TT" :"Trinidad and Tobago","ID-TV" :"Tuvalu","ID-TW" :"Taiwan",
+        "ID-TZ" :"Tanzania","ID-UA" :"Ukraine","ID-UG" :"Uganda","ID-UMDQ" :"Jarvis Island","ID-UMFQ" :"Baker Island","ID-UMHQ" :"Howland Island","ID-UMJQ":"Johnston Atoll","ID-UMMQ" :"Midway Islands","ID-UMWQ" :"Wake Island","ID-US" :"United States",
+        "ID-UY" :"Uruguay","ID-UZ" :"Uzbekistan","ID-VA" :"Vatican City","ID-VC" :"Saint Vincent and the Grenadines","ID-VE" :"Venezuela","ID-VG" :"British Virgin Islands","ID-VI" :"US Virgin Islands","ID-VN" :"Vietnam","ID-VU" :"Vanuatu" ,"ID-WF" :"Wallis and Futuna",
+        "ID-WS" :"Samoa","ID-YE" :"Yemen","ID-YT" :"Mayotte","ID-ZA" :"South Africa","ID-ZM" :"Zambia","ID-ZW" :"Zimbabwe",
                         };
                         
                         // Loop through all possible state names and try to find a match
                         for (const [stateName, code] of Object.entries(stateCodes)) {
                           if (regionName.includes(stateName) || stateName.includes(regionName)) {
-                            regionCodes.push(`NG-${code}`);
+                            regionCodes.push(`ID-${code}`);
                           }
                         }
                         
                         // Add generic Nigeria code as fallback
-                        regionCodes.push("NG");
-                      } else if (countryId === 2) { // Kenya
-                        // Try standard format first (KE-XX)
+                        regionCodes.push("ID");
+
+                      } 
+                        
+
+/*
+                      else if (countryId === 5) { // moroco
+                        // Try standard format first (MA-XX)
                         if (svgRegion && svgRegion.id) {
-                          regionCodes.push(`KE-${svgRegion.id}`);
+                          regionCodes.push(`MA-${svgRegion.id}`);
                         }
                         
-                        // Try custom format for special counties
-                        if (regionName.includes("Taita") || regionName.includes("Taveta")) {
-                          regionCodes.push("KE-CUSTOM-TaitaTaveta");
-                        }
-                        if (regionName.includes("Tharaka") || regionName.includes("Nithi")) {
-                          regionCodes.push("KE-CUSTOM-Tharaka");
-                        }
-                        if (regionName.includes("Trans") || regionName.includes("Nzoia")) {
-                          regionCodes.push("KE-CUSTOM-TransNzoia");
-                        }
-                        if (regionName.includes("Elgeyo") || regionName.includes("Marakwet")) {
-                          regionCodes.push("KE-CUSTOM-KeiyoMarakwet");
-                        }
                         
                         // Try all numbered county codes (KE-01 through KE-47)
-                        for (let i = 1; i <= 47; i++) {
-                          const countyCode = `KE-${i.toString().padStart(2, '0')}`;
+                        for (let i = 1; i <= 16; i++) {
+                          const countyCode = `MA-${i.toString().padStart(2, '0')}`;
                           regionCodes.push(countyCode);
                         }
                         
                         // Add generic Kenya code as fallback
-                        regionCodes.push("KE");
+                        regionCodes.push("MA");
                       }
+*/
                       
                       // Try to get the centroid using the region's SVG path and region codes
-                      let centroid = null;
+                      //let centroid = null;
+                      let centroid: { x: number; y: number } | null = null;
+
                       let pathToUse = svgRegion ? svgRegion.path : "";
                       
-                      // Special case for Ebonyi
-                      if (regionName === "Ebonyi") {
-                        // Hardcoded centroid for Ebonyi - precisely calculated from path
-                        centroid = { x: 310.0, y: 515.0 };
-                        console.log("Using hardcoded centroid for Ebonyi");
-                      }
-                      
-                      // Special case for Federal Capital Territory - USING PERFECT CIRCLE
-                      if (regionName === "Federal Capital Territory" || regionName === "FCT") {
-                        // Hardcoded centroid for FCT - precisely at the center of circle
-                        centroid = { x: 380.0, y: 370.0 };
-                        console.log("Using hardcoded centroid for FCT:", centroid.x, centroid.y);
-                      }
-                      
-                      // Special case for Nasarawa - USING PERFECT CIRCLE
-                      if (regionName === "Nasarawa") {
-                        // Hardcoded centroid for Nasarawa - precisely at the center of circle
-                        centroid = { x: 404.0, y: 340.0 };
-                        console.log("Using hardcoded centroid for Nasarawa:", centroid.x, centroid.y);
-                      }
                       
                       // If not one of the special cases, try all region codes until we find a centroid
                       if (!centroid) {
                         for (const code of regionCodes) {
                           if (pathToUse) {
                             centroid = getPathCentroid(pathToUse, code);
+                           // setCentroidPosition(centroid);
                             if (centroid) break;
                           }
                         }
@@ -348,6 +369,7 @@ export function PuzzleBoard({
                           const x = 150 + col * 60;
                           const y = 300 + row * 60;
                           centroid = { x, y };
+                         
                         }
                       }
 
@@ -358,14 +380,14 @@ export function PuzzleBoard({
                       
                       // Calculate appropriate dot size based on viewBox
                       const [, , width, height] = viewBox.split(' ').map(Number);
-                      const baseDotSize = Math.min(width, height) * 0.008; // Smaller dots as requested
-                      const dotSize = isPrimary ? baseDotSize * 1.2 : baseDotSize * 1.0;
+                      const baseDotSize = Math.min(width, height) * 0.01; // Smaller dots as requested
+                      const dotSize = isPrimary ? baseDotSize * 1.0 : baseDotSize * 1.0;
                       
                       // Set dot styles - using only red dots as per user request
                       const dotColor = "rgba(255,0,0,1)"; // Pure red for all dots
                       const outlineColor = "white"; // White outline for better contrast
                       const opacity = isPrimary ? 1 : 0; // Hide non-primary (secondary) dots
-                      
+                     // setCentroidPosition(centroid);
                       return (
                         <g key={`dot-${gameRegion.id}`} className={isPrimary ? "primary-dot" : "secondary-dot"}>
                           {/* If primary dot and crosshair is enabled, show crosshair guides */}
@@ -405,6 +427,7 @@ export function PuzzleBoard({
                                 stroke={dotColor} 
                                 strokeWidth={dotSize * 0.4}
                                 strokeDasharray="3,3"
+                                data-centroid-for={regionName}
                                 style={{ 
                                   opacity: opacity * 0.8
                                 }}
@@ -418,6 +441,7 @@ export function PuzzleBoard({
                                 fill="none" 
                                 stroke={outlineColor} 
                                 strokeWidth={dotSize * 0.5}
+                                data-centroid-for={regionName}
                                 style={{ 
                                   opacity: opacity * 0.7
                                 }}
@@ -440,6 +464,7 @@ export function PuzzleBoard({
                                 cy={centroid.y} 
                                 r={dotSize * 1.2} 
                                 fill={dotColor} 
+                                data-centroid-for={regionName}
                                 style={{ 
                                   filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.9))',
                                   opacity: opacity
@@ -459,6 +484,7 @@ export function PuzzleBoard({
                                 fill="none" 
                                 stroke={outlineColor} 
                                 strokeWidth={dotSize * 0.3}
+                                data-centroid-for={regionName}
                                 style={{ 
                                   opacity: opacity * 0.5
                                 }}
@@ -480,7 +506,8 @@ export function PuzzleBoard({
                                 cx={centroid.x} 
                                 cy={centroid.y} 
                                 r={dotSize} 
-                                fill={dotColor} 
+                                fill={dotColor}
+                                data-centroid-for={regionName} 
                                 style={{ 
                                   filter: isPrimary ? 'drop-shadow(0 0 4px rgba(255,255,255,0.7))' : 'none',
                                   opacity: opacity
@@ -494,6 +521,7 @@ export function PuzzleBoard({
                               cy={centroid.y} 
                               r={dotSize} 
                               fill={dotColor} 
+                              data-centroid-for={regionName}
                               opacity={opacity}
                             />
                           )}
@@ -503,7 +531,7 @@ export function PuzzleBoard({
                     
                     // If region highlighting is enabled, and we have a dragged piece,
                     // highlight the target region on the map
-                    if (HIGHLIGHT_TARGET_REGION && draggedRegion) {
+                    if (HIGHLIGHT_TARGET_REGION && draggedRegion && isEasy ) {
                       const matchingRegion = findMatchingRegion(draggedRegion);
                       if (matchingRegion && matchingRegion.id) {
                         guidanceElements.push(
@@ -517,12 +545,28 @@ export function PuzzleBoard({
                           />
                         );
                       }
+                       
+                    } 
+                    if (isMedium || isHard ) {
+                      unplacedRegions
+                      .filter(region => region.id !== draggedPieceId) // 👈 Skip the dropped piece
+                      .forEach(region => {
+                      const dot = renderGuidanceDot(region, true);
+                      if (dot) guidanceElements.push(
+                        React.cloneElement(dot, { key: `guide-dot-${region.id}` }) // ✅ Ensure unique key
+                      );
+                     });
                     }
                     
                     // If we have a dragged piece, render its guidance dot
-                    if (draggedRegion) {
+                    //if (draggedRegion) {
+                    if (draggedRegion && !draggedRegion.isPlaced ) {
+
                       const dot = renderGuidanceDot(draggedRegion, true);
-                      if (dot) guidanceElements.push(dot);
+                      if (dot) guidanceElements.push(
+                        React.cloneElement(dot, { key: `guide-dot-${draggedRegion.id}` }) // ✅ Unique key
+
+                      );
                     }
                     
                     // Always show dots for all regions (both placed and unplaced)
@@ -548,6 +592,8 @@ export function PuzzleBoard({
                   }
                 ) : undefined
               }
+
+            
             />
           ) : (
             <svg className="w-full h-full" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet">
@@ -579,41 +625,102 @@ export function PuzzleBoard({
             </svg>
           )}
         </div>
-  
-        {/* Puzzle Pieces that have been placed on the board */}
-        {hasRegions && gameState.regions.map(region => 
-          region.isPlaced && (
-            <DynamicStatePiece
-              key={region.id}
-              region={region}
-              snapToPosition
-              containerRef={containerRef}
-              onDrop={() => false} // Already placed pieces can't be moved
-              shapeSize={gameState?.shapeSize || 1.0} // Use global shape size
-            />
-          )
-        )}
+
+        {showPopup && currentTarget && isMedium && (
+       <div className="fixed down-10 left-6 bg-white shadow-2xl rounded-2xl p-5 z-50 w-70 border border-gray-200 animate-fade-in space-y-4">
+       <h3 className="text-lg font-semibold text-gray-800">🎯 Find and place:</h3>
+       <p className="text-base text-blue-600 font-medium">{currentTarget.name}</p>
+
+    {/* Countdown Label */}
+    <div className="text-sm text-gray-500 font-medium text-center">⏳ Time Left</div>
+
+    {/* Stylized Countdown Timer */}
+    <div className="flex justify-center">
+      <div className="relative w-14 h-14">
+        {/* Circular background with ring */}
+        <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-amber-300 via-yellow-400 to-yellow-600 shadow-inner shadow-yellow-400 animate-pulse" />
         
-        {/* Start Message */}
-        {!gameStarted && (
-          <div className="text-center p-6 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg max-w-md z-10">
-            <h3 className="font-heading font-bold text-2xl mb-3 text-gray-800">
-              Memorize the Map of {countryName}
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Drag and place all {countryId === 1 ? 37 : 47} states of {countryName} in their correct positions on the map.
-              <br/>
-              <span className="text-sm mt-1 inline-block text-emerald-600">Click on an area of the map for hints!</span>
-            </p>
-            <Button 
-              onClick={handleStartPuzzle}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6"
-            >
-              Start Puzzle
-            </Button>
-          </div>
-        )}
+        {/* Zooming Timer Text */}
+        <div className="absolute inset-0 flex items-center justify-center text-3xl font-extrabold text-green animate-bounce-slow">
+          {countdown}s
+        </div>
+
+        {/* Glowing ring effect */}
+        <div className="absolute inset-0 rounded-full ring-3 ring-yellow-300 animate-ping-slow" />
       </div>
     </div>
+  </div>
+)}
+
+
+      {errorPopup.visible && (
+       <div className="fixed bottom-6 left-6 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-fade-in">
+       {errorPopup.message}
+      </div>
+      )}
+
+
+        {!gameStarted && (
+          <StartScreen 
+            countryName={countryName}
+            countryId={countryId}
+            onStart={handleStartPuzzle}
+          />
+        )}
+            
+            </div>
+    </div>
   );
-}
+};
+
+// Sub-components for better readability
+const FallbackMap = ({ outlinePath }: { outlinePath: string }) => (
+  <svg className="w-full h-full" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet">
+    <path 
+      d={outlinePath} 
+      fill="none" 
+      stroke="#666"
+      strokeWidth="12"
+      style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}
+    />
+     <path d={outlinePath} fill="#e5e5e5" stroke="#e5e5e5" strokeWidth="2" />
+    <path 
+      d={outlinePath} 
+      fill="none" 
+      stroke="#ccc" 
+      strokeWidth="1.5"
+      strokeDasharray="2,2"
+    />
+  </svg>
+);
+
+
+
+
+const StartScreen = ({ 
+  countryName, 
+  countryId,
+  onStart 
+}: { 
+  countryName: string;
+  countryId: number;
+  onStart: () => void;
+}) => (
+  <div className="text-center p-6 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg max-w-md z-10">
+    <h3 className="font-heading font-bold text-2xl mb-3 text-gray-800">
+      Memorize the Map of {countryName}
+    </h3>
+    <p className="text-gray-600 mb-4">
+      Drag and place all {countryId === 1 ? 37 : 47} states of {countryName}
+      <span className="block mt-1 text-sm text-emerald-600">
+        Click map areas for hints!
+      </span>
+    </p>
+    <Button 
+      onClick={onStart}
+      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6"
+    >
+      Start Puzzle
+    </Button>
+  </div>
+);

@@ -1,315 +1,358 @@
-import React, { useState, useEffect, useRef } from "react";
-import { extractNigeriaRegions, extractKenyaRegions, getViewBoxFromSVG } from "@/data/svg-parser";
+import React, { useState, useEffect, useRef, forwardRef, useMemo, useCallback, useLayoutEffect } from "react";
+import { extractWorldRegions, getViewBoxFromSVG, } from "@/data/svg-parser";
+import { useGame} from "@/context/game-context";
+import { svgPathProperties } from "svg-path-properties";
 
 interface CountrySvgMapProps {
   countryId: number;
   countryName: string;
   svgData: string;
   className?: string;
-  highlightRegion?: string | null;
+  highlightRegion?: string | string[] | null;
   onRegionClick?: (regionId: string, regionName: string) => void;
   showLabels?: boolean;
   height?: number | string;
   width?: number | string;
   renderOverlay?: () => React.ReactNode; // Function to render additional overlay elements
+  
 }
 
 interface RegionData {
   id: string;
   name: string;
   path: string;
+  position?: { x: number; y: number };
+
 }
 
-export function CountrySvgMap({
-  countryId,
-  countryName,
-  svgData,
-  className = "",
-  highlightRegion = null,
-  onRegionClick,
-  showLabels = false,
-  height = "100%",
-  width = "100%",
-  renderOverlay
-}: CountrySvgMapProps): JSX.Element {
+
+interface RegionMapping {
+  [key: string]: number;
+}
+
+const ANIMATION_DURATION = 300;
+
+const CountrySvgMap = forwardRef<SVGSVGElement, CountrySvgMapProps>((props, ref) => {
+  const {
+    countryId,
+    countryName,
+    svgData,
+    className = "",
+    highlightRegion = " ",
+    onRegionClick,
+    showLabels = false,
+    height = "100%",
+    width = "100%",
+    renderOverlay,
+   
+  } = props;
+
   const [regions, setRegions] = useState<RegionData[]>([]);
-  const [viewBox, setViewBox] = useState<string>("0 0 800 600");
+  const [viewBox, setViewBox] = useState<string>("0 0 400 300");
   const [scale, setScale] = useState<number>(1);
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
-  const [regionMappings, setRegionMappings] = useState<Record<string, number>>({});
+  const [regionMappings, setRegionMappings] = useState<RegionMapping>({});
+  
   
   const svgRef = useRef<SVGSVGElement>(null);
+  const { setSvgDimensions,setmapregionPosition,countdown,currentTarget, } = useGame();
+// Generate a variety of colors for regions
+const getRegionColor = (index: number) => {
+  const colors = [
+    { fill: "#f87171", stroke: "#b91c1c" }, // red-400, red-700
+    { fill: "#fb923c", stroke: "#c2410c" }, // orange-400, orange-700
+    { fill: "#fbbf24", stroke: "#b45309" }, // amber-400, amber-700
+    { fill: "#4ade80", stroke: "#15803d" }, // green-400, green-700
+    { fill: "#2dd4bf", stroke: "#0f766e" }, // teal-400, teal-700
+    { fill: "#60a5fa", stroke: "#1d4ed8" }, // blue-400, blue-700
+    { fill: "#a78bfa", stroke: "#6d28d9" }, // violet-400, violet-700
+    { fill: "#f472b6", stroke: "#be185d" }, // pink-400, pink-700
+  ];
   
-  // Add pulse animation effect when component mounts
-  useEffect(() => {
-    // Add a slight zoom effect
-    const animateMap = () => {
-      setIsAnimating(true);
-      setScale(1.05); // Zoom in slightly
-      
-      setTimeout(() => {
-        setScale(1); // Return to normal size
-        setTimeout(() => {
-          setIsAnimating(false);
-        }, 300);
-      }, 300);
+  return colors[index % colors.length];
+};
+
+   // Memoized region data processing
+   const uniqueRegions = useMemo(() => 
+    regions.filter((region, index, self) => 
+      index === self.findIndex(r => r.id === region.id)
+    ),
+    [regions]
+  );
+  
+  useLayoutEffect(() => {
+    if (!svgRef.current) return;
+  
+    const updateDimensions = () => {
+      const bbox = svgRef.current?.getBBox?.();
+      if (bbox && bbox.width > 0 && bbox.height > 0) {
+        setSvgDimensions({
+          width: bbox.width,
+          height: bbox.height
+        });
+      }
     };
-    
-    // Run animation on initial load
-    animateMap();
-    
-    // Setup interval for periodic animation
-    const intervalId = setInterval(animateMap, 10000); // Animate every 10 seconds
-    
-    return () => clearInterval(intervalId);
+  
+  }, [svgData]);
+
+
+  // Animation handlers
+  const animateMap = useCallback((targetScale: number) => {
+    setIsAnimating(true);
+    setScale(targetScale);
+    setTimeout(() => {
+      setScale(1);
+      setTimeout(() => setIsAnimating(false), ANIMATION_DURATION);
+    }, ANIMATION_DURATION);
   }, []);
   
-  // Function to handle click on the map - triggers zoom effect
-  const handleMapClick = () => {
-    if (!isAnimating) {
-      setIsAnimating(true);
-      setScale(1.1); // Zoom in more than the automatic animation
-      
-      setTimeout(() => {
-        setScale(1); // Return to normal size
-        setTimeout(() => {
-          setIsAnimating(false);
-        }, 300);
-      }, 300);
-    }
-  };
+ // Initial animation setup
+ useEffect(() => {
+  const initialAnimate = () => animateMap(1.05);
+  initialAnimate();
+}, [animateMap]);
   
   // Extract regions from SVG data and set up region mappings
   useEffect(() => {
     if (!svgData) return;
     
-    let extractedRegions: RegionData[] = [];
-    
-    if (countryId === 1) {
-      // Nigeria
-      extractedRegions = extractNigeriaRegions(svgData);
-      console.log(`Found ${extractedRegions.length} Nigeria regions from SVG data`);
-    } else if (countryId === 2) {
-      // Kenya
-      extractedRegions = extractKenyaRegions(svgData);
-      console.log(`Found ${extractedRegions.length} Kenya regions from SVG data`);
+    const extractRegions = () => {
+
+      let extracted: RegionData[] = [];
+      if (countryId === 1) {
+        extracted = extractWorldRegions(svgData);
+        
+
+      } 
+
+       // Add centroid position to each region
+    const regionsWithPositions = extracted.map(region => {
+      
+      try {
+       
+      const properties = new svgPathProperties(region.path);
+      
+      const length = properties.getTotalLength();
+      const center = properties.getPointAtLength(length / 2); // Approximate center
+      
+      return {
+        ...region,
+        position: { x: center.x, y: center.y }
+      };
+    } catch (e) {
+      console.warn(`Invalid path for region ${region.name}:`, e);
+      return { ...region };
     }
-    
-    setRegions(extractedRegions);
-    
+  });  
+      setRegions(regionsWithPositions);
+      setViewBox(getViewBoxFromSVG(svgData));
+      setmapregionPosition(regionsWithPositions);
+      console.log('regionposition:',regionsWithPositions);
+    };
+
+    extractRegions();
+  }, [svgData, countryId]);
+
+//this use effect is for medium light flashing
+  useEffect(() => {
+    if (countdown === 0 && currentTarget?.name) {
+     // console.log("Looking for centroid of:", currentTarget?.name);
+
+      const delay = setTimeout(() => {
+        const regionElement = svgRef.current?.querySelector(`[data-name="${currentTarget.name}"]`);
+  
+        if (regionElement) {
+          const centroidDot = svgRef.current?.querySelector(
+            `circle[data-centroid-for="${currentTarget.name}"]`
+            
+          );
+
+  
+          if (centroidDot) {
+            const originalFill = centroidDot.getAttribute("fill") || "red";
+            let isGold = false;
+            let flashes = 0;
+  
+            const flashInterval = setInterval(() => {
+              centroidDot.setAttribute("fill", isGold ? originalFill : "gold");
+              isGold = !isGold;
+              flashes++;
+  
+              if (flashes >= 6) { // 3 full flashes
+                clearInterval(flashInterval);
+                centroidDot.setAttribute("fill", originalFill);
+              }
+            }, 250);
+  
+            return () => clearInterval(flashInterval);
+          }
+        }
+      }, 0);
+  
+      // Clear delay timeout on unmount
+      return () => clearTimeout(delay);
+    }
+  }, [countdown, currentTarget]);
+  
     // Set viewBox
-    const extractedViewBox = getViewBoxFromSVG(svgData);
-    setViewBox(extractedViewBox);
+   // const extractedViewBox = getViewBoxFromSVG(svgData);
+    //setViewBox(extractedViewBox);
     
     // Fetch region data from the API to map SVG regions to database regions
-    const fetchRegions = async () => {
+   // Region mapping logic
+  useEffect(() => {
+    const fetchRegionMappings = async () => {
       try {
         const response = await fetch(`/api/countries/${countryId}/regions`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch regions");
-        }
+        if (!response.ok) throw new Error("Failed to fetch regions");
         
         const regionsData = await response.json();
-        const mappings: Record<string, number> = {};
-        
-        // Create a mapping from region name to database ID
-        const nameToRegion = new Map<string, any>();
-        
-        // First, build a lookup table of names to DB regions
-        regionsData.forEach((region: any) => {
-          const cleanName = region.name.trim().toLowerCase();
-          nameToRegion.set(cleanName, region);
-          
-          // Add common variations/abbreviations
-          if (cleanName === "federal capital territory") {
-            nameToRegion.set("fct", region);
-          }
-        });
-        
-        console.log(`Built name lookup with ${nameToRegion.size} entries`);
-        
-        // Then map SVG regions to DB regions
-        if (countryId === 1) { // Nigeria
-          extractedRegions.forEach(svgRegion => {
-            const svgRegionName = svgRegion.name.trim().toLowerCase();
-            const svgRegionCode = svgRegion.id.replace('NG-', '');
-            let mapped = false;
-            
-            // Try direct name match
-            if (nameToRegion.has(svgRegionName)) {
-              const region = nameToRegion.get(svgRegionName);
-              mappings[svgRegion.id] = region.id;
-              console.log(`Direct match: ${svgRegion.name} -> ID ${region.id}`);
-              mapped = true;
-            }
-            
-            // Try prefix match (e.g., "Akwa Ibom" matches "Akwa")
-            if (!mapped) {
-              nameToRegion.forEach((dbRegion, dbName) => {
-                if (svgRegionName.startsWith(dbName) || dbName.startsWith(svgRegionName)) {
-                  mappings[svgRegion.id] = dbRegion.id;
-                  console.log(`Prefix match: ${svgRegion.name} -> ${dbRegion.name} (ID ${dbRegion.id})`);
-                  mapped = true;
-                }
-              });
-            }
-            
-            // Special cases for problematic states
-            if (!mapped) {
-              if (svgRegionName === "ebonyi") {
-                // Find Ebonyi in the regions or use a fallback ID
-                const ebonyiRegion = regionsData.find((r: any) => 
-                  r.name.toLowerCase() === "ebonyi" || r.id === 11);
-                
-                if (ebonyiRegion) {
-                  mappings[svgRegion.id] = ebonyiRegion.id;
-                  console.log(`Special case: Ebonyi -> ID ${ebonyiRegion.id}`);
-                } else {
-                  mappings[svgRegion.id] = 11; // Fallback ID for Ebonyi
-                  console.log(`Special fallback: Ebonyi -> ID 11`);
-                }
-                mapped = true;
-              }
-              else if (svgRegion.name === "Federal Capital Territory" || svgRegionName === "fct") {
-                const fctRegion = regionsData.find((r: any) => 
-                  r.name.toLowerCase().includes("capital") || r.name.toLowerCase() === "fct" || r.id === 12);
-                
-                if (fctRegion) {
-                  mappings[svgRegion.id] = fctRegion.id;
-                  console.log(`Special case: FCT -> ID ${fctRegion.id}`);
-                } else {
-                  mappings[svgRegion.id] = 12; // Fallback ID for FCT
-                  console.log(`Special fallback: FCT -> ID 12`);
-                }
-                mapped = true;
-              }
-            }
-            
-            // For any remaining unmapped regions, add them with a high ID number
-            if (!mapped) {
-              // Find the highest existing ID and add from there
-              const maxId = Math.max(...regionsData.map((r: any) => r.id));
-              
-              // Use an offset to ensure we don't conflict with existing IDs
-              const uniqueId = maxId + 100 + (svgRegionCode.charCodeAt(0) + svgRegionCode.charCodeAt(1));
-              
-              mappings[svgRegion.id] = uniqueId;
-              console.log(`Generated unique ID: ${svgRegion.name} -> ID ${uniqueId}`);
-            }
-          });
-        } else if (countryId === 2) { // Kenya
-          // Similar logic for Kenya
-          extractedRegions.forEach(svgRegion => {
-            const svgRegionName = svgRegion.name.trim().toLowerCase();
-            let mapped = false;
-            
-            // Try direct name match
-            if (nameToRegion.has(svgRegionName)) {
-              const region = nameToRegion.get(svgRegionName);
-              mappings[svgRegion.id] = region.id;
-              mapped = true;
-            }
-            
-            // Try prefix match
-            if (!mapped) {
-              nameToRegion.forEach((dbRegion, dbName) => {
-                if (svgRegionName.startsWith(dbName) || dbName.startsWith(svgRegionName)) {
-                  mappings[svgRegion.id] = dbRegion.id;
-                  mapped = true;
-                }
-              });
-            }
-            
-            // For any remaining unmapped regions, add them with a high ID number
-            if (!mapped) {
-              const maxId = Math.max(...regionsData.map((r: any) => r.id));
-              const uniqueId = maxId + 100 + svgRegion.name.length;
-              mappings[svgRegion.id] = uniqueId;
-            }
-          });
-        }
-        
-        console.log('Created region mappings:', mappings);
+        const mappings = createRegionMappings(regionsData);
         setRegionMappings(mappings);
       } catch (error) {
-        console.error("Error mapping regions:", error);
+        console.error("Region mapping error:", error);
       }
-    };
+    }; if (regions.length > 0) {
+      fetchRegionMappings();
+    }
+
+  }, [countryId, regions]);
+
+  // Region mapping creator
+  const createRegionMappings = (regionsData: any[]): RegionMapping => {
+    const nameMap = new Map<string, any>(
+      regionsData.map(region => [
+        region.name.trim().toLowerCase(),
+        region
+      ])
+    );
+
+    return regions.reduce((acc, region) => {
+      const regionId = getRegionId(region, nameMap, countryId);
+      //console.log('regionId:', regionId);
+
+      if (regionId) acc[region.id] = regionId;
+      return acc;
+    }, {} as RegionMapping);
+  };
+
+          // Region ID resolver
+  const getRegionId = (
+    region: RegionData,
+    nameMap: Map<string, any>,
+    countryId: number
+  ): number | null => {
+    const cleanName = region.name.trim().toLowerCase();
+    const dbRegion = nameMap.get(cleanName);
     
-    fetchRegions();
-  }, [svgData, countryId]);
+    if (dbRegion) return dbRegion.id;
+
+
+    // Generate fallback ID
+    return Math.max(...Array.from(nameMap.values()).map(r => r.id)) + 100;
+  };
+            
+   // Event handlers
+   const handleMapClick = useCallback(() => {
+    if (!isAnimating) animateMap(1.1);
+  }, [animateMap, isAnimating]);
+
+  const handleRegionClick = (id: string, name: string) => {
+    console.log("Clicked region:", id, name);
+    onRegionClick?.(id, name);
+  };
   
-  // Create unique regions list
-  const uniqueRegions = regions.filter((region, index, self) => 
-    index === self.findIndex((r) => r.id === region.id)
-  );
+
+  // Render helpers
+  const renderPaths = (strokeWidth: number, style: React.CSSProperties) => {
+   
+       const isHighlighted = (regionName: string) => {
+        if (Array.isArray(highlightRegion)) {
+          return highlightRegion.includes(regionName);
+        }
+        return regionName === highlightRegion;
+      };
+    
+      return uniqueRegions.map((region, index) => {
+        const highlighted = isHighlighted(region.name);
+        //const { fill, stroke } = getRegionColor(index);
+        const highlightColors = getRegionColor(index);
+
+      return (
+        <path
+        
+        key={region.id}
+        d={region.path}
+        strokeWidth={strokeWidth}
+        style={{
+          ...style,
+          ...(highlighted
+            ? { fill: highlightColors.fill, stroke: highlightColors.stroke }
+            : {}),
+        }}
+        data-region-id={region.id}
+        data-numeric-id={regionMappings[region.id]}
+        data-name={region.name}
+        onClick={() => handleRegionClick(region.id, region.name)}
+        />
+      );
+    });
+  };
+  
+
   
   return (
     <div 
       className={`country-svg-map relative ${className}`} 
-      style={{ width, height }}
+      style={{ width,height, overflowY: 'auto', overflowX: 'auto' }}
       onClick={handleMapClick}
     >
       <svg
         ref={svgRef}
         viewBox={viewBox}
-        width="100%"
-        height="100%"
+         width="100%"
+         height="100%"
         className="w-full h-full cursor-pointer"
+        
         style={{ 
+          width:'79%',
           transform: `scale(${scale})`,
           transformOrigin: 'center center',
-          transition: isAnimating ? 'transform 0.4s ease-in-out' : 'none'
+          transition: isAnimating ? `transform ${ANIMATION_DURATION}ms ease-in-out` : 'none',
+          display: 'block',
+          overflow: 'visible',
+
         }}
       >
         {/* Draw a thick outer border */}
-        {uniqueRegions.map((region) => (
-          <path
-            key={`border-${region.id}`}
-            d={region.path}
-            fill="none"
-            stroke="#666666"
-            strokeWidth="12"
-            style={{ 
-              pointerEvents: "none",
-              filter: "drop-shadow(0px 2px 4px rgba(0,0,0,0.3))"
-            }}
-          />
-        ))}
+         {/* Border layer */}
+         {renderPaths(12, { 
+          fill: "none",
+          stroke: "#666",
+          filter: "drop-shadow(0px 2px 4px rgba(0,0,0,0.3))",
+          pointerEvents: "none"
+        })}
+
+        {/* Fill layer */}
+        {renderPaths(2, {
+          fill: "#e5e5e5",
+          stroke: "#e5e5e5",
+          pointerEvents: "none"
+        })}
+        {/* Outline layer */}
+        {renderPaths(1.5, {
+          fill: "none",
+          stroke: "#ccc",
+          strokeDasharray: "2,2",
+          pointerEvents: "none"
+        })}
         
-        {/* Draw the filled regions */}
-        {uniqueRegions.map((region) => (
-          <path
-            key={`fill-${region.id}`}
-            d={region.path}
-            fill="#e5e5e5"
-            stroke="#e5e5e5"
-            strokeWidth="2"
-            style={{ pointerEvents: "none" }}
-          />
-        ))}
-        
-        {/* Draw region outlines inside the map */}
-        {uniqueRegions.map((region) => (
-          <path
-            key={`outline-${region.id}`}
-            d={region.path}
-            fill="none"
-            stroke="#cccccc"
-            strokeWidth="1.5"
-            strokeDasharray="2,2"
-            data-region-id={region.id}
-            data-numeric-id={regionMappings[region.id]}
-            data-name={region.name}
-            style={{ 
-              pointerEvents: "none"
-            }}
-          />
-        ))}
-          
-        {/* Render the overlay elements (like guidance dots) */}
-        {renderOverlay && renderOverlay()}
+
+        {renderOverlay?.()}
       </svg>
     </div>
   );
-}
+});
+
+CountrySvgMap.displayName = "CountrySvgMap";
+export default CountrySvgMap;

@@ -12,12 +12,14 @@ import { Confetti } from "@/components/ui/confetti";
 
 interface SuccessModalProps {
   isOpen: boolean;
+  onNextLevel?: () => void;
+  onRestart?: () => void;
 }
 
-export function SuccessModal({ isOpen }: SuccessModalProps) {
+export function SuccessModal({ isOpen, onNextLevel, onRestart }: SuccessModalProps) {
   const { gameState, resetGame } = useGame();
   const [, navigate] = useLocation();
-  
+  /*
   // Format time
   const formatTime = (timeMs: number | null): string => {
     if (!timeMs) return "00:00";
@@ -29,6 +31,7 @@ export function SuccessModal({ isOpen }: SuccessModalProps) {
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  */
   // Handle going to next country
   const handleNextCountry = () => {
     // Simple implementation - just increment country ID
@@ -43,6 +46,7 @@ export function SuccessModal({ isOpen }: SuccessModalProps) {
   // Handle playing again
   const handlePlayAgain = () => {
     resetGame();
+    onRestart?.();
   };
 
   // Handle going back to home
@@ -65,37 +69,47 @@ export function SuccessModal({ isOpen }: SuccessModalProps) {
             <p>You successfully assembled {gameState.countryName}!</p>
           </div>
           
-          <div className="p-4">
-            <div className="space-y-4 mb-6">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Time:</span>
-                <span className="font-mono font-bold">
-                  {formatTime(gameState.endTime)}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Score:</span>
-                <span className="font-bold">{gameState.score || 0}</span>
+           {/* Stats Section */}
+          <div className="space-y-4 my-6"></div>
+           <div className="flex justify-between items-center">
+              <span className="text-gray-600">Score:</span>
+              <span className="font-bold">{gameState.score || 0}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Hints Used:</span>
-                <span className="font-bold">{gameState.hintsUsed}/3</span>
+                <span className="font-bold text-1g">{gameState.hintsUsed}/3</span>
               </div>
-            </div>
             
+             {/* action button */}
             <DialogFooter className="flex flex-col space-y-3">
-              <Button 
+              {/* Always show Next Level if provided */}
+                {onNextLevel && (
+              <Button
+                className="w-full bg-primary hover:bg-primary/90 text-white"
+                onClick={onNextLevel}
+              >
+                Next Level
+              </Button>
+             )}
+
+             {/* Show Next Country only if onNextLevel isn't provided */}
+             {!onNextLevel && (
+              <Button
                 className="w-full bg-primary hover:bg-primary/90 text-white"
                 onClick={handleNextCountry}
               >
                 Next Country
               </Button>
+            )}
+
               <Button 
                 className="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700"
                 onClick={handlePlayAgain}
               >
                 Play Again
               </Button>
+
+
               <Button 
                 variant="ghost" 
                 className="w-full text-gray-500 hover:text-gray-700"
@@ -104,7 +118,7 @@ export function SuccessModal({ isOpen }: SuccessModalProps) {
                 Back to Countries
               </Button>
             </DialogFooter>
-          </div>
+         
         </DialogContent>
       </Dialog>
     </>

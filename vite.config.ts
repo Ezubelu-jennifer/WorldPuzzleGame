@@ -18,6 +18,11 @@ export default defineConfig({
         ]
       : []),
   ],
+ // server: {
+    //hmr: {
+     // overlay: false
+    //}
+  //},
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),

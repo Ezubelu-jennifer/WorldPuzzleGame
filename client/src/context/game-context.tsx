@@ -1,18 +1,67 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { GameState, RegionPiece } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { sampleRegions } from "@/data/countries";
+import { useDragContext } from "./drag-context";
+
+type Difficulty = "easy" | "medium" | "hard" |"very hard" | null;
+
 
 interface GameContextProps {
   gameState: GameState | null;
-  initializeGame: (countryId: number, countryName: string) => void;
-  placePiece: (pieceId: number, x: number, y: number) => boolean;
+  setGameState: React.Dispatch<React.SetStateAction<GameState | null>>
+  initializeGame: (countryId: number, countryName: string) => Promise<void>;
+  placePiece: (pieceId: number, x: number, y: number, rotation: number,pathData: string) => boolean;
   useHint: () => void;
   resetGame: () => void;
   completeGame: () => void;
-  setShapeSize: (size: number) => void; // Add ability to adjust shape size
+  setShapeSize: (size: number) => void;
   loading: boolean;
   error: string | null;
+  hasDropped: boolean;
+  //mapregionPosition:{x:number, y:number};
+  setmapregionPosition: (positions: RegionPosition[]) => void;
+  //droppedRegionId: number | null;
+  highlightedRegions: string[];
+  setHighlightedRegions: React.Dispatch<React.SetStateAction<string[]>>;
+  setDroppedItems: React.Dispatch<React.SetStateAction<{ regionId: number; position: { x: number; y: number }; pathData: string }[]>>;
+  droppedItems: { regionId: number; position: { x: number; y: number };pathData: string }[];
+  svgDimensions: SvgDimensions;
+  setSvgDimensions: (dims: SvgDimensions) => void;
+  selectedLevel: Difficulty;
+  setSelectedLevel: React.Dispatch<React.SetStateAction<Difficulty>>;
+  currentTarget: { id: number; name: string } | null;
+  setCurrentTarget: React.Dispatch<React.SetStateAction< { id: number; name: string } | null>>;
+  showPopup: boolean;
+  errorPopup: ErrorPopupType;
+  countdown: number;
+  setCountdown: React.Dispatch<React.SetStateAction<number>>;
+  
+}
+interface SvgDimensions {
+  width: number;
+  height: number;
+}
+type ErrorPopupType = {
+  message: string;
+  visible: boolean;
+};
+
+
+interface DroppedItem {
+  regionId: number;
+  position: { x: number; y: number };
+  pathData: string; 
+}
+
+interface RegionPosition {
+  id: string;
+    name: string;
+    path: string;
+    position?: {
+        x: number;
+        y: number;
+    };
 }
 
 const GameContext = createContext<GameContextProps | undefined>(undefined);
@@ -22,534 +71,362 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [gameSessionId, setGameSessionId] = useState<number | null>(null);
+  const [mapregionPosition, setmapregionPosition] = useState<RegionPosition[]>([]);
+  const [hasDropped, setHasDropped] = useState(false);
+  //const [droppedRegionId, setDroppedRegionId] = useState<number | null>(null);
+  //const [dragpathData, setDragPathData] = useState<string>("");
+  const [droppedItems, setDroppedItems] = useState<DroppedItem[]>([]);
+  const [svgDimensions, setSvgDimensions] = useState<SvgDimensions>({ width: 0, height: 0 });
+  const [highlightedRegions, setHighlightedRegions] = useState<string[]>([]);
+  const [selectedLevel, setSelectedLevel] = useState<Difficulty>(null);
 
-  // Initialize a new game for a specific country
-  const initializeGame = async (countryId: number, countryName: string) => {
+  const [currentTarget, setCurrentTarget] = useState<{ id: number; name: string } | null>(null);
+  const [showPopup, setShowPopup] = useState(false);
+  const { draggedPieceId, draggedRotation, } = useDragContext();
+  const [errorPopup, setErrorPopup] = useState({ message: "", visible: false });
+  const [countdown, setCountdown] = useState(9); // 
+
+
+    
+  const initializeGame = useCallback(async (countryId: number, countryName: string) => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      // Load regions from backend
       let regions: RegionPiece[] = [];
-      
+
       try {
-        // Try to get regions from API
         const response = await fetch(`/api/countries/${countryId}/regions`);
-        if (!response.ok) {
-          throw new Error("Failed to load regions");
-        }
+        if (!response.ok) throw new Error("Failed to load regions");
+
         regions = await response.json();
-        
-        // Debug the regions received from API
-        console.log(`Loaded ${regions.length} regions for ${countryName} (ID: ${countryId})`);
-        
-        // Ensure all required properties are present
+
+        // Adjust special cases
         regions = regions.map((region, index) => {
-          // Special handling for problematic regions with fixed positions
-          let specialCorrectX, specialCorrectY;
+          const specialCoords: Record<string, { x: number; y: number }> = {
           
-          if (region.name === "Federal Capital Territory" || region.name === "FCT") {
-            specialCorrectX = 380;
-            specialCorrectY = 370;
-            console.log("Setting special position for FCT:", specialCorrectX, specialCorrectY);
-          } 
-          else if (region.name === "Nasarawa") {
-            specialCorrectX = 404;
-            specialCorrectY = 340;
-            console.log("Setting special position for Nasarawa:", specialCorrectX, specialCorrectY);
-          }
-          else if (region.name === "Ebonyi") {
-            specialCorrectX = 310;
-            specialCorrectY = 515;
-            console.log("Setting special position for Ebonyi:", specialCorrectX, specialCorrectY);
-          }
-          
-          // Make sure each region has required properties
-          const processedRegion: RegionPiece = {
+          };
+          const special = specialCoords[region.name];
+
+          return {
             id: region.id,
             name: region.name,
             svgPath: region.svgPath || "",
-            correctX: specialCorrectX || region.correctX || 100 + (index * 50),
-            correctY: specialCorrectY || region.correctY || 100 + (index * 30),
+           correctX: region.correctX ?? 150 + index * 50,
+           correctY: region.correctY ?? 150 + index * 30,
+
             isPlaced: false,
-            fillColor: region.fillColor || "#" + Math.floor(Math.random()*16777215).toString(16),
-            strokeColor: region.strokeColor || "#333333"
+            fillColor: region.fillColor || `#${Math.floor(Math.random() * 16777215).toString(16)}`,
+            strokeColor: region.strokeColor || "#333333",
+            rotation: 0,
           };
-          
-          return processedRegion;
         });
-        
-        // Check if Nasarawa is in the Nigeria regions
-        if (countryId === 1) {
-          const hasNasarawa = regions.some(r => r.name === "Nasarawa");
-          console.log(`Nasarawa region ${hasNasarawa ? 'found' : 'missing'} in Nigeria data`);
-        }
-        
-        // Make sure we have the correct number of regions
-        const expectedCount = countryId === 1 ? 37 : 47;
-        console.log(`Expected ${expectedCount} regions, got ${regions.length} for ${countryName}`);
-        
-        // If count doesn't match, add missing or remove extras
-        if (regions.length !== expectedCount) {
-          if (regions.length < expectedCount) {
-            // Missing regions - add generic ones to match the count
-            const missingCount = expectedCount - regions.length;
-            console.warn(`Adding ${missingCount} generic regions to match expected count`);
-            
-            for (let i = 0; i < missingCount; i++) {
-              const id = 1000 + regions.length + i;
-              const name = countryId === 1 
-                ? `Nigeria State ${regions.length + i + 1}` 
-                : `Kenya County ${regions.length + i + 1}`;
-              
-              regions.push({
-                id: id,
-                name: name,
-                svgPath: "",
-                correctX: 150 + (i * 50),
-                correctY: 150 + (i * 30),
-                isPlaced: false,
-                fillColor: "#" + Math.floor(Math.random()*16777215).toString(16),
-                strokeColor: "#333333"
-              });
-            }
-          } else if (regions.length > expectedCount) {
-            // Too many regions - trim to expected count
-            console.warn(`Trimming ${regions.length - expectedCount} excess regions`);
-            regions = regions.slice(0, expectedCount);
-          }
-        }
-      } catch (err) {
-        // Fallback to sample data if API fails
-        console.warn("Using sample regions data as fallback", err);
+      } catch (apiError) {
+        console.warn("Failed to fetch regions, using sample data.", apiError);
         regions = sampleRegions[countryId] || [];
-        console.log(`Fallback provided ${regions.length} regions`);
       }
+
+      // Ensure region count
+      const expectedRegionCounts: Record<number, number> = {
+        1: 256, // Nigeria
+        2: 47, // Kenya
+        3: 10, // South Africa
+        4: 29, // Egypt
+        5: 16, // Morocco
+      };
       
-      // Create a new game session on the server
+      const expectedCount = expectedRegionCounts[countryId] ?? 0; // Default to 0 if not found
+      if (regions.length < expectedCount) {
+        for (let i = regions.length; i < expectedCount; i++) {
+          regions.push({
+            id: 1000 + i,
+            name: `Region ${i + 1}`,
+            svgPath: "",
+            correctX: 150 + i * 50,
+            correctY: 150 + i * 30,
+            isPlaced: false,
+            fillColor: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
+            strokeColor: "#333333",
+            rotation: 0,
+          });
+        }
+      } else if (regions.length > expectedCount) {
+        regions = regions.slice(0, expectedCount);
+      }
+
+      // Create game session
       try {
-        const startTime = Date.now();
         const response = await apiRequest('POST', '/api/game-sessions', {
           countryId,
-          startedAt: new Date(startTime).toISOString(),
+          startedAt: new Date().toISOString(),
           hintsUsed: 0,
-          userId: null // Anonymous player for now
+          userId: null,
         });
-        
         if (response.ok) {
           const session = await response.json();
           setGameSessionId(session.id);
         }
-      } catch (err) {
-        // Continue even if session creation fails
-        console.warn("Failed to create game session, continuing in offline mode");
+      } catch (sessionError) {
+        console.warn("Session creation failed, continuing offline.", sessionError);
       }
-      
-      // Set initial game state
-      const gameState: GameState = {
+
+      setGameState(prev => ({
+        ...prev,
         countryId,
         countryName,
-        regions: regions.map(r => ({ ...r, isPlaced: false })),
+        regions,
         placedPieces: [],
         hintsUsed: 0,
         startTime: Date.now(),
         endTime: null,
         isCompleted: false,
         score: null,
-        shapeSize: 1.0 // Default shape size
-      };
-      
-      // Set the state
-      setGameState(gameState);
-      
-      // Final check of the data to debug
-      console.log(`Game initialized with ${gameState.regions.length} regions`);
+        shapeSize: 1.0,
+      }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to initialize game");
+      setError(err instanceof Error ? err.message : "Initialization failed");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  // Place a piece on the board
-  const placePiece = (pieceId: number, x: number, y: number): boolean => {
+  
+  useEffect(() => {
+    console.log('hasDropped updated:', hasDropped);
+  }, [hasDropped]);
+  useEffect(() => {
+    console.log("Dropped items updated:", droppedItems);
+  }, [droppedItems]);
+
+  //this use effect is used for visible popup error
+  useEffect(() => {
+    if (errorPopup.visible) {
+      const timer = setTimeout(() => {
+        setErrorPopup({ message: "", visible: false });
+      }, 3000); // Hide after 3 seconds
+  
+      return () => clearTimeout(timer);
+    }
+  }, [errorPopup.visible]);
+  
+
+
+  const placePiece = (pieceId: number, x: number, y: number, rotation: number,pathData: string) => {
     if (!gameState) return false;
     
-    // Find the piece
+    console.log(`GameContext placePiece checking: pieceId=${pieceId}, adjustedPos=(${x.toFixed(2)}, ${y.toFixed(2)})`);
+
+  
     const pieceIndex = gameState.regions.findIndex(r => r.id === pieceId && !r.isPlaced);
     if (pieceIndex === -1) return false;
-    
+
     const piece = gameState.regions[pieceIndex];
-    
-    // Method 1: Check if piece is near its correct position (distance-based with dynamic tolerance)
-    // Calculate distance to correct position
-    const dx = x - piece.correctX;
-    const dy = y - piece.correctY;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    
-    // Base tolerance is 100px, and we adjust it based on the piece's size
-    // Get the current shape size from game state if available or use default
-    const gameSize = gameState.shapeSize || 1.0;
-    
-    // Dynamic tolerance calculation - for better placement precision at all shapes
-    // Higher tolerance to be more forgiving and make placement easier
-    const baseTolerance = 100;
-    // Using proportional relationship with shape size to make it more forgiving
-    const tolerance = baseTolerance * gameSize; 
-    
-    const isCorrectPosition = distance <= tolerance;
-    
-    // Log for debugging
-    console.log(`Placing piece ${piece.id} (${piece.name})`);
-    console.log(`Current position: (${x.toFixed(0)}, ${y.toFixed(0)})`);
-    console.log(`Correct position: (${piece.correctX.toFixed(0)}, ${piece.correctY.toFixed(0)})`);
-    console.log(`Distance: ${distance.toFixed(0)}px, Tolerance: ${tolerance}px`);
-    console.log(`Is correct position? ${isCorrectPosition ? 'YES ✓' : 'NO ✗'}`); 
-    
-    // Method 2: Check if the piece is over its matching region on the map (shape-based)
-    let isOverMatchingRegion = false;
-    
-    // Find the target region element in the DOM
-    const findRegionElement = (regionId: number): SVGPathElement | null => {
-      try {
-        // Try to find the corresponding region path in the SVG map
-        const svgPaths = document.querySelectorAll('path[data-region-id], path[data-numeric-id], path[id], use');
-        
-        // Log for debugging
-        console.log(`Looking for SVG path with region ID ${regionId} among ${svgPaths.length} paths/elements`);
-        
-        // Get the region name for better matching
-        const regionName = piece.name.toLowerCase();
-        
-        // For Nigeria, create a code-to-id mapping
-        const nigeriaCodeToId: Record<string, number> = {
-          'AB': 1, 'AD': 2, 'AK': 3, 'AN': 4, 'BA': 5, 'BY': 6, 'BE': 7, 'BO': 8,
-          'CR': 9, 'DE': 10, 'EB': 11, 'ED': 12, 'EK': 13, 'EN': 14, 'FC': 15, 
-          'GO': 16, 'IM': 17, 'JI': 18, 'KD': 19, 'KN': 20, 'KT': 21, 'KE': 22, 
-          'KO': 23, 'KW': 24, 'LA': 25, 'NA': 26, 'NI': 27, 'OG': 28, 'ON': 29, 
-          'OS': 30, 'OY': 31, 'PL': 32, 'RI': 33, 'SO': 34, 'TA': 35, 'YO': 36, 
-          'ZA': 37
-        };
-        
-        // First pass: Try direct ID matching which is most reliable
-        for (let i = 0; i < svgPaths.length; i++) {
-          const pathElement = svgPaths[i] as SVGPathElement;
-          
-          // Try to match by numeric ID (maps to our database IDs)
-          const numericId = pathElement.getAttribute('data-numeric-id');
-          if (numericId && parseInt(numericId, 10) === regionId) {
-            console.log(`✅ Found exact match by numeric ID: ${numericId}`);
-            return pathElement;
-          }
-          
-          // Try matching by SVG data-region-id attribute
-          const dataRegionId = pathElement.getAttribute('data-region-id');
-          if (dataRegionId) {
-            // For Nigeria, check for state code
-            if (dataRegionId.startsWith('NG-') && gameState?.countryId === 1) {
-              const stateCode = dataRegionId.replace('NG-', '');
-              const mappedId = nigeriaCodeToId[stateCode];
-              if (mappedId === regionId) {
-                console.log(`✅ Found match by Nigeria state code: ${stateCode} -> ID: ${mappedId}`);
-                return pathElement;
-              }
-            }
-            
-            // Regular ID pattern match
-            if (dataRegionId.includes(`${regionId}`)) {
-              console.log(`✅ Found match by SVG ID: ${dataRegionId}`);
-              return pathElement;
-            }
-          }
-          
-          // Try matching by element ID attribute
-          const elementId = pathElement.id;
-          if (elementId) {
-            // For Nigeria, check for state code in ID
-            if (elementId.startsWith('NG-') && gameState?.countryId === 1) {
-              const stateCode = elementId.replace('NG-', '');
-              const mappedId = nigeriaCodeToId[stateCode];
-              if (mappedId === regionId) {
-                console.log(`✅ Found match by element ID with Nigeria code: ${elementId}`);
-                return pathElement;
-              }
-            }
-            
-            // Regular ID pattern match
-            if (elementId.includes(`${regionId}`)) {
-              console.log(`✅ Found match by element ID: ${elementId}`);
-              return pathElement;
-            }
-          }
+    const regionName = piece.name;
+    console.log("Region Name:", regionName);
+
+     // Now, find the region in mapregionPosition based on the regionName
+    const regionPosition = mapregionPosition.find(r => r.name === regionName);
+
+    if (!regionPosition ) return false;
+   // if (regionPosition) {
+    console.log("Region Position:", regionPosition.position);
+    // Access the position of the region in mapregionPosition
+    const { x: regionX, y: regionY } = regionPosition.position || { x: 0, y: 0 };
+  
+    // You can use regionX, regionY to work with the position
+    const dx = x - regionX;
+    const dy = y - regionY;
+    const distance =( Math.sqrt(dx * dx + dy * dy));
+
+    let tolerance = (gameState.shapeSize || 1) * 250;
+   
+    const isWithinTolerance = distance <= tolerance;
+  
+    let isCorrect = false;
+
+    switch (selectedLevel) {
+      case "easy":
+        // Just use distance tolerance
+        isCorrect = isWithinTolerance;
+        break;
+  
+      case "medium":
+        // Check correct piece, even if dropped at wrong location
+        if (pieceId !== currentTarget?.id) {
+          setErrorPopup({
+            message: "Wrong piece! Try placing the highlighted region.",
+            visible: true,
+          });
+          return false;
         }
-        
-        // Second pass: Try name-based matching (less reliable but needed for some cases)
-        for (let i = 0; i < svgPaths.length; i++) {
-          const pathElement = svgPaths[i] as SVGPathElement;
-          
-          // Try to match by data-name attribute
-          const pathName = pathElement.getAttribute('data-name')?.toLowerCase();
-          if (pathName && regionName && (
-              pathName.includes(regionName) || 
-              regionName.includes(pathName))
-          ) {
-            console.log(`✅ Found match by name: ${pathName} ↔ ${regionName}`);
-            return pathElement;
+        isCorrect = isWithinTolerance;
+        break;
+
+        case "hard":
+          // Check both position and rotation
+          if(rotation <= 20){
+            isCorrect = isWithinTolerance ;//&& isRotationCorrect;
           }
-          
-          // Try to match by element ID containing name or partial name
-          const elementId = pathElement.id?.toLowerCase();
-          if (elementId && regionName && (
-              elementId.includes(regionName) ||
-              regionName.includes(elementId))
-          ) {
-            console.log(`✅ Found match by element ID containing name: ${elementId} ↔ ${regionName}`);
-            return pathElement;
-          }
-        }
-        
-        // No matches found
-        console.log(`❌ No matching region element found for ID: ${regionId}, Name: ${regionName}`);
-      } catch (err) {
-        console.error('Error finding region element:', err);
+          break;
+
+          case "very hard":
+            if(rotation <= 12){
+              isCorrect = isWithinTolerance ;//&& isRotationCorrect;
+            }
+            break;
+    
+        default:
+          isCorrect = isWithinTolerance;
       }
-      return null;
-    };
-    
-    // Check if the point is within a shape with the elementFromPoint method
-    const isPointInShape = (x: number, y: number, targetElement: SVGPathElement): boolean => {
-      try {
-        // Get the element at the point
-        const element = document.elementFromPoint(x, y);
-        if (!element) return false;
+      console.log(`dx: ${dx}, dy: ${dy}, distance: ${distance}, tolerance: ${tolerance}, isCorrect: ${isCorrect}`);
+
+
+    if (isCorrect) {
+
+        const updatedPiece = {
+        ...piece, 
+        isPlaced: true, 
+        rotation, 
+        correctX:regionX,
+        correctY: regionY,
         
-        // Get the target element attributes for matching
-        const targetRegionId = targetElement.getAttribute('data-region-id');
-        const targetNumericId = targetElement.getAttribute('data-numeric-id');
-        const targetName = targetElement.getAttribute('data-name')?.toLowerCase();
-        
-        // Try direct element match
-        if (element === targetElement || targetElement.contains(element)) {
-          console.log('Direct element match');
-          return true;
-        }
-        
-        // Try ID-based match
-        if (targetNumericId && element.closest(`path[data-numeric-id="${targetNumericId}"]`)) {
-          console.log('Numeric ID match');
-          return true;
-        }
-        
-        if (targetRegionId && element.closest(`path[data-region-id="${targetRegionId}"]`)) {
-          console.log('Region ID match');
-          return true;
-        }
-        
-        // Try name-based match for special cases
-        if (targetName && piece.name) {
-          const pieceName = piece.name.toLowerCase();
-          const elementName = element.getAttribute('data-name')?.toLowerCase();
-          
-          if (elementName && (
-              elementName.includes(targetName) || 
-              targetName.includes(elementName) ||
-              elementName.includes(pieceName) ||
-              pieceName.includes(elementName)
-          )) {
-            console.log('Name match');
-            return true;
-          }
-        }
-        
-        return false;
-      } catch (err) {
-        console.error('Error checking if point is in shape:', err);
-        return false;
-      }
-    };
-    
-    // First use a broader tolerance to consider if we're near the region
-    if (distance <= 120) {
-      try {
-        // Get the SVG path element for this region
-        const regionElement = findRegionElement(pieceId);
-        
-        if (regionElement) {
-          // Check if the cursor is over this region's shape
-          isOverMatchingRegion = isPointInShape(x, y, regionElement);
-          console.log(`Cursor position: (${x}, ${y}) - Over matching region? ${isOverMatchingRegion}`);
-        } else {
-          // Fallback to distance-based matching if we can't find the shape
-          // Using a more generous tolerance for fallback cases
-          const fallbackTolerance = 120 * (gameState?.shapeSize || 1.0);
-          isOverMatchingRegion = distance <= fallbackTolerance;
-          console.log(`Fallback to distance matching (${distance} <= ${fallbackTolerance}? ${isOverMatchingRegion})`);
-        }
-      } catch (err) {
-        console.error('Error in shape matching:', err);
-        // Fallback to distance-based matching with generous tolerance
-        const fallbackTolerance = 120 * (gameState?.shapeSize || 1.0);
-        isOverMatchingRegion = distance <= fallbackTolerance;
-      }
-    }
-    
-    // A piece is correctly placed if it's either near its correct position OR over its matching region
-    const isCorrectlyPlaced = isCorrectPosition || isOverMatchingRegion;
-    
-    if (isCorrectlyPlaced) {
-      console.log(`✅ State ${piece.name} placed correctly! Snapping to exact position.`);
-      
-      // Update the game state with the placed piece
-      const updatedRegions = [...gameState.regions];
-      updatedRegions[pieceIndex] = {
-        ...piece,
-        isPlaced: true,
-        currentX: piece.correctX,
-        currentY: piece.correctY
       };
-      
-      const updatedPlacedPieces = [...gameState.placedPieces, pieceId];
-      
+      const updatedRegions = [...gameState.regions];
+      updatedRegions[pieceIndex] = updatedPiece;
+
       setGameState({
         ...gameState,
         regions: updatedRegions,
-        placedPieces: updatedPlacedPieces,
-        // Preserve the current shape size
-        shapeSize: gameState.shapeSize || 1.0
+        placedPieces: [...gameState.placedPieces, pieceId],
+        
       });
-      
-      // Check if game is complete
-      if (updatedPlacedPieces.length === gameState.regions.length) {
-        completeGame();
-      }
-      
+
+    setHasDropped(true);
+
+      setDroppedItems(prev => [
+        ...prev,
+        {
+          regionId: pieceId,
+          position: { x: regionX, y: regionY },
+          pathData,
+        },
+      ]);
+      setShowPopup(false);
       return true;
+   // }
     }
-    
-    return false;
-  };
+    //console.log("Drop rejected - outside tolerance");
+    //return false;
+    else {
+      setErrorPopup({
+        message: selectedLevel === "hard"
+          ? "Incorrect placement. Try again with correct position and rotation."
+          : "Incorrect placement. Try again.",
+        visible: true,
+      });
+  
+      return false;
+    }
+};
+  
 
-  // Use a hint to place a random piece
+
+
   const useHint = () => {
-    if (!gameState) return;
-    
-    // Find unplaced pieces
-    const unplacedPieces = gameState.regions.filter(r => !r.isPlaced);
-    if (unplacedPieces.length === 0) return;
-    
-    // Select a random unplaced piece
-    const randomIndex = Math.floor(Math.random() * unplacedPieces.length);
-    const piece = unplacedPieces[randomIndex];
-    
-    // Update the game state
-    const updatedRegions = gameState.regions.map(r => 
-      r.id === piece.id 
-        ? { ...r, isPlaced: true, currentX: r.correctX, currentY: r.correctY }
-        : r
-    );
-    
-    setGameState({
-      ...gameState,
-      regions: updatedRegions,
-      placedPieces: [...gameState.placedPieces, piece.id],
-      hintsUsed: gameState.hintsUsed + 1,
-      // Preserve the current shape size
-      shapeSize: gameState.shapeSize || 1.0
-    });
-    
-    // Check if game is complete
-    if (gameState.placedPieces.length + 1 === gameState.regions.length) {
-      completeGame();
+    //if (!gameState) return;
+    //setGameState(prev => prev ? { ...prev, hintsUsed: prev.hintsUsed + 1 } : prev);
+    if (!gameState?.regions) return;
+
+    const unplacedRegions = gameState.regions.filter(region => !region.isPlaced);
+
+    if (unplacedRegions.length === 0) {
+      setCurrentTarget(null);
+      setShowPopup(false);
+      alert("All pieces placed!");
+      return;
     }
+
+    const randomIndex = Math.floor(Math.random() * unplacedRegions.length);
+    const selectedRegion = unplacedRegions[randomIndex];
+  
+    setCurrentTarget({ id: selectedRegion.id, name: selectedRegion.name });
+
+
+    setShowPopup(true);
   };
 
-  // Reset the current game
   const resetGame = () => {
     if (!gameState) return;
-    
-    // Reset game state but keep country information and shape size
     setGameState({
       ...gameState,
-      regions: gameState.regions.map(r => ({ ...r, isPlaced: false, currentX: undefined, currentY: undefined })),
+      regions: gameState.regions.map(r => ({ ...r, isPlaced: false })),
       placedPieces: [],
       hintsUsed: 0,
       startTime: Date.now(),
       endTime: null,
       isCompleted: false,
       score: null,
-      // Maintain the current shape size
-      shapeSize: gameState.shapeSize || 1.0
     });
   };
 
-  // Complete the game and calculate score
-  const completeGame = async () => {
-    if (!gameState || gameState.isCompleted) return;
-    
-    const endTime = Date.now();
-    const timeTaken = (endTime - (gameState.startTime || endTime)) / 1000; // in seconds
-    
-    // Simple scoring formula: 
-    // Base score + (bonus for speed) - (penalty for hints)
-    const baseScore = gameState.regions.length * 100;
-    const timeBonus = Math.max(0, 300 - timeTaken) * 5;
-    const hintPenalty = gameState.hintsUsed * 50;
-    
-    const finalScore = Math.round(baseScore + timeBonus - hintPenalty);
-    
-    // Update game state
+  const completeGame = () => {
+    if (!gameState) return;
     setGameState({
       ...gameState,
-      endTime,
       isCompleted: true,
-      score: finalScore,
-      // Preserve the current shape size
-      shapeSize: gameState.shapeSize || 1.0
+      endTime: Date.now(),
+      score: calculateScore(gameState),
     });
-    
-    // Send completion to server
-    if (gameSessionId) {
-      try {
-        await apiRequest('PUT', `/api/game-sessions/${gameSessionId}/complete`, {
-          hintsUsed: gameState.hintsUsed,
-          score: finalScore
-        });
-      } catch (err) {
-        console.warn("Failed to record game completion", err);
-      }
-    }
   };
-  
-  // Update the shape size for better matching accuracy
+
   const setShapeSize = (size: number) => {
     if (!gameState) return;
-    
-    // Ensure size is within reasonable bounds
-    const safeSize = Math.max(0.5, Math.min(2.0, size));
-    
-    // Update game state with new shape size
-    setGameState({
-      ...gameState,
-      shapeSize: safeSize
-    });
-    
-    console.log(`Global shape size updated to ${safeSize}`);
+    setGameState(prev => prev ? { ...prev, shapeSize: size } : prev);
   };
 
+  const calculateScore = (state: GameState): number => {
+    if (!state.startTime || !state.endTime) return 0;
+  
+    const totalTimeInSeconds = (state.endTime - state.startTime) / 1000;
+    const penalty = state.hintsUsed * 10; // Example: 10 points per hint used
+  
+    const baseScore = 1000; // Max score
+    const timePenalty = totalTimeInSeconds; // 1 point per second taken
+  
+    let score = baseScore - timePenalty - penalty;
+    return Math.max(0, Math.round(score)); // Ensure score isn't negative
+  };
+  
   return (
-    <GameContext.Provider
-      value={{
-        gameState,
-        initializeGame,
-        placePiece,
-        useHint,
-        resetGame,
-        completeGame,
-        setShapeSize,
-        loading,
-        error
-      }}
-    >
+    <GameContext.Provider value={{
+      gameState,
+      setGameState,
+      initializeGame,
+      placePiece,
+      useHint,
+      resetGame,
+      completeGame,
+      setShapeSize,
+      hasDropped,
+      svgDimensions, 
+      setSvgDimensions,
+      //mapregionPosition,
+      setmapregionPosition,
+      setDroppedItems,
+      highlightedRegions,           // ✅ added
+      setHighlightedRegions,  
+      droppedItems,
+      selectedLevel,
+      setSelectedLevel,
+      currentTarget,
+      setCurrentTarget,
+      showPopup,
+      errorPopup,
+      countdown,
+      setCountdown,
+      loading,
+      error,
+    }}>
       {children}
     </GameContext.Provider>
   );
@@ -557,7 +434,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
 export function useGame() {
   const context = useContext(GameContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useGame must be used within a GameProvider");
   }
   return context;

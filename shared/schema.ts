@@ -105,4 +105,7 @@ export interface RegionPiece {
   scale?: number; // Dynamic scale for this specific piece to match map
   width?: number; // Actual width of the region for dynamic sizing
   height?: number; // Actual height of the region for dynamic sizing
+  rotation?: number;  // Add optional rotation
+  
+
 }

@@ -1,4 +1,4 @@
-import { useState, useRef, MouseEvent, TouchEvent } from "react";
+import { useState, useRef, MouseEvent, TouchEvent, useEffect } from "react";
 
 interface Position {
   x: number;
@@ -6,147 +6,140 @@ interface Position {
 }
 
 interface UseDragParams {
-  onDragStart?: () => void;
-  onDragEnd?: (position: Position, dropped: boolean) => void;
+  onDragStart?: (e: MouseEvent | TouchEvent) => void;
+  onDragEnd?: (position: Position, elementUnderCursor: Element | null) => void;
+  onDragMove?: (position: { x: number; y: number }) => void; // <-- Add this
+
   initialPosition?: Position;
+  dragItemId?: string | number; // Add identifier for the dragged item
 }
 
 export function useDrag({
   onDragStart,
   onDragEnd,
-  initialPosition = { x: 0, y: 0 }
+  onDragMove,
+  initialPosition = { x: 0, y: 0 },
+  dragItemId
 }: UseDragParams = {}) {
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState<Position>(initialPosition);
-  const dragStartPositionRef = useRef<Position>({ x: 0, y: 0 });
-  const elementStartPositionRef = useRef<Position>(initialPosition);
-  const wasDraggingRef = useRef(false);
-
-  // Reference to track when in drag operation
   const dragRef = useRef({
     dragging: false,
-    dragStartClientX: 0,
-    dragStartClientY: 0,
+    startX: 0,
+    startY: 0,
   });
+  
+  
 
-  // Handler for mouse down event
+
+  // Set up data transfer for native DnD
+  useEffect(() => {
+    const handleDragStart = (e: DragEvent) => {
+      if (dragItemId !== undefined && e.dataTransfer) {
+        e.dataTransfer.setData('pieceId', dragItemId.toString());
+        e.dataTransfer.effectAllowed = 'move';
+      }
+    };
+
+    const node = document.body;
+    node.addEventListener('dragstart', handleDragStart);
+    return () => node.removeEventListener('dragstart', handleDragStart);
+  }, [dragItemId]);
+
+  // Clean up if component unmounts mid-drag
+  useEffect(() => {
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, []);
+
+  // Mouse handlers
   const handleMouseDown = (e: MouseEvent) => {
     e.preventDefault();
-    
-    // Store initial positions
-    dragStartPositionRef.current = { x: e.clientX, y: e.clientY };
-    elementStartPositionRef.current = { ...position };
-    
     dragRef.current = {
       dragging: true,
-      dragStartClientX: e.clientX,
-      dragStartClientY: e.clientY,
+      startX: e.clientX,
+      startY: e.clientY,
     };
-    
     setIsDragging(true);
-    wasDraggingRef.current = true;
+    if (onDragStart) onDragStart(e);
     
-    if (onDragStart) {
-      onDragStart();
-    }
-    
-    // Add global event listeners
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   };
+// Handler for mouse move event
+const handleMouseMove = (e: globalThis.MouseEvent) => {
+  if (!dragRef.current.dragging) return;
 
-  // Handler for mouse move event
-  const handleMouseMove = (e: MouseEvent | globalThis.MouseEvent) => {
-    if (!dragRef.current.dragging) return;
-    
-    // Position directly at the cursor position with no offset
-    const newPosition = {
-      x: e.clientX,
-      y: e.clientY,
-    };
-    
-    setPosition(newPosition);
-  };
+  const newPosition = { x: e.clientX, y: e.clientY };
+  setPosition(newPosition);
 
-  // Handler for mouse up event
-  const handleMouseUp = (e: MouseEvent | globalThis.MouseEvent) => {
-    if (!dragRef.current.dragging) return;
-    
-    dragRef.current.dragging = false;
-    setIsDragging(false);
-    
-    // Remove global event listeners
-    document.removeEventListener("mousemove", handleMouseMove);
-    document.removeEventListener("mouseup", handleMouseUp);
-    
-    if (onDragEnd && wasDraggingRef.current) {
-      // Use the current position which should be tracked by our state
-      onDragEnd(position, true);
-      wasDraggingRef.current = false;
-    }
-  };
+  onDragMove?.(newPosition); // 🔥 Call onDragMove here
+};
+ // Handler for mouse up event
+const handleMouseUp = (e: globalThis.MouseEvent) => {
+  if (!dragRef.current.dragging) return;
+  
+  finishDrag(e.clientX, e.clientY);
+};
 
-  // Handler for touch start event
+  // Touch handlers
   const handleTouchStart = (e: TouchEvent) => {
     if (e.touches.length !== 1) return;
-    
-    // Store initial positions
-    dragStartPositionRef.current = { 
-      x: e.touches[0].clientX, 
-      y: e.touches[0].clientY 
-    };
-    elementStartPositionRef.current = { ...position };
-    
+    const touch = e.touches[0];
     dragRef.current = {
       dragging: true,
-      dragStartClientX: e.touches[0].clientX,
-      dragStartClientY: e.touches[0].clientY,
+      startX: touch.clientX,
+      startY: touch.clientY,
     };
-    
     setIsDragging(true);
-    wasDraggingRef.current = true;
+    if (onDragStart) onDragStart(e);
     
-    if (onDragStart) {
-      onDragStart();
-    }
-    
-    // Add global event listeners
     document.addEventListener("touchmove", handleTouchMove, { passive: false });
     document.addEventListener("touchend", handleTouchEnd);
   };
 
   // Handler for touch move event
-  const handleTouchMove = (e: TouchEvent | globalThis.TouchEvent) => {
-    if (!dragRef.current.dragging || e.touches.length !== 1) return;
-    
-    e.preventDefault(); // Prevent scrolling while dragging
-    
-    // Position directly at the touch point with no offset
-    const newPosition = {
-      x: e.touches[0].clientX,
-      y: e.touches[0].clientY,
-    };
-    
-    setPosition(newPosition);
-  };
+const handleTouchMove = (e: globalThis.TouchEvent) => {
+  if (!dragRef.current.dragging || e.touches.length !== 1) return;
+
+  e.preventDefault();
+  const touch = e.touches[0];
+  const newPosition = { x: touch.clientX, y: touch.clientY };
+  setPosition(newPosition);
+  onDragMove?.(newPosition);
+  // 🔥 Call onDragMove here
+};
 
   // Handler for touch end event
-  const handleTouchEnd = (e: TouchEvent | globalThis.TouchEvent) => {
-    if (!dragRef.current.dragging) return;
-    
-    dragRef.current.dragging = false;
+const handleTouchEnd = (e: globalThis.TouchEvent) => {
+  if (!dragRef.current.dragging) return;
+  
+  const touch = e.changedTouches[0];
+  finishDrag(touch.clientX, touch.clientY);
+};
+  // Common drag finish logic
+  const finishDrag = (clientX: number, clientY: number) => {
+    //dragRef.current.dragging = false;
+    //setIsDragging(false);
+    dragRef.current = { dragging: false, startX: 0, startY: 0 };
     setIsDragging(false);
     
-    // Remove global event listeners
+    // Clean up listeners
+    document.removeEventListener("mousemove", handleMouseMove);
+    document.removeEventListener("mouseup", handleMouseUp);
     document.removeEventListener("touchmove", handleTouchMove);
     document.removeEventListener("touchend", handleTouchEnd);
+
+   
     
-    if (onDragEnd && wasDraggingRef.current) {
-      // Important: use the current position which should be under the finger
-      // This is more reliable than trying to calculate a new position at touchend
-      // since sometimes the finger position isn't available in the touchend event
-      onDragEnd(position, true);
-      wasDraggingRef.current = false;
+    if (onDragEnd) {
+      const elementUnderCursor = document.elementFromPoint(clientX, clientY);
+      onDragEnd({ x: clientX, y: clientY }, elementUnderCursor);
+
     }
   };
 
@@ -154,9 +147,11 @@ export function useDrag({
     isDragging,
     position,
     setPosition,
+    
     dragHandlers: {
       onMouseDown: handleMouseDown,
       onTouchStart: handleTouchStart,
+      draggable: true,
     },
   };
 }
